@@ -1,0 +1,71 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Users\Requests;
+
+use App\Support\Requests\BaseFormRequest;
+
+class UserUpdateRequest extends BaseFormRequest
+{
+    protected function fields(): array
+    {
+        return ['first_name', 'last_name', 'email', 'original_email', 'role_ids'];
+    }
+
+    public function rules(): array
+    {
+        return [
+            'first_name'     => 'required|min_length[2]|max_length[100]',
+            'last_name'      => 'required|min_length[2]|max_length[100]',
+            'email'          => 'required|valid_email',
+            'original_email' => 'required|valid_email',
+            'role_ids'       => 'permit_empty',
+        ];
+    }
+
+    public function payload(): array
+    {
+        $payload = [
+            'first_name' => $this->postString('first_name'),
+            'last_name'  => $this->postString('last_name'),
+        ];
+
+        // Email is only modifiable by a superadmin. The form already renders
+        // a read-only input for everyone else; this is the server-side guard
+        // against tampered payloads (and saves the API a guaranteed 403).
+        if (is_superadmin()) {
+            $email          = trim($this->postString('email'));
+            $original_email = trim($this->postString('original_email'));
+
+            if ($original_email === '' || mb_strtolower($email) !== mb_strtolower($original_email)) {
+                $payload['email'] = $email;
+            }
+        }
+
+        if ($this->request->getPost('role_ids') !== null) {
+            $payload['role_ids'] = $this->normalizedRoleIds();
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function normalizedRoleIds(): array
+    {
+        $raw = $this->request->getPost('role_ids');
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $clean = [];
+        foreach ($raw as $value) {
+            if (is_numeric($value) && (int) $value > 0) {
+                $clean[] = (int) $value;
+            }
+        }
+        return array_values(array_unique($clean));
+    }
+}

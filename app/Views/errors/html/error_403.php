@@ -1,0 +1,33 @@
+<?php
+$isAuthed = (string) session(\App\Support\SessionKeys::ACCESS_TOKEN->value) !== '';
+$primaryUrl   = $isAuthed ? site_url(route_to('dashboard')) : site_url('login');
+$primaryLabel = $isAuthed ? lang('App.go_dashboard') : lang('App.go_login');
+?>
+<!doctype html>
+<html lang="<?= esc(service('language')->getLocale()) ?>">
+<head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= esc(lang('App.error403Title')) ?></title>
+    <?php include __DIR__ . '/partials/error_theme.php'; ?>
+</head>
+<body>
+<main class="error-wrap" data-error-page="403">
+    <section class="error-card" role="alert" aria-live="polite">
+        <p class="error-code">403</p>
+        <h1 class="error-title"><?= esc(lang('App.error403Title')) ?></h1>
+        <p class="error-copy"><?= esc(lang('App.error403Body')) ?></p>
+
+        <?php if (ENVIRONMENT !== 'production' && ! empty($message)): ?>
+            <div class="error-debug"><?= nl2br(esc($message)) ?></div>
+        <?php endif; ?>
+
+        <div class="error-actions">
+            <a class="btn btn-primary" href="<?= esc($primaryUrl) ?>"><?= esc($primaryLabel) ?></a>
+            <button class="btn btn-secondary" type="button" onclick="history.back()"><?= esc(lang('App.go_back')) ?></button>
+        </div>
+    </section>
+</main>
+</body>
+</html>

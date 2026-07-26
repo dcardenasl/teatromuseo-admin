@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.2', '8.3', '8.4', '8.5']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout ci4-website-builder-domain (App\Libraries\Cms\ PSR-4 dependency)
+        # actions/checkout's `path` input is confined to $GITHUB_WORKSPACE and
+        # rejects `../` targets, so a real sibling checkout (matching this
+        # repo's composer.json App\Libraries\Cms\ => ../ci4-website-builder-domain/...
+        # PSR-4 mapping) needs a plain git clone instead of the checkout action.
+        run: git clone --branch dev --depth 1 https://github.com/dcardenasl/ci4-website-builder-domain.git ../ci4-website-builder-domain
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: ${{ matrix.php-version == '8.2' && 'xdebug' || 'none' }}
+          extensions: curl, fileinfo, intl, mbstring
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php-version }}-
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare writable directories
+        run: chmod -R 777 writable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build CSS
+        run: npm run build:css
+
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --debug
+
+      - name: Code style
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: Security audit
+        run: composer audit --abandoned=ignore
+
+      - name: Lint JS (all files under public/assets/js, audit B8.2)
+        run: npm run lint:all
+
+      - name: Language file parity (EN/ES, audit B8.3)
+        run: composer i18n-check
+
+      - name: Run test suite
+        # GH Actions' `cond && A || B` collapses to B whenever A is falsy —
+        # and '' *is* falsy — so this can't branch to "no extra flag" via an
+        # empty string; use an explicit, non-empty flag for the 8.2/coverage
+        # branch instead.
+        run: vendor/bin/phpunit ${{ matrix.php-version == '8.2' && '--coverage-clover=tests/coverage.xml' || '--no-coverage' }}
+
+      - name: Coverage gate (>= 54.20% line coverage)
+        if: matrix.php-version == '8.2'
+        run: composer coverage:check

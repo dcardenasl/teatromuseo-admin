@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Guía completa para usar el Admin de CI4 Website Builder.">
+  <title>Guía de uso · CI4 Website Builder Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: hsl(220, 40%, 13%);
+      --muted: hsl(218, 14%, 48%);
+      --soft: hsl(220, 30%, 97.5%);
+      --paper: hsl(0, 0%, 100%);
+      --line: hsl(216, 20%, 90%);
+      --blue: hsl(256, 85%, 58%);
+      --blue-dark: hsl(256, 75%, 45%);
+      --blue-soft: hsl(256, 100%, 97%);
+      --mint: hsl(152, 70%, 25%);
+      --mint-ink: hsl(152, 70%, 20%);
+      --mint-bg: hsl(152, 75%, 96.5%);
+      --amber: hsl(38, 85%, 25%);
+      --amber-ink: hsl(38, 85%, 20%);
+      --amber-bg: hsl(38, 100%, 96.5%);
+      --red-soft: hsl(354, 90%, 96.5%);
+      --red-ink: hsl(354, 70%, 35%);
+      --shadow: 0 10px 30px -3px rgba(18, 28, 47, 0.04), 0 4px 12px -2px rgba(18, 28, 47, 0.02);
+      --shadow-hover: 0 20px 40px -10px rgba(49, 95, 206, 0.12), 0 8px 16px -4px rgba(49, 95, 206, 0.04);
+      --radius: 20px;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--soft);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: hsl(218, 12%, 80%);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: hsl(218, 12%, 70%);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--soft);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: var(--blue-dark); text-decoration: none; transition: color 0.2s ease; }
+    a:hover { color: var(--blue); text-decoration: none; }
+    button, input { font: inherit; }
+    code, kbd, .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    code { padding: .2rem .4rem; border-radius: 6px; background: hsl(218, 20%, 93%); color: hsl(256, 60%, 35%); font-size: .88em; }
+    img { max-width: 100%; display: block; }
+
+    .layout { display: grid; grid-template-columns: 292px minmax(0, 1fr); min-height: 100vh; }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 32px 20px;
+      background: hsl(222, 47%, 11%);
+      color: hsl(218, 25%, 85%);
+      border-right: 1px solid hsl(222, 47%, 16%);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: hsl(222, 20%, 30%);
+      border-radius: 3px;
+    }
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: hsl(222, 20%, 40%);
+    }
+
+    .brand { display: flex; gap: 12px; align-items: center; margin: 0 8px; color: #fff; text-decoration: none; }
+    .brand-mark {
+      display: grid; place-items: center; width: 40px; height: 40px;
+      border-radius: 12px; background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      box-shadow: 0 4px 12px rgba(49, 95, 206, 0.3); font-weight: 850; letter-spacing: -.05em;
+      font-family: 'Outfit', sans-serif;
+    }
+    .brand strong { display: block; font-size: 14px; letter-spacing: .01em; font-family: 'Outfit', sans-serif; font-weight: 700; }
+    .brand span { display: block; margin-top: 2px; color: hsl(218, 20%, 65%); font-size: 11px; }
+    .sidebar-label { margin: 24px 12px 8px; color: hsl(218, 20%, 55%); font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    
+    .toc { display: grid; gap: 4px; }
+    .toc a { padding: 10px 12px; border-radius: 10px; color: hsl(218, 20%, 80%); font-size: 13px; line-height: 1.4; display: flex; align-items: center; transition: all 0.2s ease; font-weight: 500; }
+    .toc a:hover { background: rgba(255, 255, 255, 0.05); color: #fff; text-decoration: none; transform: translateX(2px); }
+    .toc a.active { background: var(--blue); color: #fff; font-weight: 700; box-shadow: 0 4px 12px rgba(49, 95, 206, 0.25); }
+    .toc a span {
+      display: inline-grid; place-items: center; width: 24px; margin-right: 8px;
+      color: hsl(218, 100%, 75%); font-size: 10px; font-weight: 800;
+      background: rgba(255, 255, 255, 0.08); border-radius: 6px; height: 20px;
+    }
+    .toc a.active span { background: rgba(0, 0, 0, 0.2); color: #fff; }
+
+    .side-note {
+      margin-top: auto; padding: 16px; border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px; color: hsl(218, 15%, 70%); font-size: 12.5px;
+      background: rgba(255, 255, 255, 0.02); line-height: 1.5;
+    }
+    .side-note strong { display: block; margin-bottom: 6px; color: #fff; font-family: 'Outfit', sans-serif; font-weight: 650; }
+
+    .main { min-width: 0; padding: 32px clamp(20px, 4vw, 54px) 80px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1120px; margin: 0 auto 28px; }
+    .crumb { color: var(--muted); font-size: 12.5px; font-weight: 500; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 40px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--paper); color: var(--ink); cursor: pointer; font-weight: 700; font-size: 13px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover { border-color: hsl(218, 14%, 75%); background: hsl(220, 20%, 98%); text-decoration: none; box-shadow: 0 4px 12px rgba(18,28,47,0.04); }
+    .btn.primary { border-color: var(--blue); background: var(--blue); color: #fff; }
+    .btn.primary:hover { border-color: var(--blue-dark); background: var(--blue-dark); box-shadow: 0 4px 12px rgba(49, 95, 206, 0.2); }
+    .mobile-nav { display: none; }
+    
+    .search { width: min(280px, 45vw); padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); outline: none; transition: all 0.2s ease; }
+    .search:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(49, 95, 206, 0.15); }
+    .btn:focus-visible, .search:focus-visible, .toc a:focus-visible, .summary:focus-visible, .copy:focus-visible { outline: 3px solid rgba(49, 95, 206, 0.25); outline-offset: 2px; }
+
+    .hero, .section, .footer { max-width: 1120px; margin: 0 auto; }
+    .hero {
+      position: relative; overflow: hidden; padding: clamp(32px, 5vw, 54px); border-radius: 24px;
+      background: radial-gradient(circle at 10% 20%, hsl(256, 75%, 28%) 0%, transparent 45%),
+                  radial-gradient(circle at 90% 80%, hsl(220, 60%, 15%) 0%, transparent 45%),
+                  linear-gradient(135deg, hsl(224, 60%, 18%) 0%, hsl(256, 70%, 22%) 100%);
+      color: #fff; box-shadow: 0 20px 40px -10px rgba(18, 28, 47, 0.15);
+    }
+    .hero::after { content: ""; position: absolute; right: -80px; bottom: -120px; width: 320px; height: 320px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 50%; box-shadow: 0 0 0 24px rgba(255, 255, 255, 0.02), 0 0 0 48px rgba(255, 255, 255, 0.015); }
+    .eyebrow { position: relative; z-index: 1; margin: 0 0 8px; color: hsl(220, 100%, 85%); font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1, h2, h3, h4 { margin: 0; color: var(--ink); line-height: 1.2; letter-spacing: -.03em; font-family: 'Outfit', sans-serif; font-weight: 700; text-wrap: balance; }
+    .hero h1 { position: relative; z-index: 1; max-width: 800px; color: #fff; font-size: clamp(32px, 5vw, 54px); font-weight: 750; letter-spacing: -0.04em; }
+    .hero p { position: relative; z-index: 1; max-width: 780px; margin: 16px 0 0; color: hsl(220, 100%, 93%); font-size: clamp(15px, 2vw, 17.5px); text-wrap: pretty; }
+    .hero-meta { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+    .hero-meta span { padding: 6px 12px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; color: hsl(220, 100%, 95%); background: rgba(255, 255, 255, 0.08); font-size: 11.5px; font-weight: 500; }
+
+    .section {
+      margin-top: 28px; padding: clamp(24px, 3.5vw, 40px); border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--paper); box-shadow: var(--shadow); transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .section:target { scroll-margin-top: 24px; }
+    .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+    .section-number {
+      flex: 0 0 auto; display: grid; place-items: center; width: 44px; height: 44px;
+      border-radius: 12px; background: var(--blue-soft); color: var(--blue-dark);
+      font-size: 13px; font-weight: 800; font-family: 'Outfit', sans-serif;
+    }
+    .section-title { flex: 1; }
+    .section h2 { font-size: clamp(24px, 3vw, 30px); font-weight: 700; border-bottom: none; }
+    .section h3 { margin: 32px 0 12px; font-size: 20px; font-weight: 650; }
+    .section h4 { margin: 20px 0 8px; font-size: 15.5px; font-weight: 650; }
+    .section p { margin: 10px 0; color: hsl(218, 14%, 25%); text-wrap: pretty; }
+    .section ul, .section ol { margin: 12px 0 16px; padding-left: 24px; color: hsl(218, 14%, 25%); }
+    .section li + li { margin-top: 6px; }
+    .lead { margin-top: -6px !important; color: var(--muted) !important; font-size: 16px; line-height: 1.5; }
+    .small { color: var(--muted) !important; font-size: 12px; }
+    
+    .grid-2, .grid-3 { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    
+    .card {
+      padding: 20px; border: 1px solid var(--line); border-radius: 14px;
+      background: hsl(220, 20%, 99%); box-shadow: inset 0 1px 2px rgba(0,0,0,0.01);
+      transition: all 0.2s ease;
+    }
+    .card:hover { border-color: hsl(218, 14%, 80%); box-shadow: 0 4px 12px rgba(18,28,47,0.02); }
+    .card h4 { margin-top: 0; color: var(--ink); font-size: 15px; }
+    .card p { font-size: 13.5px; margin: 6px 0 0; }
+    
+    .callout {
+      display: flex; gap: 14px; margin: 20px 0; padding: 18px 20px;
+      border-left: 5px solid var(--blue); border-radius: 14px;
+      background: var(--blue-soft); color: hsl(218, 14%, 25%);
+      box-shadow: var(--shadow); font-size: 14.5px;
+    }
+    .callout strong { display: block; margin-bottom: 4px; color: var(--blue-dark); font-family: 'Outfit', sans-serif; font-weight: 700; }
+    .callout.warn { border-color: hsl(38, 85%, 50%); background: var(--amber-bg); color: hsl(38, 80%, 22%); }
+    .callout.warn strong { color: var(--amber-ink); }
+    .callout.danger { border-color: var(--red-ink); background: var(--red-soft); color: hsl(354, 70%, 25%); }
+    .callout.danger strong { color: var(--red-ink); }
+    .callout.ok { border-color: hsl(152, 70%, 45%); background: var(--mint-bg); color: hsl(152, 70%, 20%); }
+    .callout.ok strong { color: var(--mint-ink); }
+    
+    .steps { display: grid; gap: 16px; counter-reset: steps; margin: 20px 0; padding: 0; }
+    .steps > li { display: grid; grid-template-columns: 32px 1fr; gap: 16px; list-style: none; margin: 0; position: relative; }
+    .steps > li:not(:last-child)::after {
+      content: ""; position: absolute; left: 16px; top: 32px; bottom: -16px;
+      width: 2px; background: var(--line); z-index: 1;
+    }
+    .steps > li::before {
+      counter-increment: steps; content: counter(steps); display: grid; place-items: center;
+      width: 32px; height: 32px; border-radius: 50%; background: var(--blue-soft);
+      color: var(--blue-dark); font-size: 13px; font-weight: 800; font-family: 'Outfit', sans-serif;
+      box-shadow: 0 0 0 4px var(--paper); z-index: 2; transition: all 0.2s ease;
+    }
+    .steps > li:hover::before { background: var(--blue); color: #fff; box-shadow: 0 0 0 5px var(--blue-soft); }
+    .steps > li > div { padding-top: 5px; color: hsl(218, 14%, 25%); font-size: 14.5px; }
+    .steps strong { color: var(--ink); }
+    
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 24px 0; }
+    .flow-item {
+      position: relative; min-height: 110px; padding: 16px; border: 1px solid var(--line);
+      border-radius: 14px; background: hsl(220, 20%, 99%); box-shadow: inset 0 1px 2px rgba(0,0,0,0.01);
+      transition: all 0.25s ease;
+    }
+    .flow-item:hover { border-color: var(--blue); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .flow-item:not(:last-child)::after {
+      content: "→"; position: absolute; right: -18px; top: 40px; z-index: 2;
+      color: var(--blue); font-size: 18px; font-weight: 800; background: var(--paper);
+      width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%;
+      border: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .flow-item span { display: block; margin-bottom: 6px; color: var(--blue); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+    .flow-item strong { display: block; font-size: 14px; line-height: 1.25; color: var(--ink); }
+    .flow-item p { margin: 6px 0 0; font-size: 11.5px; line-height: 1.35; color: var(--muted); }
+    
+    .table-wrap { overflow-x: auto; margin: 24px 0; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+    table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 13.5px; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: hsl(220, 20%, 97%); color: var(--ink); font-family: 'Outfit', sans-serif; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: hsl(220, 20%, 99%); }
+    
+    .tag { display: inline-flex; align-items: center; margin: 2px 4px 2px 0; padding: 4px 10px; border-radius: 999px; background: hsl(218, 14%, 93%); color: hsl(218, 14%, 35%); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+    .tag.blue { background: var(--blue-soft); color: var(--blue-dark); }
+    .tag.green { background: var(--mint-bg); color: var(--mint-ink); }
+    .tag.red { background: var(--red-soft); color: var(--red-ink); }
+    
+    .shot {
+      margin: 24px 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+      box-shadow: var(--shadow); background: var(--paper);
+    }
+    .shot::before {
+      content: ""; display: block; height: 34px; background: hsl(220, 20%, 94%);
+      border-bottom: 1px solid var(--line); position: relative;
+      background-image: radial-gradient(circle, #ff5f56 4.5px, transparent 5.5px),
+                        radial-gradient(circle, #ffbd2e 4.5px, transparent 5.5px),
+                        radial-gradient(circle, #27c93f 4.5px, transparent 5.5px);
+      background-size: 15px 15px, 15px 15px, 15px 15px;
+      background-position: 12px 10px, 30px 10px, 48px 10px;
+      background-repeat: no-repeat;
+    }
+    .shot img { width: 100%; margin: 0 auto; border: none; border-radius: 0; box-shadow: none; }
+    figcaption { padding: 12px 16px; color: var(--muted); font-size: 12px; text-align: left; background: hsl(220, 20%, 99%); }
+    
+    .url-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+    .url-row code { flex: 1; overflow-x: auto; padding: 10px 14px; white-space: nowrap; border: 1px solid var(--line); }
+    .copy { min-height: 36px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--blue-dark); cursor: pointer; font-size: 11.5px; font-weight: 700; transition: all 0.2s ease; }
+    .copy:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+    
+    .checklist { display: grid; gap: 10px; margin: 18px 0; }
+    .checklist label { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: hsl(220, 20%, 99%); color: hsl(218, 14%, 25%); transition: all 0.2s ease; cursor: pointer; }
+    .checklist label:hover { border-color: hsl(218, 14%, 80%); background: #fff; }
+    .checklist input { margin-top: 4px; accent-color: var(--blue); width: 16px; height: 16px; }
+    
+    details { margin: 12px 0; border: 1px solid var(--line); border-radius: 12px; background: hsl(220, 20%, 99%); overflow: hidden; transition: all 0.2s ease; }
+    details:hover { border-color: hsl(218, 14%, 80%); }
+    details[open] { border-color: var(--blue); background: #fff; }
+    summary { padding: 14px 16px; cursor: pointer; color: var(--ink); font-weight: 700; font-family: 'Outfit', sans-serif; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+    summary::after {
+      content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform 0.2s ease;
+    }
+    details[open] summary::after { transform: rotate(-135deg); border-color: var(--blue); }
+    summary::-webkit-details-marker, summary::marker { display: none; }
+    details > div { padding: 0 16px 16px; color: hsl(218, 14%, 30%); font-size: 14px; }
+    
+    .capture-gallery { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 20px; }
+    .capture-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: hsl(220, 20%, 99%); box-shadow: var(--shadow); }
+    .capture-card figure { margin: 0; padding: 0; border: 0; background: transparent; }
+    .capture-card img { width: 100%; max-height: 520px; object-fit: contain; object-position: top center; border: 1px solid var(--line); border-radius: 10px; background: #e8edf6; }
+    .capture-card h4 { margin: 12px 0 6px; font-size: 16px; }
+    .capture-card figcaption { text-align: left; padding: 0; background: transparent; color: var(--muted); }
+    
+    .example { padding: 18px; border: 1px dashed hsl(218, 60%, 80%); border-radius: 12px; background: var(--blue-soft); }
+    .example code { color: var(--blue-dark); background: transparent; padding: 0; }
+    .footer { margin-top: 40px; padding: 24px 0; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+    .search-empty { display: none; margin: 24px auto; max-width: 1120px; padding: 24px; border: 1px dashed var(--line); border-radius: 16px; background: #fff; text-align: center; color: var(--muted); font-weight: 500; }
+
+    @media (max-width: 980px) {
+      .layout { display: block; }
+      .sidebar { position: static; height: auto; padding: 24px 16px; border-right: none; border-bottom: 1px solid hsl(222, 47%, 16%); }
+      .brand { margin-bottom: 16px; }
+      .sidebar-label, .side-note { display: none; }
+      .toc { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .sidebar.open .toc { display: grid; }
+      .mobile-nav { display: inline-flex; }
+      .main { padding: 24px 16px 60px; }
+      .topbar { align-items: flex-start; }
+      .flow { grid-template-columns: repeat(2, 1fr); }
+      .flow-item:not(:last-child)::after { display: none; }
+    }
+    @media (max-width: 680px) {
+      .topbar { display: block; }
+      .actions { margin-top: 16px; justify-content: flex-start; }
+      .search { width: 100%; }
+      .hero { border-radius: 20px; }
+      .section { margin-top: 20px; border-radius: 16px; padding: 20px; }
+      .section-head { gap: 12px; }
+      .grid-2, .grid-3, .flow { grid-template-columns: 1fr; }
+      .toc { grid-template-columns: 1fr; }
+      .capture-gallery { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: #fff; font-size: 11px; }
+      .sidebar, .topbar, .actions, .copy, .checklist input { display: none !important; }
+      .layout { display: block; }
+      .main { padding: 0; }
+      .hero, .section { box-shadow: none; break-inside: avoid; }
+      .hero { color: #000; background: #edf2fb; }
+      .hero h1, .hero p, .hero .eyebrow { color: #172033; }
+      .section { margin-top: 14px; }
+      a { color: #172033; text-decoration: underline; }
+      .capture-gallery { display: none; }
+      #capturas::after { content: "Las capturas están disponibles en la versión web de esta guía."; display: block; margin-top: 14px; color: #68758b; font-style: italic; }
+      .example, details { break-inside: avoid; }
+    }
+
+    /* Custom Search Wrapper styling */
+    .search-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: min(280px, 45vw);
+    }
+    .search-wrapper .search-icon {
+      position: absolute;
+      left: 12px;
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .search-wrapper .search {
+      width: 100%;
+      padding-left: 36px;
+      padding-right: 48px;
+    }
+    .search-wrapper .search-shortcut {
+      position: absolute;
+      right: 10px;
+      background: hsl(220, 20%, 93%);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: inherit;
+      color: var(--muted);
+      pointer-events: none;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CI</div>
+        <div><strong>CI4 Website Builder</strong><span>Guía del panel Admin</span></div>
+      </div>
+      <button class="btn mobile-nav" id="navToggle" type="button" aria-expanded="false">☰ Secciones</button>
+      <div class="sidebar-label">Contenido de la guía</div>
+      <nav class="toc" aria-label="Índice de la guía">
+        <a href="#acceso"><span>00</span>Acceso y reglas base</a>
+        <a href="#marco"><span>01</span>Cómo leer el panel</a>
+        <a href="#escritorio"><span>02</span>Escritorio</a>
+        <a href="#perfil-archivos"><span>03</span>Perfil y archivos</a>
+        <a href="#administracion"><span>04</span>Administración</a>
+        <a href="#iam"><span>05</span>Identidad y accesos</a>
+        <a href="#flujo"><span>06</span>Flujo recomendado CMS</a>
+        <a href="#contenido"><span>07</span>Contenido</a>
+        <a href="#estructura"><span>08</span>Estructura</a>
+        <a href="#fichas"><span>09</span>Fichas de cada módulo</a>
+        <a href="#capturas"><span>10</span>Capturas por módulo</a>
+        <a href="#primeros-pasos"><span>11</span>Atajos por objetivo</a>
+        <a href="#mapa-sistema"><span>12</span>Mapa del sistema</a>
+        <a href="#ejemplos"><span>13</span>Ejemplos rellenados</a>
+        <a href="#validaciones"><span>14</span>Validaciones y reglas</a>
+        <a href="#recetas"><span>15</span>Recetas paso a paso</a>
+        <a href="#publicacion"><span>16</span>Publicación y revisión</a>
+        <a href="#roles-matriz"><span>17</span>Matriz de roles</a>
+        <a href="#errores"><span>18</span>Errores y soluciones</a>
+        <a href="#recuperacion"><span>19</span>Recuperación ante errores</a>
+        <a href="#faq"><span>20</span>Preguntas frecuentes</a>
+        <a href="#configuracion"><span>21</span>Configuración</a>
+        <a href="#mantenimiento"><span>22</span>Mantenimiento</a>
+        <a href="#glosario"><span>23</span>Glosario</a>
+        <a href="#seguridad"><span>24</span>Qué hacer y qué evitar</a>
+        <a href="#checklist"><span>25</span>Checklist operativo</a>
+      </nav>
+      <div class="side-note"><strong>Consejo</strong>Trabaja primero en borrador, revisa traducciones y usa la vista previa antes de publicar.</div>
+    </aside>
+
+    <main class="main" id="top">
+      <div class="topbar">
+        <div class="crumb">Documentación local · versión observada en julio de 2026</div>
+        <div class="actions">
+          <div class="search-wrapper">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+            </svg>
+            <input id="guideSearch" class="search" type="search" placeholder="Buscar en la guía…" aria-label="Buscar en la guía">
+            <kbd class="search-shortcut">⌘K</kbd>
+          </div>
+          <a class="btn" href="/admin-guide-modules.html">Módulos por página</a>
+          <button class="btn" type="button" onclick="window.print()">Imprimir / PDF</button>
+          <button class="btn" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Arriba</button>
+        </div>
+      </div>
+
+      <header class="hero">
+        <p class="eyebrow">Manual operativo del administrador</p>
+        <h1>Guía completa para usar el Admin</h1>
+        <p>Recorrido pantalla por pantalla para administrar usuarios, archivos, páginas, entradas, menús, traducciones, formularios y la configuración del sitio sin perder el control del contenido.</p>
+        <div class="hero-meta"><span>Idioma de esta guía: español</span><span>Admin local: localhost:8182</span><span>28 módulos documentados</span><span>48 capturas reales</span><span>Manual para personas no técnicas</span></div>
+      </header>
+
+      <div class="search-empty" id="searchEmpty">No encontré una sección que coincida con esa búsqueda. Prueba con «páginas», «traducciones», «archivos» o «permisos».</div>
+
+      <section class="section searchable" id="acceso" data-search="acceso login iniciar sesión credenciales localhost csrf contraseña registro recuperación">
+        <div class="section-head"><div class="section-number">00</div><div class="section-title"><h2>Acceso y reglas base</h2><p class="lead">El primer detalle importante es entrar siempre por el mismo host que usa el proyecto.</p></div></div>
+        <div class="callout warn"><div><strong>Usa exactamente esta URL</strong><div><code>http://localhost:8182/login</code>. No reemplaces <code>localhost</code> por <code>127.0.0.1</code> en el navegador: la sesión y el CSRF están ligados al host.</div></div></div>
+        <div class="grid-2">
+          <div class="card"><h4>Credenciales iniciales de desarrollo</h4><p><strong>Correo:</strong> <code>admin@example.com</code><br><strong>Contraseña:</strong> <code>ChangeMe123!</code></p><p class="small">Son las credenciales del README raíz. Cámbialas o reemplázalas antes de cualquier uso real.</p></div>
+          <div class="card"><h4>Qué hay en la pantalla</h4><p>Campos <strong>Correo</strong> y <strong>Password</strong>, botón <strong>Ingresar</strong>, recuperación de contraseña y enlace para crear una cuenta.</p></div>
+        </div>
+        <ol class="steps">
+          <li><div>Abre el enlace de login en una pestaña nueva.</div></li>
+          <li><div>Escribe el correo y la contraseña. No guardes credenciales de desarrollo en un equipo compartido.</div></li>
+          <li><div>Pulsa <strong>Ingresar</strong> y espera el Escritorio.</div></li>
+          <li><div>Si olvidaste la contraseña, entra en <strong>¿Olvidaste tu contraseña?</strong>; si todavía no existe una cuenta, usa <strong>Crear una cuenta</strong>.</div></li>
+        </ol>
+        <div class="callout danger"><div><strong>No ignores un 403</strong><div>Un error CSRF/403 después de entrar suele significar que mezclaste hosts. Cierra esa pestaña y vuelve a abrir <code>http://localhost:8182/login</code>.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="marco" data-search="menú navegación barra lateral cabecera filtros tablas paginación buscar ordenar ver editar eliminar idioma sesión">
+        <div class="section-head"><div class="section-number">01</div><div class="section-title"><h2>Cómo leer el panel</h2><p class="lead">La interfaz se repite de forma consistente. Aprender una lista y un formulario te permite moverte por casi todo el CMS.</p></div></div>
+        <div class="grid-3">
+          <div class="card"><h4>Barra lateral</h4><p>Abre <strong>Menú</strong> para mostrar u ocultar la navegación. Los módulos están agrupados en Administración, Identidad y Accesos, CMS, Contenido, Estructura y Configuración.</p></div>
+          <div class="card"><h4>Barra superior</h4><p>Muestra el nombre de la pantalla, el idioma visible (<strong>ES</strong> / <strong>EN</strong>) y el menú de la cuenta (<strong>Mi perfil</strong> / <strong>Cerrar sesión</strong>).</p></div>
+          <div class="card"><h4>Listas</h4><p>Usan búsqueda, filtros, columnas ordenables, botones de página y acciones de <strong>Ver</strong>, <strong>Editar</strong> o <strong>Eliminar</strong>.</p></div>
+        </div>
+        <h3>Patrón de trabajo en una lista</h3>
+        <ol class="steps">
+          <li><div>Filtra por texto, estado, colección, idioma o grupo según la pantalla.</div></li>
+          <li><div>Usa <strong>Buscar</strong>. Para volver al estado inicial, pulsa <strong>Limpiar filtros</strong>.</div></li>
+          <li><div>Haz clic en el encabezado de una columna con flechas para ordenar.</div></li>
+          <li><div>Abre <strong>Ver</strong> para consultar sin editar, o <strong>Editar</strong> para cambiar datos.</div></li>
+          <li><div>Confirma cualquier acción destructiva en el diálogo; si no estás seguro, vuelve atrás.</div></li>
+        </ol>
+        <div class="table-wrap"><table><thead><tr><th>Indicador</th><th>Qué significa</th><th>Qué hacer</th></tr></thead><tbody>
+          <tr><td><span class="tag green">Activo / Publicado</span></td><td>El registro puede usarse o mostrarse según el módulo.</td><td>Verifica traducciones, enlaces y vista previa antes de publicarlo.</td></tr>
+          <tr><td><span class="tag blue">Borrador</span></td><td>El contenido está guardado pero no es público.</td><td>Continúa editando o publícalo cuando la revisión esté completa.</td></tr>
+          <tr><td><span class="tag red">Faltante</span></td><td>Existe una traducción o campo requerido sin completar.</td><td>Abre la acción <strong>Traducir</strong> desde la auditoría.</td></tr>
+        </tbody></table></div>
+        <h3>Qué hace cada botón importante</h3>
+        <p>El mismo nombre puede aparecer en varios módulos. Esta tabla explica la consecuencia general; si una pantalla muestra una variante, sigue siempre el texto exacto del botón visible.</p>
+        <div class="table-wrap"><table><thead><tr><th>Botón o acción</th><th>Qué ocurre</th><th>Regla para una persona nueva</th></tr></thead><tbody>
+          <tr><td><strong>Buscar / Aplicar filtros</strong></td><td>Solo cambia los resultados que ves.</td><td>No crea ni modifica registros.</td></tr>
+          <tr><td><strong>Limpiar filtros</strong></td><td>Devuelve la lista a su búsqueda inicial.</td><td>Úsalo antes de concluir que “no existe” un registro.</td></tr>
+          <tr><td><strong>Ver</strong></td><td>Abre el detalle para consultar.</td><td>Es la opción segura para entender un registro antes de editarlo.</td></tr>
+          <tr><td><strong>Editar</strong></td><td>Abre campos que pueden cambiarse.</td><td>El cambio no queda aplicado hasta pulsar guardar.</td></tr>
+          <tr><td><strong>Guardar / Actualizar</strong></td><td>Persiste los datos de esa pantalla.</td><td>Busca el mensaje de confirmación y comprueba después el listado.</td></tr>
+          <tr><td><strong>Guardar borrador</strong></td><td>Guarda trabajo editorial sin hacerlo público.</td><td>Es la opción segura para una primera prueba o una revisión pendiente.</td></tr>
+          <tr><td><strong>Publicar ahora</strong></td><td>Solicita dejar el contenido publicado; aprobación o programación pueden impedir que se vea inmediatamente.</td><td>Úsalo solo después de revisar idiomas, URL, imágenes y bloques.</td></tr>
+          <tr><td><strong>Traducir / Auto-traducir</strong></td><td>Abre o propone contenido para otro idioma.</td><td>La propuesta no es una revisión humana: corrige nombres, enlaces y SEO antes de guardar.</td></tr>
+          <tr><td><strong>Biblioteca</strong></td><td>Selecciona un archivo ya existente.</td><td>Prefiérela para conservar variantes, metadata y referencias.</td></tr>
+          <tr><td><strong>Usado en</strong></td><td>Muestra páginas, entradas o bloques que referencian un recurso.</td><td>Consulta esta lista antes de retirar o eliminar.</td></tr>
+          <tr><td><strong>Reordenar / Guardar Orden</strong></td><td>Cambia posición o jerarquía.</td><td>Reordenar puede ser local; pulsa Guardar Orden si aparece y verifica el resultado.</td></tr>
+          <tr><td><strong>Papelera / Restaurar / Eliminar definitivamente</strong></td><td>Retira temporalmente, recupera o borra sin vuelta atrás.</td><td>La tercera acción exige confirmar dependencias y autorización.</td></tr>
+          <tr><td><strong>Refrescar caché</strong></td><td>Vuelve a preparar un catálogo o contenido cacheado.</td><td>No corrige un esquema, permiso o URL incorrectos.</td></tr>
+        </tbody></table></div>
+        <h3>Cómo saber que una acción quedó aplicada</h3>
+        <ol class="steps"><li><div>Lee el mensaje que aparece después de pulsar el botón. Si aparece un error junto a un campo, el proceso no terminó.</div></li><li><div>Vuelve al listado del mismo módulo; si hace falta, pulsa <strong>Limpiar filtros</strong> y busca por el nombre o clave.</div></li><li><div>Abre <strong>Ver</strong> y confirma el valor que cambiaste, el estado y el idioma.</div></li><li><div>Para cambios sensibles, revisa <strong>Auditoría</strong>. Para contenido publicado, comprueba además la URL pública cuando el estado y la fecha permitan mostrarlo.</div></li></ol>
+        <div class="callout warn"><div><strong>Si solo viste un cambio en pantalla</strong><div>Un texto escrito en un formulario, una propuesta de traducción o una posición movida todavía puede no estar guardada. Considera el cambio real únicamente después de confirmación, verificación en el listado y, cuando corresponda, comprobación pública.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="escritorio" data-search="escritorio dashboard bienvenida resumen usuarios archivos api traducciones actividad analytics sistema">
+        <div class="section-head"><div class="section-number">02</div><div class="section-title"><h2>Escritorio</h2><p class="lead">Es la pantalla de orientación: muestra el estado actual del proyecto y enlaza con las áreas que requieren atención.</p></div></div>
+        <figure class="shot"><img src="/assets/docs/admin-guide/dashboard.png" alt="Captura del Escritorio del Admin con tarjetas de usuarios, archivos, resumen y traducciones"><figcaption>Escritorio real del proyecto: las cifras y porcentajes cambian con la actividad del sistema.</figcaption></figure>
+        <div class="table-wrap"><table><thead><tr><th>Zona de la captura</th><th>Qué debes leer</th></tr></thead><tbody><tr><td>Cabecera</td><td>Idioma activo, cuenta y acceso a Perfil/Cerrar sesión.</td></tr><tr><td>Tarjetas superiores</td><td>Usuarios, archivos y disponibilidad API: sirven para detectar cambios rápidos.</td></tr><tr><td>Resumen completo</td><td>Contadores clicables de páginas, entradas, colecciones, menús, categorías, etiquetas y formularios.</td></tr><tr><td>Traducciones y estado</td><td>Cobertura por idioma y estado de Hub API, Dominio y Sitio Web Público.</td></tr><tr><td>Actividad y archivos</td><td>Últimos cambios y biblioteca reciente; abre el detalle para investigar.</td></tr></tbody></table></div>
+        <div class="grid-2">
+          <div class="card"><h4>Tarjetas principales</h4><p><strong>Usuarios totales</strong>, <strong>Archivos totales</strong> y <strong>Tiempo de actividad API</strong>. Son indicadores rápidos, no reemplazan las pantallas de detalle.</p></div>
+          <div class="card"><h4>Resumen completo</h4><p>Enlaces con contadores para Páginas, Entradas, Colecciones, Menús, Categorías, Etiquetas, Formularios y Envíos.</p></div>
+          <div class="card"><h4>Traducciones</h4><p>Barra de cobertura por idioma. En la sesión observada estaban activos ES y EN; si tu instalación agrega otro idioma, también aparecerá aquí. Usa el enlace de auditoría para corregir pendientes.</p></div>
+          <div class="card"><h4>Actividad y salud</h4><p>Actividad reciente, analytics de los últimos 7 días, estado de Hub API, Dominio y Sitio Web Público, y últimos archivos.</p></div>
+        </div>
+        <h3>Qué hacer al entrar</h3>
+        <ol class="steps"><li><div>Revisa los servicios en <strong>Estado del Sistema</strong>.</div></li><li><div>Mira la cobertura de traducciones antes de publicar.</div></li><li><div>Usa las tarjetas como accesos directos; no borres desde el Escritorio.</div></li></ol>
+      </section>
+
+      <section class="section searchable" id="perfil-archivos" data-search="perfil avatar foto seguridad reset email verificación archivos subida papelera metadata alt texto variantes traducciones">
+        <div class="section-head"><div class="section-number">03</div><div class="section-title"><h2>Perfil y archivos</h2><p class="lead">La cuenta controla tus datos; Archivos controla la biblioteca que luego reutilizan páginas, entradas y bloques.</p></div></div>
+        <h3>Perfil</h3>
+        <div class="grid-2">
+          <div class="card"><h4>Foto de perfil</h4><p><strong>Subir foto</strong> abre el selector de archivos. Usa una imagen pequeña y profesional.</p></div>
+          <div class="card"><h4>Información personal</h4><p>Edita nombre y apellido con <strong>Guardar cambios</strong>. Revisa el correo mostrado antes de usarlo como identidad operativa.</p></div>
+          <div class="card"><h4>Seguridad</h4><p>La pantalla ofrece <strong>Enviar enlace de reset</strong> para iniciar un restablecimiento de contraseña.</p></div>
+          <div class="card"><h4>Verificación de correo</h4><p>Si la cuenta no está verificada, usa <strong>Reenviar verificación</strong>. Verifica que el correo de destino sea correcto.</p></div>
+        </div>
+        <h3>Archivos</h3>
+        <ol class="steps">
+          <li><div>En <strong>Archivos</strong>, selecciona el archivo en <strong>Subir Nuevo Archivo</strong> y pulsa <strong>Subir Archivo</strong>.</div></li>
+          <li><div>Filtra por texto, categoría (Imágenes, Documentos, Video, Audio), fechas o tamaño.</div></li>
+          <li><div>En la tabla, abre <strong>Ver</strong> para consultar el detalle, o <strong>Descargar</strong> para obtener el original.</div></li>
+          <li><div>En el detalle, revisa las variantes generadas —sus dimensiones dependen del archivo y de la configuración— y guarda texto alternativo, pie y crédito.</div></li>
+          <li><div>Consulta <strong>Usado en</strong> antes de eliminar. Si el archivo está referenciado, corrige primero esas referencias.</div></li>
+        </ol>
+        <div class="callout ok"><div><strong>Buenas prácticas editoriales</strong><div>Completa siempre el <strong>Texto alternativo</strong>; describe la imagen para lectores de pantalla y SEO. Usa nombres de archivo estables y evita subir duplicados.</div></div></div>
+        <h4>Papelera</h4><p>La Papelera permite filtrar archivos enviados allí y ofrece <strong>Restaurar</strong> o <strong>Eliminar definitivamente</strong>. La segunda acción borra el archivo del disco y es irreversible: úsala solo tras confirmar que no hay usos.</p>
+      </section>
+
+      <section class="section searchable" id="administracion" data-search="usuarios auditoría api keys métricas analytics administración crear editar roles estado límite peticiones salud tráfico referrer">
+        <div class="section-head"><div class="section-number">04</div><div class="section-title"><h2>Administración</h2><p class="lead">Estas pantallas controlan quién entra, qué ocurrió y cómo está funcionando la plataforma.</p></div></div>
+        <h3>Usuarios</h3>
+        <p>La lista muestra nombre, email, estado y fecha de creación. Usa <strong>Crear usuario</strong> para abrir el formulario.</p>
+        <div class="grid-2"><div class="card"><h4>Crear / editar</h4><p>Nombre, apellido y email son obligatorios. Elige uno o más roles: <strong>admin</strong>, <strong>cms-admin</strong>, <strong>cms-editor</strong>, <strong>superadmin</strong> o <strong>user</strong>.</p></div><div class="card"><h4>Detalle</h4><p>Consulta roles y acciones rápidas: editar, administrar roles, ver auditoría o eliminar. Elimina solo cuentas que ya no deban conservar acceso.</p></div></div>
+        <div class="callout warn"><div><strong>Regla de roles</strong><div>Si dejas los roles vacíos, el sistema asigna <code>user</code> por defecto. Si quitas todos los roles de un usuario existente, vuelve a aplicar ese rol base.</div></div></div>
+        <h3>Auditoría</h3><p>Registra operaciones con ID, usuario, acción, entidad, IP, fecha y resultado. Filtra por texto, acción, usuario, resultado y severidad. <strong>Ver</strong> abre el detalle del evento.</p>
+        <h3>API Keys</h3><p>La lista muestra nombre, prefijo, estado, límite de peticiones, ventana y fecha. En <strong>Nueva API key</strong> define nombre, límite total, ventana, límite por usuario y límite por IP. En edición puedes cambiar nombre, estado y límites; el detalle permite editar o eliminar/revocar.</p>
+        <div class="callout danger"><div><strong>Trata una API key como una contraseña</strong><div>No la pegues en tickets, capturas ni repositorios. Si sospechas una filtración, desactívala o elimínala y genera una nueva.</div></div></div>
+        <div class="grid-2"><div><h3>Métricas y Salud</h3><p>Elige un <strong>Period</strong> y pulsa <strong>Aplicar Filtros</strong>. Revisa peticiones totales, tiempo promedio, disponibilidad, peticiones exitosas, tendencias y tabla SLO.</p></div><div><h3>Analytics</h3><p>Elige el período para revisar visitas, visitantes únicos, páginas más visitadas, referrers y dispositivos. Úsalo para priorizar contenido, no para modificarlo.</p></div></div>
+      </section>
+
+      <section class="section searchable" id="iam" data-search="roles permisos identidad accesos role permissions applications aplicación matriz superadmin read write admin">
+        <div class="section-head"><div class="section-number">05</div><div class="section-title"><h2>Identidad y accesos</h2><p class="lead">Esta zona define las capacidades de cada persona y de cada aplicación.</p></div></div>
+        <h3>Roles</h3><p>Un rol tiene <strong>Aplicación</strong>, <strong>Código</strong>, <strong>Nombre</strong>, <strong>Descripción</strong> y un conjunto de permisos. En una edición, al guardar se reemplaza el conjunto completo: marca todo lo que debe conservarse.</p>
+        <h3>Roles × permisos</h3><p>Es la matriz de asignación masiva. Selecciona un rol, revisa los permisos agrupados por aplicación y recurso, usa <strong>Seleccionar todo</strong> o <strong>Ninguno</strong> dentro del grupo cuando corresponda, y pulsa <strong>Guardar</strong>. La pantalla avisa <strong>Tienes cambios sin guardar</strong> mientras exista una modificación local.</p>
+        <div class="table-wrap"><table><thead><tr><th>Nivel</th><th>Ejemplo</th><th>Qué permite</th></tr></thead><tbody>
+          <tr><td><span class="tag">READ</span></td><td><code>cms.pages.read</code></td><td>Consultar páginas.</td></tr>
+          <tr><td><span class="tag blue">WRITE</span></td><td><code>cms.pages.write</code></td><td>Crear o editar páginas.</td></tr>
+          <tr><td><span class="tag red">ADMIN</span></td><td><code>cms.pages.admin</code></td><td>Administrar por completo el recurso, incluyendo operaciones sensibles.</td></tr>
+          <tr><td><span class="tag red">SUPERADMIN-ACCESS</span></td><td><code>iam.superadmin-access</code></td><td>Operaciones reservadas de superadministración.</td></tr>
+        </tbody></table></div>
+        <h3>Permisos</h3><p>Crear o editar un permiso requiere <strong>Aplicación</strong>, <strong>Código</strong>, <strong>Recurso</strong>, <strong>Acción</strong> y una descripción opcional. Mantén la convención de códigos: por ejemplo <code>users.write</code>, <code>entries.read</code>.</p>
+        <h3>Aplicaciones</h3><p>Es una pantalla de <strong>solo lectura</strong>. Muestra código, nombre, estado y fecha. Las aplicaciones se registran del lado del servidor mediante <code>php spark apps:bootstrap</code>; no intentes crearlas desde este panel.</p>
+      </section>
+
+      <section class="section searchable" id="flujo" data-search="wizard asistente estructura contenido colección página menú flujo recomendado presets traducción borrador publicar">
+        <div class="section-head"><div class="section-number">06</div><div class="section-title"><h2>Flujo recomendado del CMS</h2><p class="lead">Para un sitio nuevo, los asistentes reducen errores de estructura y te llevan por el orden correcto.</p></div></div>
+        <div class="flow"><div class="flow-item"><span>1 · Base</span><strong>Asistente de estructura</strong><p>Crea colección, página o menú.</p></div><div class="flow-item"><span>2 · Modelo</span><strong>Colecciones</strong><p>Define flags, traducciones y bloques.</p></div><div class="flow-item"><span>3 · Diseño</span><strong>Páginas y bloques</strong><p>Arma la composición visual.</p></div><div class="flow-item"><span>4 · Datos</span><strong>Entradas</strong><p>Carga contenido por idioma.</p></div><div class="flow-item"><span>5 · Revisión</span><strong>Auditoría + preview</strong><p>Corrige faltantes y publica.</p></div></div>
+        <h3>Asistente de estructura</h3>
+        <ol class="steps"><li><div>Elige <strong>Crear colección</strong>, <strong>Crear página</strong> o <strong>Crear menú nuevo</strong>.</div></li><li><div>Para una colección, selecciona preset <strong>Blog</strong>, <strong>Noticias</strong>, <strong>Portafolio</strong>, <strong>Servicios</strong> u <strong>Otro</strong>, o crea sin preset.</div></li><li><div>Completa nombre visible y slug base; revisa las propuestas para los idiomas activos. En esta instalación, el segundo idioma observado es EN.</div></li><li><div>Usa <strong>Anterior</strong> y <strong>Siguiente</strong> para revisar; pulsa la acción de crear solo cuando el resumen sea correcto.</div></li><li><div>Después del éxito puedes crear la primera entrada, abrir el detalle o volver a colecciones.</div></li></ol>
+        <h3>Asistente de contenido</h3><p>Permite <strong>Agregar contenido</strong>, <strong>Editar una página</strong> o <strong>Editar enlaces del menú</strong>. El flujo conserva borradores, muestra traducciones automáticas y termina en una pantalla de revisión antes de <strong>Publicar ahora</strong>.</p>
+        <div class="callout warn"><div><strong>No confundas asistentes con publicación automática</strong><div>El asistente puede preparar traducciones y contenido base, pero revisa títulos, slugs, bloques y enlaces antes de publicar. Si un bloque no se guardó, usa <strong>Terminar de editar bloques</strong>.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="contenido" data-search="entradas colecciones categorías etiquetas formularios envíos traducciones contenido colección slug estado seo imagen portada open graph destacado programación sitemap">
+        <div class="section-head"><div class="section-number">07</div><div class="section-title"><h2>Contenido</h2><p class="lead">Aquí se administra la información editorial y las entidades que la organizan.</p></div></div>
+        <h3>Colecciones</h3><p>Una colección define el tipo de contenido (por ejemplo <code>noticias</code> o <code>portafolio</code>). La lista muestra clave, traducciones, estado, aprobación, categorías, etiquetas y fecha.</p>
+        <ol class="steps"><li><div>Pulsa <strong>Nueva Colección</strong>.</div></li><li><div>Completa nombre y slug por idioma, clave interna, tipo de colección y descripción.</div></li><li><div>Marca <strong>Está Activo</strong> y, si aplica, <strong>Requiere Aprobación</strong>, <strong>Habilita Categorías</strong> y <strong>Habilita Etiquetas</strong>.</div></li><li><div>Define orden, prioridad y frecuencia por defecto del sitemap.</div></li><li><div>En el detalle, usa <strong>Administrar estructura</strong> para configurar bloques heredados y pasos del wizard.</div></li></ol>
+        <h3>Entradas</h3>
+        <figure class="shot"><img src="/assets/docs/admin-guide/entrada-edicion.png" alt="Captura del editor de una entrada con colección, categorías, etiquetas, plantilla y pestañas de idioma"><figcaption>Editor real de una entrada: los bloques heredados aparecen como una plantilla fija y el contenido se completa por idioma.</figcaption></figure>
+        <div class="table-wrap"><table><thead><tr><th>Zona de la captura</th><th>Qué comprobar</th></tr></thead><tbody><tr><td>Datos base</td><td>Colección, estado y destacado determinan dónde y cómo se mostrará.</td></tr><tr><td>Pestañas de idioma</td><td>ES es la base; cada idioma activo tiene sus propios textos, slug, SEO e imagen.</td></tr><tr><td>Clasificación</td><td>Categorías y etiquetas permiten que los listados filtren la entrada.</td></tr><tr><td>Plantilla/bloques</td><td>Una colección puede heredar bloques fijos; no los elimines sin saber qué parte pública alimentan.</td></tr><tr><td>Acciones finales</td><td>Guarda borrador, previsualiza y publica/programa solo tras revisar la lista de publicación.</td></tr></tbody></table></div>
+        <ol class="steps"><li><div>En <strong>Nueva Entrada</strong>, elige <strong>Colección</strong> y <strong>Estado</strong>; decide si es <strong>Destacado</strong>.</div></li><li><div>Para ES, EN y cualquier otro idioma activo completa título, slug, extracto, imagen destacada, meta título, meta descripción e imagen Open Graph. ES es el idioma base indicado con una estrella.</div></li><li><div>Selecciona categorías de la colección y etiquetas globales cuando estén disponibles.</div></li><li><div>Define orden, fecha de publicación, fecha programada, inclusión en sitemap, prioridad y frecuencia de cambio.</div></li><li><div>Guarda como borrador mientras trabajas. En edición, si la colección tiene plantilla fija, administra esos bloques desde <strong>Gestionar Bloques</strong>.</div></li></ol>
+        <div class="callout ok"><div><strong>Imágenes: biblioteca o URL externa</strong><div>Usa <strong>Biblioteca</strong> para reutilizar un archivo del Hub o <strong>URL externa</strong> para un enlace público directo. Prefiere la biblioteca para mantener variantes, metadata y trazabilidad centralizadas.</div></div></div>
+        <h3>Categorías y etiquetas</h3><p>Las categorías pertenecen a una colección y pueden tener una <strong>Categoría Principal</strong> para construir jerarquías. Las etiquetas se reutilizan entre colecciones. En ambos casos, completa nombres y slugs por idioma y activa el registro cuando corresponda. Usa <strong>Reordenar</strong> en categorías si necesitas cambiar el orden.</p>
+        <h3>Formularios dinámicos</h3><p>En <strong>Nuevo Formulario</strong> define clave única, activo, CAPTCHA, email de notificación, respuesta automática y la clave del campo email. En las pestañas de idioma completa nombre, texto del botón, descripción y mensajes.</p><p>En edición aparece el <strong>Constructor de Campos</strong>: agrega clave, tipo, opciones, obligatorio, activo, etiqueta, placeholder, ayuda y etiquetas traducidas. Guarda el formulario antes de usarlo en un bloque.</p>
+        <h3>Envíos</h3><p>Filtra por <strong>Todos</strong>, <strong>Nuevo</strong>, <strong>Leído</strong>, <strong>Respondido</strong>, <strong>Spam</strong> o <strong>Archivado</strong>. Si no hay registros activos, la tabla muestra “No se encontraron resultados”; eso no es un error.</p>
+      </section>
+
+      <section class="section searchable" id="estructura" data-search="páginas menús bloques tipos de bloque reordenar página padre slug page type menú item enlace categoría children slides diseño cta hero">
+        <div class="section-head"><div class="section-number">08</div><div class="section-title"><h2>Estructura</h2><p class="lead">La estructura conecta páginas, navegación y bloques visuales.</p></div></div>
+        <h3>Páginas</h3><p>En <strong>Nueva Página</strong> selecciona tipo funcional (Inicio, Genérica, Contacto, Privacidad, Términos, 404, 500, Mantenimiento o Índice de Colección), estado, colección, página padre y orden.</p><p>Luego completa por idioma título, slug, extracto, meta título, meta descripción e imagen Open Graph. En publicación define fechas, sitemap, prioridad y frecuencia. En edición aparece <strong>Administrar Bloques</strong>; usa <strong>Reordenar</strong> desde la lista para ordenar páginas.</p>
+        <h3>Bloques de una página</h3>
+        <figure class="shot"><img src="/assets/docs/admin-guide/bloques-pagina.png" alt="Captura de la pantalla Bloques de Contenido con Carrusel Hero y acciones Slides, Editar y Eliminar"><figcaption>Lista de bloques: cada fila se puede subir, bajar, editar o eliminar; los contenedores abren sus hijos.</figcaption></figure>
+        <div class="table-wrap"><table><thead><tr><th>Zona de la captura</th><th>Qué hace</th></tr></thead><tbody><tr><td>Orden</td><td>Subir/Bajar cambia el orden visual; después usa Guardar Orden si aparece.</td></tr><tr><td>Contenedor</td><td>Slides, Items o Hijos abre el nivel interno del bloque.</td></tr><tr><td>Editar</td><td>Abre los campos que el esquema del tipo define; no todos los bloques tienen los mismos controles.</td></tr><tr><td>Vista previa</td><td>Permite comprobar la salida del bloque sin publicarlo todavía.</td></tr><tr><td>Eliminar</td><td>Retira la instancia de la página; confirma dependencias antes de aceptar.</td></tr></tbody></table></div>
+        <ol class="steps"><li><div>Pulsa <strong>Añadir Bloque</strong> y elige un tipo del catálogo: hero, texto enriquecido, imagen, CTA, galería, formulario, video, métricas, FAQ y otros.</div></li><li><div>Completa la configuración del diseño y el contenido por idioma. Revisa el indicador <strong>Activo / Visible</strong>.</div></li><li><div>Guarda con <strong>Añadir Bloque</strong> o <strong>Actualizar Bloque</strong>; abre <strong>Vista previa</strong> cuando esté disponible.</div></li><li><div>En la lista usa <strong>Subir</strong>, <strong>Bajar</strong> y después <strong>Guardar Orden</strong>. Los contenedores tienen enlaces como <strong>Slides</strong> para editar hijos.</div></li></ol>
+        <h3>Menús</h3><p>Un menú tiene nombres traducidos, <strong>Clave del menú</strong>, <strong>Ubicación</strong> (por ejemplo <code>header</code>, <code>footer</code> o <code>footer_secondary</code>) y estado activo.</p><p>En <strong>Nuevo elemento del menú</strong> puedes usar el ayudante de categoría para construir una URL; definir etiqueta y URL por idioma; elegir tipo de enlace (página, entrada, listado de colección, URL personalizada o sin enlace); seleccionar padre, destino, icono Lucide, clase CSS y activo. La categoría no es un tipo de enlace independiente. Usa <strong>Reordenar</strong> para ajustar jerarquía y posición.</p>
+        <div class="callout warn"><div><strong>Un enlace visible no es contenido</strong><div>Crear o editar un elemento del menú solo cambia navegación. La página, entrada o colección de destino debe existir, estar activa y tener la traducción correspondiente.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="fichas" data-search="módulos pantalla ficha detallada campos opciones botones permisos acciones filtros estados relaciones traducción wizard escritorio perfil archivos usuarios auditoría api keys métricas analytics roles permisos aplicaciones colecciones entradas categorías etiquetas formularios envíos páginas menús bloque redirecciones idiomas identidad configuración">
+        <div class="section-head"><div class="section-number">09</div><div class="section-title"><h2>Fichas detalladas de cada módulo</h2><p class="lead">Referencia pantalla por pantalla: qué se ve, qué significa cada opción, qué acciones tiene y qué revisar antes de guardar.</p></div></div>
+        <div class="callout ok"><div><strong>Cómo usar este catálogo</strong><div>Abre el módulo desde la barra lateral, lee primero <strong>Objetivo</strong>, completa los campos en el orden indicado y guarda solo después de revisar el resumen. Algunos campos aparecen u ocultan según el recurso, idioma, estado o esquema elegido.</div></div></div>
+        <div class="callout"><div><strong>¿Prefieres una ficha por vez?</strong><div>La versión multipágina reúne los 28 módulos en un índice buscable. Cada ficha tiene su propia URL, captura, pasos, permisos, verificaciones y enlaces a módulos relacionados; también se puede imprimir o compartir por separado.</div><a class="btn primary" href="/admin-guide-modules.html">Abrir documentación por módulos →</a></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Control</th><th>Qué hace</th><th>Precaución</th></tr></thead><tbody>
+          <tr><td><strong>Ver</strong></td><td>Abre el detalle en modo consulta.</td><td>No modifica datos; úsalo para confirmar referencias antes de editar.</td></tr>
+          <tr><td><strong>Editar</strong></td><td>Abre el registro con campos modificables.</td><td>Guardar aplica el cambio; revisa también idiomas y checkboxes.</td></tr>
+          <tr><td><strong>Eliminar</strong></td><td>Retira el registro o lo envía a papelera, según el módulo.</td><td>Confirma usos y dependencias. La eliminación definitiva no se deshace.</td></tr>
+          <tr><td><strong>Reordenar</strong></td><td>Cambia la posición de páginas, categorías, menús o bloques.</td><td>El orden puede afectar la navegación o el renderizado.</td></tr>
+          <tr><td><strong>Activo / visible</strong></td><td>Controla si el registro puede utilizarse o mostrarse.</td><td>Activo no siempre significa publicado: revisa estado y fechas.</td></tr>
+          <tr><td><strong>Guardar</strong></td><td>Persiste los cambios del formulario actual.</td><td>Si hay “cambios sin guardar”, todavía no se aplicó la matriz u orden.</td></tr>
+        </tbody></table></div>
+
+        <h3>Inicio y cuenta</h3>
+        <details open><summary>1. Escritorio / Dashboard</summary><div>
+          <p class="small"><strong>Navegación:</strong> Escritorio · pantalla inicial después del login.</p>
+          <p><strong>Objetivo:</strong> orientarte sobre el estado del sitio y llevarte a las áreas que requieren atención. No es un editor.</p>
+          <div class="table-wrap"><table><thead><tr><th>Zona</th><th>Qué muestra</th><th>Cómo usarla</th></tr></thead><tbody>
+            <tr><td>Usuarios / Archivos totales</td><td>Cantidad de cuentas y activos.</td><td>Abre los módulos de detalle para operar.</td></tr>
+            <tr><td>Tiempo de actividad API</td><td>Disponibilidad del servicio.</td><td>Si es anómalo, confirma Estado del Sistema.</td></tr>
+            <tr><td>Resumen de contenido</td><td>Contadores de páginas, entradas, colecciones, menús, categorías, etiquetas, formularios y envíos.</td><td>Funcionan como accesos directos.</td></tr>
+            <tr><td>Traducciones</td><td>Cobertura por idioma y pendientes.</td><td>Entra en Auditoría de Traducciones.</td></tr>
+            <tr><td>Actividad / salud</td><td>Eventos, analytics, Hub API, Dominio, sitio público y últimos archivos.</td><td>Diagnóstico de alto nivel, no edición.</td></tr>
+          </tbody></table></div>
+          <p><strong>Se puede:</strong> revisar estado y navegar. <strong>No se hace aquí:</strong> crear, editar o eliminar contenido.</p>
+        </div></details>
+        <details><summary>2. Perfil</summary><div>
+          <p class="small"><strong>Navegación:</strong> Perfil · menú de usuario superior.</p>
+          <p><strong>Objetivo:</strong> mantener tus datos y ejecutar acciones básicas de seguridad.</p>
+          <div class="table-wrap"><table><thead><tr><th>Campo / acción</th><th>Uso</th></tr></thead><tbody>
+            <tr><td>Foto de perfil · Subir foto</td><td>Selecciona la imagen del avatar.</td></tr>
+            <tr><td>Nombre y apellido</td><td>Identidad mostrada en el panel y auditoría.</td></tr>
+            <tr><td>Guardar cambios</td><td>Persiste la información personal.</td></tr>
+            <tr><td>Enviar enlace de reset</td><td>Inicia restablecimiento por email; verifica el destinatario.</td></tr>
+            <tr><td>Reenviar verificación</td><td>Reenvía el email si la cuenta está pendiente.</td></tr>
+          </tbody></table></div>
+        </div></details>
+        <details><summary>3. Archivos</summary><div>
+          <p class="small"><strong>Navegación:</strong> Archivos.</p>
+          <p><strong>Objetivo:</strong> gestionar la biblioteca central reutilizada por páginas, entradas, bloques e identidad.</p>
+          <div class="table-wrap"><table><thead><tr><th>Opción</th><th>Qué hace / qué revisar</th></tr></thead><tbody>
+            <tr><td>Subir Nuevo Archivo</td><td>Incorpora un archivo; revisa formato, peso y duplicados.</td></tr>
+            <tr><td>Buscar, categoría, fechas, tamaño</td><td>Filtra por texto, Imágenes/Documentos/Video/Audio, fecha o peso.</td></tr>
+            <tr><td>Ver / Descargar</td><td>Consulta detalle o baja el original; descargar no crea una copia administrada.</td></tr>
+            <tr><td>Variantes</td><td>Versiones derivadas del original; las dimensiones dependen del archivo y de la configuración.</td></tr>
+            <tr><td>Alt, pie, crédito</td><td>Metadata editorial; el alt describe el contenido o función para accesibilidad.</td></tr>
+            <tr><td>Usado en / traducciones</td><td>Revisa referencias antes de retirar el activo.</td></tr>
+            <tr><td>Papelera: Restaurar / Eliminar definitivamente</td><td>Recupera o borra de forma irreversible; confirma dependencias antes de la segunda.</td></tr>
+          </tbody></table></div>
+        </div></details>
+
+        <h3>Administración, observabilidad y acceso</h3>
+        <details><summary>4. Usuarios</summary><div>
+          <p class="small"><strong>Navegación:</strong> Usuarios.</p><p><strong>Objetivo:</strong> crear cuentas y asignarles el mínimo de roles necesario.</p>
+          <p><strong>Campos:</strong> nombre, apellido, email, estado y roles. Roles observados: <code>admin</code>, <code>cms-admin</code>, <code>cms-editor</code>, <code>superadmin</code> y <code>user</code>. El detalle ofrece Ver, Editar, Administrar roles, Auditoría y Eliminar.</p>
+          <p class="small"><strong>Comportamiento:</strong> si los roles quedan vacíos al crear, se asigna <code>user</code>; si se quitan todos en una cuenta existente, vuelve a aplicarse ese rol base.</p>
+        </div></details>
+        <details><summary>5. Auditoría</summary><div>
+          <p class="small"><strong>Navegación:</strong> Auditoría.</p><p><strong>Objetivo:</strong> reconstruir quién hizo qué, cuándo y desde dónde.</p>
+          <p><strong>Columnas:</strong> ID, usuario, acción, entidad, IP, fecha, resultado y severidad. <strong>Filtros:</strong> texto, acción, usuario, resultado y severidad. <strong>Ver</strong> abre el detalle del evento. No borres eventos durante una investigación.</p>
+        </div></details>
+        <details><summary>6. API Keys</summary><div>
+          <p class="small"><strong>Navegación:</strong> API Keys.</p><p><strong>Objetivo:</strong> emitir credenciales para consumidores de API y limitar su uso.</p>
+          <div class="table-wrap"><table><thead><tr><th>Campo</th><th>Qué controla</th></tr></thead><tbody>
+            <tr><td>Nombre</td><td>Identifica al consumidor; no pongas aquí el secreto.</td></tr>
+            <tr><td>Límite de peticiones / ventana</td><td>Cuota total y período en que se contabiliza.</td></tr>
+            <tr><td>Límite por usuario / por IP</td><td>Topes adicionales para evitar abuso de un consumidor u origen.</td></tr>
+            <tr><td>Activo</td><td>Habilita o deshabilita sin perder el registro.</td></tr>
+            <tr><td>Prefijo / detalle</td><td>Permite identificar la key sin mostrar el secreto completo.</td></tr>
+          </tbody></table></div><p><strong>Flujo:</strong> crear → guardar el secreto en un gestor → probar → ajustar límites → desactivar y rotar ante sospecha.</p>
+        </div></details>
+        <details><summary>7. Métricas / Salud</summary><div>
+          <p class="small"><strong>Navegación:</strong> Métricas.</p><p><strong>Objetivo:</strong> verificar disponibilidad y desempeño del API.</p>
+          <p>El selector <strong>Period</strong> y <strong>Aplicar Filtros</strong> actualizan peticiones totales, tiempo promedio, disponibilidad, peticiones exitosas, tendencias y tabla SLO. Las alternativas del período dependen de la instancia; compara períodos equivalentes y no solo el valor actual.</p>
+        </div></details>
+        <details><summary>8. Analytics</summary><div>
+          <p class="small"><strong>Navegación:</strong> Analytics.</p><p><strong>Objetivo:</strong> entender el uso del sitio público para priorizar mejoras.</p>
+          <p>El período actualiza visitas, visitantes únicos, páginas más visitadas, referrers y dispositivos. Estos datos orientan decisiones; no publican contenido ni convierten una página en destacada.</p>
+        </div></details>
+        <details><summary>9. Roles</summary><div>
+          <p class="small"><strong>Navegación:</strong> Roles.</p><p><strong>Campos:</strong> aplicación, código, nombre, descripción y conjunto de permisos. El código debe ser estable. Al editar y guardar, la selección completa reemplaza la anterior: marca todo lo que deba conservarse.</p>
+        </div></details>
+        <details><summary>10. Roles × permisos</summary><div>
+          <p class="small"><strong>Navegación:</strong> Roles × permisos.</p><p>Selecciona un rol, revisa los grupos por aplicación/recurso y usa <strong>Seleccionar todo</strong>, <strong>Ninguno</strong> y <strong>Guardar</strong>. El aviso <strong>Tienes cambios sin guardar</strong> significa que aún no se persistió la matriz. Parte de <code>read</code>, agrega <code>write</code> a editores y reserva <code>admin</code>/<code>superadmin-access</code>.</p>
+        </div></details>
+        <details><summary>11. Permisos</summary><div>
+          <p class="small"><strong>Navegación:</strong> Permisos.</p><p><strong>Campos:</strong> aplicación, código, recurso, acción y descripción opcional. Ejemplos de convención: <code>cms.pages.read</code>, <code>users.write</code>. No elimines ni renombres un permiso en uso sin revisar roles dependientes.</p>
+        </div></details>
+        <details><summary>12. Aplicaciones</summary><div>
+          <p class="small"><strong>Navegación:</strong> Aplicaciones.</p><p>Es una pantalla <strong>solo lectura</strong> con código, nombre, estado y fecha. Las aplicaciones se registran del lado servidor mediante <code>php spark apps:bootstrap</code>; no se crean desde el panel.</p>
+        </div></details>
+
+        <h3>Asistentes y contenido editorial</h3>
+        <details><summary>13. CMS wizard / Asistente de contenido</summary><div>
+          <p class="small"><strong>Navegación:</strong> CMS wizard.</p><p>Permite <strong>Agregar contenido</strong>, <strong>Editar una página</strong> o <strong>Editar enlaces del menú</strong>. <strong>Anterior/Siguiente</strong> conserva el flujo; <strong>Traducir/Auto-traducir</strong> prepara idiomas; <strong>Publicar ahora</strong> solo debe usarse tras revisar. Si faltan bloques, termina en <strong>Terminar de editar bloques</strong>.</p>
+        </div></details>
+        <details><summary>14. Asistente de estructura</summary><div>
+          <p class="small"><strong>Navegación:</strong> CMS → Asistente de estructura.</p><p>Inicia <strong>Crear colección</strong>, <strong>Crear página</strong> o <strong>Crear menú nuevo</strong>. Para colecciones ofrece presets <strong>Blog</strong>, <strong>Noticias</strong>, <strong>Portafolio</strong>, <strong>Servicios</strong>, <strong>Otro</strong> o sin preset. Completa nombre visible, slug y traducciones propuestas; revisa el resumen antes de crear.</p>
+        </div></details>
+        <details><summary>15. Entradas</summary><div>
+          <p class="small"><strong>Navegación:</strong> Entradas.</p><p><strong>Campos:</strong> colección, estado, destacado; por ES, EN y cualquier otro idioma activo: título, slug, extracto, imagen destacada, meta título, meta descripción e imagen Open Graph; categorías, etiquetas, orden, fecha publicada, fecha programada y opciones de sitemap (incluir, prioridad, frecuencia). ES aparece como idioma base con estrella.</p><p><strong>Flujo:</strong> colección → datos base → ES → traducciones → clasificación/SEO → borrador → preview → publicar o programar. Si hay plantilla fija, usa <strong>Gestionar Bloques</strong>.</p>
+        </div></details>
+        <details><summary>16. Colecciones</summary><div>
+          <p class="small"><strong>Navegación:</strong> Colecciones.</p><p><strong>Campos:</strong> nombre y slug por idioma, clave interna, tipo, descripción, activo, requiere aprobación, habilita categorías, habilita etiquetas, orden y valores por defecto de prioridad/frecuencia del sitemap. <strong>Administrar estructura</strong> configura bloques heredados y pasos del wizard.</p><p>La clave es una referencia técnica estable; cambiarla puede afectar entradas, URLs e integraciones.</p>
+        </div></details>
+        <details><summary>17. Categorías</summary><div>
+          <p class="small"><strong>Navegación:</strong> Categorías.</p><p>Selecciona colección, categoría principal/padre, nombre y slug por idioma y estado activo. <strong>Reordenar</strong> cambia la posición. Revisa entradas asociadas antes de eliminar.</p>
+        </div></details>
+        <details><summary>18. Etiquetas</summary><div>
+          <p class="small"><strong>Navegación:</strong> Etiquetas.</p><p>Completa nombre y slug por idioma y marca activo. Son reutilizables entre colecciones y no tienen jerarquía padre/hijo. Evita sinónimos que fragmenten los listados.</p>
+        </div></details>
+        <details><summary>19. Formularios Dinámicos</summary><div>
+          <p class="small"><strong>Navegación:</strong> Formularios Dinámicos.</p><p><strong>Formulario:</strong> clave única, activo, CAPTCHA, email de notificación, respuesta automática, clave del campo email y textos por idioma (nombre, descripción, botón y mensajes). <strong>Campo:</strong> clave, tipo, opciones, obligatorio, activo, etiqueta, placeholder, ayuda y etiquetas traducidas.</p><p><strong>Flujo:</strong> configurar → definir campos → guardar → probar un envío → revisar Envíos → insertar en página/bloque.</p>
+        </div></details>
+        <details><summary>20. Envíos</summary><div>
+          <p class="small"><strong>Navegación:</strong> Envíos.</p><p>Las pestañas observadas son <strong>Todos</strong>, <strong>Nuevo</strong>, <strong>Leído</strong>, <strong>Respondido</strong>, <strong>Spam</strong> y <strong>Archivado</strong>. Si una pestaña está vacía, “No se encontraron resultados” es un estado normal, no un error de formulario.</p>
+        </div></details>
+
+        <h3>Páginas, menús y bloques</h3>
+        <details><summary>21. Páginas</summary><div>
+          <p class="small"><strong>Navegación:</strong> Páginas.</p><p><strong>Campos:</strong> tipo (Inicio, Genérica, Contacto, Privacidad, Términos, 404, 500, Mantenimiento o Índice de Colección), estado, colección, padre, orden; por idioma título, slug, extracto, meta título, meta descripción y Open Graph; fechas y sitemap. <strong>Administrar Bloques</strong> abre la composición y <strong>Reordenar</strong> ordena el árbol/listado.</p>
+        </div></details>
+        <details><summary>22. Menús</summary><div>
+          <p class="small"><strong>Navegación:</strong> Menús.</p><p><strong>Menú:</strong> nombres por idioma, clave, ubicación (<code>header</code>/<code>footer</code>/<code>footer_secondary</code>) y activo. <strong>Ítem:</strong> etiqueta y URL por idioma, tipo de enlace (página, entrada, listado de colección, URL personalizada o sin enlace), padre, destino, icono Lucide, clase CSS y activo. Hay un ayudante para construir URLs de categoría, además de reordenar y guardar orden; categoría no es un tipo de enlace separado.</p><p>Prueba cada destino en cada idioma: un ítem activo no arregla una página inexistente.</p>
+        </div></details>
+        <details><summary>23. Tipos de Bloque</summary><div>
+          <p class="small"><strong>Navegación:</strong> Tipos de Bloque.</p><p><strong>Campos:</strong> clave, nombre, categoría, descripción, icono, esquema JSON, campos traducibles, campos de configuración, soporte para páginas/entradas, contenedor, hijos permitidos, activo y orden. <strong>Refrescar caché</strong> actualiza el catálogo.</p><p>Los campos de una instancia dependen del esquema JSON. No cambies una clave usada sin planificar migración: las instancias guardan esa referencia.</p>
+        </div></details>
+
+        <h3>Configuración global y traducciones</h3>
+        <details><summary>24. Redirecciones</summary><div>
+          <p class="small"><strong>Navegación:</strong> Redirecciones.</p><p><strong>Campos:</strong> ruta anterior (empieza con <code>/</code>), nueva URL, nota, tipo <strong>301</strong> o <strong>302</strong> y activo. Acciones: importar/exportar CSV. Valida rutas, duplicados y bucles antes de activar.</p>
+        </div></details>
+        <details><summary>25. Idiomas</summary><div>
+          <p class="small"><strong>Navegación:</strong> Idiomas.</p><p><strong>Campos:</strong> código, nombre, nombre nativo, predeterminado, activo e idioma de reserva. Acciones: establecer como predeterminado y reordenar. Desactivar un idioma o cambiar el predeterminado es global; revisa auditoría y menús antes.</p>
+        </div></details>
+        <details><summary>26. Auditoría de Traducciones</summary><div>
+          <p class="small"><strong>Navegación:</strong> Auditoría de Traducciones.</p><p><strong>Filtros:</strong> búsqueda, idioma, recurso y estado. Audita páginas, menús, colecciones, entradas, categorías, etiquetas, formularios, campos, bloques, ítems de menú y configuración. <strong>Traducir</strong> abre el editor pendiente; <strong>Auto-traducir</strong> requiere revisión humana.</p>
+        </div></details>
+        <details><summary>27. Identidad del sitio</summary><div>
+          <p class="small"><strong>Navegación:</strong> Identidad del sitio.</p><p><strong>Grupos:</strong> nombre/título/tagline/descripción por idioma, contacto, emails, copyright, analytics, redes sociales, reCAPTCHA y diseño de menú de pie. En activos de marca selecciona logo y favicon desde la biblioteca. <strong>Traducir todos los idiomas</strong>, <strong>Auto-traducir</strong> y <strong>Guardar</strong> completan el flujo, pero revisa propuestas y dominio.</p>
+        </div></details>
+        <details><summary>28. Configuración</summary><div>
+          <p class="small"><strong>Navegación:</strong> Configuración.</p><p>Filtra por clave, grupo o página. La lista muestra valor, tipo, grupo, si es traducible, traducciones y descripción. <strong>Ver</strong> consulta; <strong>Editar</strong> cambia. Crea una clave nueva solo después de confirmar qué código la consumirá y en qué formato.</p>
+        </div></details>
+
+        <h3>Catálogo real de bloques de esta instalación</h3>
+        <p>En la revisión realizada en julio de 2026, <strong>Tipos de Bloque</strong> mostró 46 tipos activos. Un bloque con la palabra <strong>Contenedor</strong> no se completa como una tarjeta normal: primero se crea el contenedor y luego se agregan sus bloques hijos permitidos. Las claves entre paréntesis son referencias internas; no se deben cambiar sin una migración.</p>
+        <div class="grid-2">
+          <div class="card"><h4>Contenido y navegación</h4><p><code>rich_text</code> Texto Enriquecido · <code>page_header</code> Encabezado de Página · <code>cta</code> Llamada a la Acción · <code>alert</code> Alerta · <code>features_grid</code> Características con Iconos · <code>process_steps</code> Proceso en Pasos · <code>external_links</code> Enlaces Recomendados · <code>faq_accordion</code> Preguntas Frecuentes · <code>anchor_nav</code> Navegación por Anclas · <code>contact_info</code> Información de Contacto.</p></div>
+          <div class="card"><h4>Imágenes y documentos</h4><p><code>image</code> Imagen · <code>gallery</code> Galería de Imágenes · <code>gallery_item</code> Imagen de Galería · <code>asset_showcase</code> Vitrina de Activos · <code>asset_item</code> Activo Visual · <code>document_download</code> Descarga de Documento · <code>document_gallery</code> Galería de Documentos · <code>pdf_viewer</code> Visualizador de PDF · <code>video_player</code> Reproductor de Video · <code>video_gallery</code> Galería de Videos.</p></div>
+          <div class="card"><h4>Colecciones, formularios y datos</h4><p><code>collection_grid</code> Grilla de Colección · <code>collection_listing</code> Listado de Colección · <code>form_embed</code> Formulario Embebido · <code>map_embed</code> Mapa Embebido · <code>metric_item</code> Métrica · <code>metrics_grid</code> Grilla de Métricas · <code>team_grid</code> Equipo de Trabajo · <code>team_member</code> Miembro del Equipo.</p></div>
+          <div class="card"><h4>Contenedores y sus hijos</h4><p><code>container</code> Contenedor · <code>hero_slider</code> Carrusel Hero + <code>slide_banner</code> Diapositiva · <code>tabs</code> Pestañas + <code>tab_item</code> Pestaña Individual · <code>accordion</code> Acordeón + <code>accordion_item</code> Elemento de Acordeón · <code>cards_grid</code> Grilla de Tarjetas + <code>card_item</code> Tarjeta · <code>cards_slider</code> Slider de Tarjetas + <code>slide_card</code> Tarjeta de Slider.</p></div>
+          <div class="card"><h4>Más contenedores y elementos</h4><p><code>timeline</code> Línea de Tiempo + <code>timeline_item</code> Hito · <code>pricing_grid</code> Tabla de Precios + <code>pricing_plan</code> Plan de Precios · <code>social_links</code> Redes Sociales + <code>social_link_item</code> Enlace de Red Social.</p></div>
+          <div class="card"><h4>Marketing y portada</h4><p><code>hero_banner</code> Hero Banner. Este bloque y <code>hero_slider</code> sirven para una portada; elige uno según necesites una sola imagen o varias diapositivas.</p></div>
+        </div>
+        <h3>Tipos de campo del constructor de formularios</h3>
+        <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Para qué sirve</th><th>Qué debes completar</th></tr></thead><tbody>
+          <tr><td><code>text</code></td><td>Texto corto: nombre, empresa, asunto.</td><td>Clave, etiqueta, placeholder, ayuda y si es obligatorio.</td></tr>
+          <tr><td><code>email</code></td><td>Correo electrónico.</td><td>Usa esta clave en “Clave del campo email” si activarás respuesta automática.</td></tr>
+          <tr><td><code>tel</code></td><td>Teléfono.</td><td>Define formato esperado en la ayuda.</td></tr>
+          <tr><td><code>textarea</code></td><td>Mensaje o texto largo.</td><td>Explica qué información debe escribir la persona.</td></tr>
+          <tr><td><code>select</code></td><td>Lista desplegable.</td><td>Agrega valores internos y una etiqueta por idioma.</td></tr>
+          <tr><td><code>radio</code></td><td>Una sola opción visible.</td><td>Agrega opciones; el usuario puede elegir una.</td></tr>
+          <tr><td><code>checkbox</code></td><td>Una o varias opciones marcables.</td><td>Agrega opciones y explica si aceptar alguna es obligatorio.</td></tr>
+          <tr><td><code>date</code></td><td>Fecha.</td><td>Indica el propósito y la zona horaria si importa.</td></tr>
+          <tr><td><code>number</code></td><td>Cantidad o número.</td><td>Define en la ayuda qué unidad usar.</td></tr>
+          <tr><td><code>url</code></td><td>Enlace web.</td><td>Indica si debe incluir <code>https://</code>.</td></tr>
+        </tbody></table></div>
+        <p class="small">En campos <code>select</code>, <code>radio</code> y <code>checkbox</code>, el valor interno es estable y las etiquetas se traducen por idioma. Si una clave ya está siendo usada en envíos, no la renombres sin coordinar el cambio.</p>
+        <h3>Tipos de campo del esquema de bloques</h3>
+        <p>Al editar un Tipo de Bloque, el diseñador permite <code>string</code>, <code>text</code>, <code>richtext</code>, <code>url</code>, <code>integer</code>, <code>boolean</code>, <code>select</code>, <code>color</code>, <code>media_reference</code> y <code>repeater</code>. Un <code>repeater</code> crea una lista repetible de subcampos; en el panel los subcampos admiten texto, texto largo, URL o referencia multimedia. En referencias multimedia se puede limitar el archivo a <code>image</code>, <code>document</code>, <code>video</code>, <code>audio</code> o <code>any</code>.</p>
+        <p>La fuente de contenido puede ser <strong>Manual</strong>, <strong>Página</strong>, <strong>Colección</strong>, <strong>Entrada</strong> o <strong>Contenedor</strong>. Esta elección cambia las opciones de configuración: por ejemplo, una Colección necesita colección, límite, orden y dirección; una Página necesita la página vinculada; un Contenedor define distribución y bloques hijos.</p>
+
+        <div class="callout warn"><div><strong>Por qué algunos campos no tienen una lista fija</strong><div>Los formularios de bloques, formularios dinámicos y configuraciones pueden ser definidos por esquema. Los campos concretos aparecen según el tipo de bloque, tipo de control o clave elegida. Si necesitas documentar un bloque concreto, abre su esquema JSON en Tipos de Bloque antes de editar la instancia.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="capturas" data-search="capturas imágenes fotos pantalla listado formulario crear editar ver módulo escritorio perfil archivos usuarios auditoría api keys métricas analytics roles permisos aplicaciones wizard colecciones entradas categorías etiquetas formularios envíos páginas menús bloques redirecciones idiomas traducciones identidad configuración">
+        <div class="section-head"><div class="section-number">10</div><div class="section-title"><h2>Capturas por módulo</h2><p class="lead">Las siguientes imágenes fueron tomadas de la instancia local real. Úsalas para reconocer la pantalla antes de seguir la receta correspondiente.</p></div></div>
+        <div class="callout ok"><div><strong>Cómo leer una captura</strong><div>Primero identifica el título de la pantalla, luego la barra lateral, después los filtros/listado y finalmente las acciones. Los datos y contadores son de demostración y pueden cambiar; lo importante es la estructura y el orden de trabajo.</div></div></div>
+        <details open><summary>Listados y módulos principales · 28 pantallas</summary><div class="capture-gallery"><article class="capture-card"><h4>Escritorio</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/01-escritorio.png" alt="Captura del módulo Escritorio del Admin"><figcaption>Indicadores, resumen, traducciones, salud del sistema y últimos archivos.</figcaption></figure></article><article class="capture-card"><h4>Perfil</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/02-perfil.png" alt="Captura del módulo Perfil del Admin"><figcaption>Datos personales, seguridad, verificación y acciones de la cuenta.</figcaption></figure></article><article class="capture-card"><h4>Archivos</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/03-archivos.png" alt="Captura del módulo Archivos del Admin"><figcaption>Biblioteca, filtros, subida y acciones sobre originales y variantes.</figcaption></figure></article><article class="capture-card"><h4>Usuarios</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/04-usuarios.png" alt="Captura del módulo Usuarios del Admin"><figcaption>Lista de personas, estados, roles y acciones de administración.</figcaption></figure></article><article class="capture-card"><h4>Auditoría</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/05-auditoria.png" alt="Captura del módulo Auditoría del Admin"><figcaption>Registro de operaciones, usuario, entidad, resultado y severidad.</figcaption></figure></article><article class="capture-card"><h4>API Keys</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/06-api-keys.png" alt="Captura del módulo API Keys del Admin"><figcaption>Credenciales de integración, estado y límites de peticiones.</figcaption></figure></article><article class="capture-card"><h4>Métricas</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/07-metricas.png" alt="Captura del módulo Métricas del Admin"><figcaption>Salud técnica, peticiones, disponibilidad, tendencias y SLO.</figcaption></figure></article><article class="capture-card"><h4>Analytics</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/08-analytics.png" alt="Captura del módulo Analytics del Admin"><figcaption>Visitas, visitantes, páginas, referrers y dispositivos.</figcaption></figure></article><article class="capture-card"><h4>Roles</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/09-roles.png" alt="Captura del módulo Roles del Admin"><figcaption>Roles existentes, códigos, aplicación y acciones de consulta.</figcaption></figure></article><article class="capture-card"><h4>Roles × permisos</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/10-roles-permisos.png" alt="Captura del módulo Roles × permisos del Admin"><figcaption>Matriz por rol con grupos, casillas y guardado completo.</figcaption></figure></article><article class="capture-card"><h4>Permisos</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/11-permisos.png" alt="Captura del módulo Permisos del Admin"><figcaption>Código, recurso, acción y descripción de cada permiso.</figcaption></figure></article><article class="capture-card"><h4>Aplicaciones</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/12-aplicaciones.png" alt="Captura del módulo Aplicaciones del Admin"><figcaption>Catálogo de aplicaciones, en modo consulta.</figcaption></figure></article><article class="capture-card"><h4>Asistente de contenido</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/13-asistente-contenido.png" alt="Captura del módulo Asistente de contenido del Admin"><figcaption>Entrada guiada para agregar o editar contenido.</figcaption></figure></article><article class="capture-card"><h4>Asistente de estructura</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/14-asistente-estructura.png" alt="Captura del módulo Asistente de estructura del Admin"><figcaption>Creación guiada de colección, página o menú.</figcaption></figure></article><article class="capture-card"><h4>Entradas</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/15-entradas.png" alt="Captura del módulo Entradas del Admin"><figcaption>Listado de contenido editorial con filtros y acciones.</figcaption></figure></article><article class="capture-card"><h4>Colecciones</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/16-colecciones.png" alt="Captura del módulo Colecciones del Admin"><figcaption>Tipos de contenido, traducciones, estado y estructura.</figcaption></figure></article><article class="capture-card"><h4>Categorías</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/17-categorias.png" alt="Captura del módulo Categorías del Admin"><figcaption>Clasificación jerárquica por colección.</figcaption></figure></article><article class="capture-card"><h4>Etiquetas</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/18-etiquetas.png" alt="Captura del módulo Etiquetas del Admin"><figcaption>Etiquetas reutilizables y estado.</figcaption></figure></article><article class="capture-card"><h4>Formularios Dinámicos</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/19-formularios.png" alt="Captura del módulo Formularios Dinámicos del Admin"><figcaption>Formularios activos, traducciones y cantidad de campos.</figcaption></figure></article><article class="capture-card"><h4>Envíos</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/20-envios.png" alt="Captura del módulo Envíos del Admin"><figcaption>Bandejas de envíos por estado.</figcaption></figure></article><article class="capture-card"><h4>Páginas</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/21-paginas.png" alt="Captura del módulo Páginas del Admin"><figcaption>Árbol/listado de páginas, tipo, estado y orden.</figcaption></figure></article><article class="capture-card"><h4>Menús</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/22-menus.png" alt="Captura del módulo Menús del Admin"><figcaption>Menús disponibles, ubicación, estado y acciones.</figcaption></figure></article><article class="capture-card"><h4>Tipos de Bloque</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/23-tipos-bloque.png" alt="Captura del módulo Tipos de Bloque del Admin"><figcaption>Catálogo, categorías, soporte y acciones.</figcaption></figure></article><article class="capture-card"><h4>Redirecciones</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/24-redirecciones.png" alt="Captura del módulo Redirecciones del Admin"><figcaption>Rutas antiguas, destinos, tipo y estado.</figcaption></figure></article><article class="capture-card"><h4>Idiomas</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/25-idiomas.png" alt="Captura del módulo Idiomas del Admin"><figcaption>Código, nombre, predeterminado, activo y orden.</figcaption></figure></article><article class="capture-card"><h4>Auditoría de Traducciones</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/26-auditoria-traducciones.png" alt="Captura del módulo Auditoría de Traducciones del Admin"><figcaption>Filtros, cobertura, recursos pendientes y acción Traducir.</figcaption></figure></article><article class="capture-card"><h4>Identidad del sitio</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/27-identidad-sitio.png" alt="Captura del módulo Identidad del sitio del Admin"><figcaption>Contenido global, marca, redes, analytics y reCAPTCHA.</figcaption></figure></article><article class="capture-card"><h4>Configuración</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/28-configuracion.png" alt="Captura del módulo Configuración del Admin"><figcaption>Claves globales, tipo, grupo, traducciones y acciones.</figcaption></figure></article></div></details>
+        <details open><summary>Creación, edición y composición · 20 pantallas</summary><div class="capture-gallery"><article class="capture-card"><h4>Crear usuario</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/29-nuevo-usuario.png" alt="Captura del módulo Crear usuario del Admin"><figcaption>Nombre, apellido, email y selección de roles.</figcaption></figure></article><article class="capture-card"><h4>Nueva API key</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/30-nueva-api-key.png" alt="Captura del módulo Nueva API key del Admin"><figcaption>Nombre, ventana y límites total, por usuario y por IP.</figcaption></figure></article><article class="capture-card"><h4>Nuevo rol</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/31-nuevo-rol.png" alt="Captura del módulo Nuevo rol del Admin"><figcaption>Aplicación, código, nombre, descripción y permisos.</figcaption></figure></article><article class="capture-card"><h4>Nuevo permiso</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/32-nuevo-permiso.png" alt="Captura del módulo Nuevo permiso del Admin"><figcaption>Aplicación, código, recurso, acción y descripción.</figcaption></figure></article><article class="capture-card"><h4>Nueva Colección</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/33-nueva-coleccion.png" alt="Captura del módulo Nueva Colección del Admin"><figcaption>Traducciones, clave, tipo, activación, clasificación y sitemap.</figcaption></figure></article><article class="capture-card"><h4>Nueva Entrada</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/34-nueva-entrada.png" alt="Captura del módulo Nueva Entrada del Admin"><figcaption>Colección, estado, idiomas, imágenes, SEO y sitemap.</figcaption></figure></article><article class="capture-card"><h4>Nueva Categoría</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/35-nueva-categoria.png" alt="Captura del módulo Nueva Categoría del Admin"><figcaption>Colección, padre, activo, nombre y slug por idioma.</figcaption></figure></article><article class="capture-card"><h4>Nueva Etiqueta</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/36-nueva-etiqueta.png" alt="Captura del módulo Nueva Etiqueta del Admin"><figcaption>Nombre, slug, idiomas y estado.</figcaption></figure></article><article class="capture-card"><h4>Nuevo Formulario</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/37-nuevo-formulario.png" alt="Captura del módulo Nuevo Formulario del Admin"><figcaption>Clave, CAPTCHA, notificación, respuesta automática y textos.</figcaption></figure></article><article class="capture-card"><h4>Editar Formulario</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/38-editar-formulario.png" alt="Captura del módulo Editar Formulario del Admin"><figcaption>Datos generales y constructor de campos real.</figcaption></figure></article><article class="capture-card"><h4>Nueva Página</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/39-nueva-pagina.png" alt="Captura del módulo Nueva Página del Admin"><figcaption>Tipo, estado, padre, colección, traducciones y SEO.</figcaption></figure></article><article class="capture-card"><h4>Nuevo Menú</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/40-nuevo-menu.png" alt="Captura del módulo Nuevo Menú del Admin"><figcaption>Nombres, clave, ubicación y estado.</figcaption></figure></article><article class="capture-card"><h4>Nuevo Tipo de Bloque</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/41-nuevo-tipo-bloque.png" alt="Captura del módulo Nuevo Tipo de Bloque del Admin"><figcaption>Origen, catálogo, esquema, soporte y orden.</figcaption></figure></article><article class="capture-card"><h4>Nueva Redirección</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/42-nueva-redireccion.png" alt="Captura del módulo Nueva Redirección del Admin"><figcaption>Ruta anterior, URL nueva, tipo y estado.</figcaption></figure></article><article class="capture-card"><h4>Nuevo Idioma</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/43-nuevo-idioma.png" alt="Captura del módulo Nuevo Idioma del Admin"><figcaption>Código, nombres, estado, predeterminado y fallback.</figcaption></figure></article><article class="capture-card"><h4>Nueva Configuración</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/44-nueva-configuracion.png" alt="Captura del módulo Nueva Configuración del Admin"><figcaption>Valor, tipo de dato, control visual, traducciones y grupo.</figcaption></figure></article><article class="capture-card"><h4>Bloques de una página</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/45-bloques-pagina.png" alt="Captura del módulo Bloques de una página del Admin"><figcaption>Orden, bloques existentes, hijos y acciones.</figcaption></figure></article><article class="capture-card"><h4>Nuevo bloque</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/46-nuevo-bloque.png" alt="Captura del módulo Nuevo bloque del Admin"><figcaption>Origen de contenido, plantilla y campos del esquema.</figcaption></figure></article><article class="capture-card"><h4>Nuevo elemento de menú</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/47-nuevo-item-menu.png" alt="Captura del módulo Nuevo elemento de menú del Admin"><figcaption>Destino, etiqueta, tipo de enlace, padre, target e icono.</figcaption></figure></article><article class="capture-card"><h4>Identidad del sitio</h4><figure><img loading="lazy" src="/assets/docs/admin-guide/screens/48-identidad-sitio.png" alt="Captura del módulo Identidad del sitio del Admin"><figcaption>Edición global por idioma y activos de marca.</figcaption></figure></article></div></details>
+        <p class="small">Para imprimir o generar PDF se omite esta galería visual para que el documento no resulte inmanejable; la versión web conserva todas las capturas.</p>
+      </section>
+
+
+      <section class="section searchable" id="primeros-pasos" data-search="primeros pasos objetivo tarea crear página entrada noticia formulario traducción menú archivo usuario no técnico empezar onboarding atajo">
+        <div class="section-head"><div class="section-number">11</div><div class="section-title"><h2>Atajos por objetivo</h2><p class="lead">Si no sabes qué módulo abrir, empieza por la tarea que quieres realizar.</p></div></div>
+        <div class="grid-2">
+          <div class="card"><h4>Quiero crear una página informativa</h4><p>Abre <a href="#recetas">Receta A · página</a>. Normalmente usarás <strong>Asistente de estructura → Crear página</strong>, luego <strong>Páginas → Administrar Bloques</strong>.</p></div>
+          <div class="card"><h4>Quiero publicar una noticia o artículo</h4><p>Primero verifica que exista una colección en <strong>Colecciones</strong>. Después sigue <a href="#recetas">Receta B · entrada</a> y revisa la <a href="#publicacion">lista de publicación</a>.</p></div>
+          <div class="card"><h4>Quiero agregar un formulario</h4><p>Configura <strong>Formularios Dinámicos</strong>, define sus campos y luego inserta el bloque <code>form_embed</code> en una página. Consulta <a href="#recetas">Receta D · formulario</a>.</p></div>
+          <div class="card"><h4>Quiero cambiar el menú</h4><p>Abre <strong>Menús</strong>, edita el menú correcto por clave y ubicación (<code>header</code>, <code>footer</code> o <code>footer_secondary</code>) y valida cada URL. Consulta <a href="#recetas">Receta C · menú</a>.</p></div>
+          <div class="card"><h4>Quiero corregir traducciones</h4><p>Abre <strong>Auditoría de Traducciones</strong>, filtra por idioma y recurso, pulsa <strong>Traducir</strong> y vuelve a revisar. La <a href="#publicacion">revisión antes de publicar</a> incluye este paso.</p></div>
+          <div class="card"><h4>Quiero dar acceso a otra persona</h4><p>En <strong>Usuarios</strong> crea o edita la cuenta y asigna el rol mínimo. Antes de guardar, consulta la <a href="#roles-matriz">matriz de roles</a>.</p></div>
+        </div>
+        <div class="callout ok"><div><strong>Regla para no perderse</strong><div>El Admin separa tres preguntas: <strong>qué contenido existe</strong> (colecciones y entradas), <strong>cómo se muestra</strong> (páginas, menús y bloques) y <strong>quién puede cambiarlo</strong> (usuarios, roles y permisos). Si identificas cuál de las tres preguntas estás resolviendo, encontrarás el módulo correcto.</div></div></div>
+        <h3>Elige tu recorrido según tu perfil</h3>
+        <div class="table-wrap"><table><thead><tr><th>Perfil</th><th>Empieza por</th><th>Evita tocar</th></tr></thead><tbody>
+          <tr><td><strong>Editor o redactor</strong></td><td>Archivos → Entradas/Páginas → traducciones → vista previa.</td><td>Roles, permisos, aplicaciones, configuraciones globales y eliminación definitiva.</td></tr>
+          <tr><td><strong>Responsable del CMS</strong></td><td>Colecciones → estructura → bloques → menús → formularios.</td><td>Cambiar claves internas o permisos sin registrar el impacto.</td></tr>
+          <tr><td><strong>Operador de plataforma</strong></td><td>Usuarios → Auditoría → Métricas → API Keys → salud.</td><td>Publicar contenido editorial sin revisión de su responsable.</td></tr>
+          <tr><td><strong>Superadministrador</strong></td><td>Roles × permisos → configuración → idiomas → auditoría de cambios.</td><td>Usar superadmin como cuenta compartida o resolver todo ampliando permisos.</td></tr>
+        </tbody></table></div>
+        <h3>Plan de la primera sesión</h3>
+        <ol class="steps"><li><div>Inicia sesión y confirma que el Escritorio muestra Hub API, Dominio y Sitio Web Público en línea.</div></li><li><div>Abre una pantalla de listado y practica buscar, ordenar, filtrar, Ver y volver sin guardar nada.</div></li><li><div>Abre un formulario de creación, identifica campos obligatorios y cancela sin crear registros.</div></li><li><div>Consulta el detalle de una página o entrada de demostración y sigue sus referencias a bloques, idioma y menú.</div></li><li><div>Haz una publicación de prueba solo en el entorno previsto para pruebas y comprueba la URL pública.</div></li></ol>
+      </section>
+
+      <section class="section searchable" id="mapa-sistema" data-search="mapa relaciones módulos colección entrada categoría etiqueta página menú bloque sitio público formulario publicación contenido estructura relación dependencia">
+        <div class="section-head"><div class="section-number">12</div><div class="section-title"><h2>Mapa del sistema</h2><p class="lead">Esta vista explica cómo se relacionan las pantallas y por qué algunas deben configurarse antes que otras.</p></div></div>
+        <div class="flow"><div class="flow-item"><span>1 · Modelo</span><strong>Colección</strong><p>Define qué tipo de entradas existen y qué campos o bloques heredan.</p></div><div class="flow-item"><span>2 · Registro</span><strong>Entrada</strong><p>Es un artículo, servicio, proyecto o noticia dentro de una colección.</p></div><div class="flow-item"><span>3 · Clasificación</span><strong>Categorías y etiquetas</strong><p>Ordenan y filtran las entradas.</p></div><div class="flow-item"><span>4 · Presentación</span><strong>Página y bloques</strong><p>Deciden la composición visual y los listados.</p></div><div class="flow-item"><span>5 · Navegación</span><strong>Menú</strong><p>Conecta al público con las URLs publicadas.</p></div></div>
+        <div class="grid-2">
+          <div class="card"><h4>Ruta de una entrada</h4><p><strong>Colección → Entrada → Categorías/Etiquetas → Página índice o listado → Menú → Sitio público.</strong> Si falta cualquiera de los primeros pasos, el enlace final puede mostrar una lista vacía o una URL inexistente.</p></div>
+          <div class="card"><h4>Ruta de un bloque</h4><p><strong>Tipo de Bloque → Instancia en una página o entrada → Contenido por idioma → Vista previa → Renderizado público.</strong> El tipo define qué campos aparecen; la instancia guarda los valores.</p></div>
+          <div class="card"><h4>Ruta de un formulario</h4><p><strong>Formulario Dinámico → Campos → Bloque <code>form_embed</code> → Envío → Envíos.</strong> El formulario puede existir sin estar visible si ninguna página lo inserta.</p></div>
+          <div class="card"><h4>Ruta de una traducción</h4><p><strong>Idioma base → Copiar o auto-traducir → Revisión humana → Auditoría → Publicación.</strong> Una traducción completa no garantiza que el enlace o la imagen también sean correctos en ese idioma.</p></div>
+        </div>
+        <div class="callout warn"><div><strong>Dependencia que suele causar errores</strong><div>No empieces por el menú si todavía no existe la página o la colección que debe abrir. Crea primero el destino, prueba su URL y luego agrega el enlace.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="ejemplos" data-search="ejemplos rellenados ejemplo página entrada noticia menú formulario redirección configuración campos valores resultado esperado copiar plantilla">
+        <div class="section-head"><div class="section-number">13</div><div class="section-title"><h2>Ejemplos rellenados</h2><p class="lead">Aquí puedes ver cómo pensar y completar cada pantalla con un caso ficticio, coherente y verificable.</p></div></div>
+        <div class="callout warn"><div><strong>Usa estos ejemplos como modelo, no como texto para copiar sin revisar</strong><div>Los nombres, slugs, emails y destinos deben corresponder a tu negocio. Antes de guardar, confirma que no existe otro registro con la misma clave y que sabes dónde aparecerá el resultado.</div></div></div>
+        <details open><summary>Ejemplo 1 · Página “Quiénes somos”</summary><div>
+          <p>Objetivo: crear una página informativa, dejarla lista para revisión y no hacerla pública todavía.</p>
+          <div class="example"><div class="table-wrap"><table><thead><tr><th>Campo de la pantalla</th><th>Valor de ejemplo</th><th>Por qué</th></tr></thead><tbody>
+            <tr><td>Tipo de página</td><td><strong>Genérica</strong></td><td>Es una página normal, no una página legal ni un índice de colección.</td></tr>
+            <tr><td>Estado</td><td><strong>Borrador</strong></td><td>Permite revisar el contenido antes de mostrarlo al público.</td></tr>
+            <tr><td>Título en ES</td><td><code>Quiénes somos</code></td><td>Es el título visible para el idioma base.</td></tr>
+            <tr><td>Slug en ES</td><td><code>quienes-somos</code></td><td>Es corto, legible y se convierte en parte de la URL.</td></tr>
+            <tr><td>Meta título</td><td><code>Quiénes somos | Nombre del sitio</code></td><td>Ayuda al buscador a identificar la página.</td></tr>
+            <tr><td>Descripción SEO</td><td><code>Conoce al equipo, la historia y la forma de trabajar de Nombre del sitio.</code></td><td>Resume la página para buscadores y enlaces compartidos.</td></tr>
+            <tr><td>Bloques</td><td>Encabezado + texto enriquecido + imagen + CTA</td><td>La composición explica quiénes son y ofrece un siguiente paso.</td></tr>
+            <tr><td>EN</td><td><code>About us</code> / <code>about-us</code></td><td>Se completa después de revisar la versión en español.</td></tr>
+          </tbody></table></div></div>
+          <p><strong>Comprobación:</strong> guarda, verifica que la página aparezca como <strong>Borrador</strong>, abre Administrar Bloques, revisa el orden y confirma que la auditoría de traducciones no tenga faltantes que impidan la publicación.</p>
+        </div></details>
+        <details><summary>Ejemplo 2 · Entrada de Noticias “Nuevo producto”</summary><div>
+          <p>Objetivo: preparar una noticia para una colección ya existente, con publicación semanal en el sitemap.</p>
+          <div class="example"><div class="table-wrap"><table><thead><tr><th>Campo</th><th>Valor de ejemplo</th><th>Revisión</th></tr></thead><tbody>
+            <tr><td>Colección</td><td><strong>Noticias</strong> (<code>noticias</code>)</td><td>Debe existir y estar activa antes de crear la entrada.</td></tr>
+            <tr><td>Estado</td><td><strong>Borrador</strong></td><td>No aparece todavía como contenido publicado.</td></tr>
+            <tr><td>Título</td><td><code>Nuevo producto</code></td><td>Evita títulos genéricos que no expliquen la novedad.</td></tr>
+            <tr><td>Slug</td><td><code>nuevo-producto</code></td><td>No uses tildes, espacios ni la fecha salvo que forme parte de la URL.</td></tr>
+            <tr><td>Destacado</td><td><strong>No</strong></td><td>Solo marca Sí si debe ocupar un espacio especial.</td></tr>
+            <tr><td>Frecuencia sitemap</td><td><strong>Semanalmente</strong></td><td>Es una señal para buscadores, no una programación de publicación.</td></tr>
+            <tr><td>Contenido</td><td>Extracto + imagen destacada + bloques del artículo</td><td>Prueba las variantes de imagen y completa el texto alternativo.</td></tr>
+            <tr><td>Publicación</td><td>Fecha revisada por el responsable editorial</td><td>Si se programa, valida también zona horaria y fecha.</td></tr>
+          </tbody></table></div></div>
+          <p><strong>Comprobación:</strong> el listado muestra la colección y el estado correcto; la página índice de Noticias puede encontrar la entrada cuando esté publicada.</p>
+        </div></details>
+        <details><summary>Ejemplo 3 · Menú principal con “Noticias”</summary><div>
+          <p>Objetivo: agregar un enlace al listado de una colección sin escribir una URL manual.</p>
+          <div class="example"><div class="table-wrap"><table><thead><tr><th>Campo</th><th>Valor de ejemplo</th><th>Qué significa</th></tr></thead><tbody>
+            <tr><td>Clave del menú</td><td><code>main_menu</code></td><td>Identificador estable del menú; no lo cambies si el sitio ya lo consume.</td></tr>
+            <tr><td>Ubicación</td><td><code>header</code></td><td>Indica que el tema lo mostrará en la cabecera.</td></tr>
+            <tr><td>Etiqueta visible</td><td><code>Noticias</code></td><td>Texto que verá la persona visitante.</td></tr>
+            <tr><td>Tipo de enlace</td><td><strong>Listado de colección</strong></td><td>El destino se elige desde el CMS y mantiene la relación.</td></tr>
+            <tr><td>Destino</td><td><strong>Noticias</strong></td><td>Selecciona la colección existente; no inventes un ID.</td></tr>
+            <tr><td>Target</td><td><code>_self</code></td><td>Abre en la pestaña actual, opción normal para navegación interna.</td></tr>
+            <tr><td>Padre</td><td><strong>Ninguno</strong></td><td>Queda como elemento principal, no como submenú.</td></tr>
+          </tbody></table></div></div>
+          <p><strong>Comprobación:</strong> guarda el elemento, ordena si hace falta y prueba la etiqueta en ES y EN. Si el menú apunta a una entrada concreta, usa “Entrada” en vez de “Listado de colección”.</p>
+        </div></details>
+        <details><summary>Ejemplo 4 · Formulario de contacto</summary><div>
+          <p>Objetivo: recibir nombre, email y mensaje, y conservar los envíos dentro del Admin.</p>
+          <div class="example"><div class="table-wrap"><table><thead><tr><th>Parte</th><th>Valor de ejemplo</th><th>Decisión</th></tr></thead><tbody>
+            <tr><td>Clave</td><td><code>contact</code></td><td>Corta, estable y fácil de seleccionar en <code>form_embed</code>.</td></tr>
+            <tr><td>Estado</td><td><strong>Activo</strong></td><td>Debe estar activo para renderizarse en la página.</td></tr>
+            <tr><td>CAPTCHA</td><td><strong>Según política del sitio</strong></td><td>Si se activa, prueba también la configuración global de reCAPTCHA.</td></tr>
+            <tr><td>Email de notificación</td><td><code>contacto@ejemplo.com</code></td><td>Usa una cuenta controlada por el equipo, no una cuenta personal desconocida.</td></tr>
+            <tr><td>Clave del campo email</td><td><code>email</code></td><td>Permite localizar el correo del visitante para la respuesta automática.</td></tr>
+            <tr><td>Campos</td><td><code>name</code> text obligatorio; <code>email</code> email obligatorio; <code>message</code> textarea obligatorio</td><td>Las claves internas no llevan espacios y deben mantenerse estables.</td></tr>
+            <tr><td>Bloque en página</td><td><code>form_embed</code> → <code>contact</code></td><td>La página y el formulario son objetos separados.</td></tr>
+          </tbody></table></div></div>
+          <p><strong>Comprobación:</strong> envía datos de prueba, revisa el mensaje de éxito, verifica el correo si corresponde y confirma que el registro aparezca en <strong>Envíos</strong>. No uses datos sensibles reales para probar.</p>
+        </div></details>
+        <details><summary>Ejemplo 5 · Redirección permanente</summary><div>
+          <p>Para retirar una URL antigua sin perder visitas, crea una redirección solo después de comprobar el destino.</p>
+          <div class="table-wrap"><table><thead><tr><th>Campo</th><th>Valor de ejemplo</th></tr></thead><tbody><tr><td>Ruta anterior</td><td><code>/servicios</code></td></tr><tr><td>Nueva URL</td><td><code>/soluciones</code></td></tr><tr><td>Tipo</td><td><strong>301</strong> · permanente</td></tr><tr><td>Activo</td><td><strong>Sí</strong></td></tr><tr><td>Nota</td><td><code>Renombrado en la reorganización del sitio</code></td></tr></tbody></table></div>
+          <p><strong>Comprobación:</strong> abre la ruta anterior en una ventana privada y confirma que lleva al destino correcto. Si el cambio es solo temporal, usa <strong>302</strong>.</p>
+        </div></details>
+        <details><summary>Ejemplo 6 · Configuración global</summary><div>
+          <p>Una configuración no es contenido editorial. Antes de crearla, el equipo técnico debe confirmar la clave y el formato que el sitio espera.</p>
+          <div class="table-wrap"><table><thead><tr><th>Campo</th><th>Ejemplo didáctico</th><th>Precaución</th></tr></thead><tbody><tr><td>Clave</td><td><code>site.example</code></td><td>No la crees en producción como prueba: es solo un nombre ilustrativo.</td></tr><tr><td>Tipo</td><td><strong>Texto</strong></td><td>El tipo determina cómo se guarda el valor.</td></tr><tr><td>Control</td><td><strong>Texto</strong></td><td>El control cambia la forma de edición, no el significado del dato.</td></tr><tr><td>Grupo</td><td><code>General</code></td><td>Ayuda a encontrarla; no reemplaza la documentación técnica.</td></tr><tr><td>Traducible</td><td>Solo si cada idioma puede tener un valor distinto</td><td>No marques esta opción para una clave global que debe ser única.</td></tr></tbody></table></div>
+        </div></details>
+        <div class="callout ok"><div><strong>Qué debería verse al final</strong><div>Un registro bien creado aparece en el listado, conserva su clave o slug, muestra el estado esperado y puede ser encontrado desde el módulo que lo consume. La comprobación siempre ocurre en dos lugares: el Admin y, cuando corresponde, el sitio público.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="validaciones" data-search="validaciones reglas campos obligatorios formatos opciones permitidas status draft published archived página entrada colección menú formulario idioma configuración error formulario no guardar">
+        <div class="section-head"><div class="section-number">14</div><div class="section-title"><h2>Validaciones y reglas exactas</h2><p class="lead">Cuando el Admin rechaza un formulario, no es un capricho: protege identificadores, relaciones y datos que luego usa el sitio.</p></div></div>
+        <p>La regla general es sencilla: completa los campos obligatorios, usa el formato indicado, corrige el mensaje en rojo y vuelve a guardar. Si hay un error, el registro no debe considerarse creado aunque la pantalla haya conservado parte de lo escrito.</p>
+        <h3>Reglas por módulo</h3>
+        <div class="table-wrap"><table><thead><tr><th>Módulo</th><th>Obligatorio / formato</th><th>Opciones o límites relevantes</th></tr></thead><tbody>
+          <tr><td>Usuarios</td><td>Nombre y apellido: 2–100 caracteres. Email obligatorio y válido.</td><td>Los roles son opcionales; asigna solo los necesarios.</td></tr>
+          <tr><td>API Keys</td><td>Nombre obligatorio, máximo 100 caracteres.</td><td>Los límites numéricos deben ser naturales y mayores que cero: total, ventana, usuario e IP.</td></tr>
+          <tr><td>Roles</td><td>Código y nombre obligatorios, 2–100 caracteres. Descripción máxima 500.</td><td>La aplicación es opcional, pero el código debe ser único y estable.</td></tr>
+          <tr><td>Permisos</td><td>Aplicación, código, recurso y acción obligatorios. Código máx. 100; recurso/acción máx. 50; descripción máx. 500.</td><td>Usa nombres consistentes; no inventes permisos para resolver un problema editorial.</td></tr>
+          <tr><td>Colecciones</td><td>Tipo en minúsculas con letras/números, guiones o guiones bajos, máx. 50. Clave máx. 50.</td><td>Prioridad decimal; activado, destacado y sitemap usan Sí/No.</td></tr>
+          <tr><td>Páginas</td><td>Estado y tipo obligatorios. Orden y padre son enteros. Fechas válidas.</td><td>Estado: Borrador, Publicado o Archivado; no publiques para probar un formulario.</td></tr>
+          <tr><td>Entradas</td><td>Colección obligatoria; estado obligatorio; fechas válidas.</td><td>Estado: Borrador, Publicado o Archivado. Destacada y sitemap son Sí/No.</td></tr>
+          <tr><td>Menús</td><td>Clave del menú: mínimo 2 caracteres, máx. 255. Ubicación: 2–50.</td><td>La clave debe coincidir con la que consume el tema, por ejemplo <code>header</code>, <code>footer</code> o <code>footer_secondary</code>.</td></tr>
+          <tr><td>Elemento de menú</td><td>Tipo de enlace y target obligatorios.</td><td>Enlace: página, entrada, listado de colección, URL personalizada o sin enlace. Target: misma pestaña (<code>_self</code>) o nueva (<code>_blank</code>).</td></tr>
+          <tr><td>Tipo de bloque</td><td>Clave, nombre, categoría y esquema obligatorios; clave/nombre mínimo 2.</td><td>Orden entero; activo, traducible, soporte de página/entrada y contenedor son Sí/No.</td></tr>
+          <tr><td>Redirecciones</td><td>Ruta anterior y URL nueva mínimo 2 caracteres; la ruta anterior debe comenzar por <code>/</code>.</td><td>Solo 301 o 302. Revisa bucles y destinos que también redirigen.</td></tr>
+          <tr><td>Idiomas</td><td>Código y nombre obligatorios, mínimo 2 caracteres. Orden y fallback son enteros.</td><td>Activo y predeterminado son Sí/No; solo debe existir un predeterminado.</td></tr>
+          <tr><td>Configuración</td><td>Clave obligatoria, mínimo 2 caracteres. Opciones deben ser JSON válido si se usan.</td><td>Tipo: Texto, Número entero, Booleano, JSON o Archivo. Control: Texto, Área de texto, Texto enriquecido, URL, Email, Teléfono, Selector de color, Número, Toggle, Selector de imagen, Selector de archivo, Lista desplegable, Código/JSON o Slug.</td></tr>
+        </tbody></table></div>
+        <h3>Estados, tipos y frecuencias permitidas</h3>
+        <div class="grid-2"><div class="card"><h4>Estados editoriales</h4><p><strong>Borrador</strong> guarda trabajo no visible; <strong>Publicado</strong> lo hace elegible para el sitio público; <strong>Archivado</strong> lo retira del flujo normal sin confundirlo con un borrador nuevo.</p></div><div class="card"><h4>Tipos de página</h4><p>La pantalla ofrece <strong>Inicio</strong>, <strong>Genérica</strong>, <strong>Contacto</strong>, <strong>Privacidad</strong>, <strong>Términos</strong>, <strong>404</strong>, <strong>500</strong>, <strong>Mantenimiento</strong> e <strong>Índice de Colección</strong>. Elige el tipo que corresponde a su función, no solo al diseño.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Pantalla</th><th>Frecuencias de sitemap que presenta</th><th>Qué no significa</th></tr></thead><tbody><tr><td>Entradas</td><td>Siempre · Cada hora · Diariamente · Semanalmente · Mensualmente · Anualmente · Nunca</td><td>No programa la publicación ni obliga al buscador a visitar la URL.</td></tr><tr><td>Páginas</td><td>Siempre · Cada hora · Diaria · Semanal · Mensual · Anual · Nunca</td><td>No reemplaza el estado publicado ni una prueba de la URL.</td></tr></tbody></table></div>
+        <h3>Dependencias que cambian el formulario</h3>
+        <ul><li>Un elemento de menú de tipo <strong>Página</strong>, <strong>Entrada</strong> o <strong>Listado de colección</strong> necesita que exista el destino correspondiente.</li><li>Una <strong>URL personalizada</strong> necesita su propia ruta; no se habilita el selector de destino.</li><li>Un bloque <code>form_embed</code> necesita la clave de un formulario existente y activo.</li><li>Un bloque con fuente <strong>Colección</strong> necesita colección, límite, orden y dirección; uno con fuente <strong>Página</strong> necesita la página vinculada.</li><li>Un campo <code>select</code>, <code>radio</code> o <code>checkbox</code> necesita opciones; sus valores internos deben permanecer estables aunque cambie la etiqueta traducida.</li></ul>
+        <div class="callout danger"><div><strong>Si aparece un error en rojo</strong><div>Lee el mensaje junto al campo, corrige ese campo y vuelve a intentar. No abras otra pestaña para crear un duplicado ni cambies la clave solo para “hacerlo pasar”. Si el error no explica la causa, guarda la URL, el mensaje y la hora para Auditoría/soporte.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="recetas" data-search="recetas paso a paso crear página entrada noticia colección menú formulario traducción archivo usuario redirección objetivo tutorial procedimiento">
+        <div class="section-head"><div class="section-number">15</div><div class="section-title"><h2>Recetas paso a paso</h2><p class="lead">Procedimientos completos para las tareas más comunes. Cada receta termina con una comprobación visible.</p></div></div>
+        <details open><summary>A · Crear una página informativa</summary><div><ol class="steps"><li><div>Abre <strong>Asistente de estructura</strong> y elige <strong>Crear página</strong>.</div></li><li><div>Selecciona el tipo: <strong>Genérica</strong> para una página normal, <strong>Contacto</strong> si tendrá formulario, o el tipo legal/especial que corresponda.</div></li><li><div>Escribe título y slug en ES. Revisa las propuestas para EN y los demás idiomas activos.</div></li><li><div>Confirma el resumen y crea la página.</div></li><li><div>Entra en <strong>Páginas → Administrar Bloques</strong>; añade, edita o reordena los bloques.</div></li><li><div>Guarda como borrador, abre la vista previa si está disponible y revisa móvil, imágenes y enlaces.</div></li><li><div>Completa traducciones, audita y publica solo cuando la URL pública esté probada.</div></li></ol><p><strong>Resultado esperado:</strong> la página aparece en Páginas con un estado claro y puede abrirse mediante su URL después de publicar.</p></div></details>
+        <details><summary>B · Crear y publicar una entrada</summary><div><ol class="steps"><li><div>En <strong>Colecciones</strong>, identifica la colección correcta y confirma que esté activa.</div></li><li><div>Abre <strong>Entradas → Nueva Entrada</strong> y selecciona la colección.</div></li><li><div>Completa título, slug, extracto e imagen destacada en ES.</div></li><li><div>Clasifica con categorías y etiquetas; marca <strong>Destacado</strong> solo si debe aparecer en espacios destacados.</div></li><li><div>Define estado, fecha publicada o fecha programada y opciones de sitemap.</div></li><li><div>Completa EN y cualquier otro idioma activo, o deja el contenido como borrador si todavía no está revisado.</div></li><li><div>Administra bloques heredados o editables según la plantilla de la colección.</div></li><li><div>Revisa la URL, SEO, imágenes, traducciones y página de listado; después publica o programa.</div></li></ol><p><strong>Resultado esperado:</strong> la entrada aparece en el listado público de su colección y el enlace individual funciona en los idiomas preparados.</p></div></details>
+        <details><summary>C · Crear un menú y sus enlaces</summary><div><ol class="steps"><li><div>Abre <strong>Menús</strong> y elige el menú por su clave y ubicación, por ejemplo <code>header</code>, <code>footer</code> o <code>footer_secondary</code>.</div></li><li><div>Verifica que el menú esté activo y que sus nombres traducidos estén completos.</div></li><li><div>Pulsa <strong>Nuevo elemento</strong> y elige el tipo de enlace: página, entrada, listado de colección, URL personalizada o sin enlace.</div></li><li><div>Selecciona el destino existente; para una categoría usa el ayudante y guarda el resultado como URL personalizada.</div></li><li><div>Escribe la etiqueta por idioma, decide si abre en la misma pestaña y selecciona padre si será un submenú.</div></li><li><div>Guarda el elemento, ordénalo y pulsa <strong>Guardar Orden</strong> si la pantalla lo solicita.</div></li><li><div>Prueba el menú en ES, EN y cualquier otro idioma activo, incluido el submenú en móvil.</div></li></ol><p><strong>Resultado esperado:</strong> el enlace visible abre el destino correcto en cada idioma y no produce 404 ni redirecciones inesperadas.</p></div></details>
+        <details><summary>D · Crear un formulario y ponerlo en una página</summary><div><ol class="steps"><li><div>Abre <strong>Formularios Dinámicos → Nuevo Formulario</strong> y define una clave corta y estable, por ejemplo <code>contact</code>.</div></li><li><div>Activa el formulario y decide si requiere CAPTCHA, email de notificación y respuesta automática.</div></li><li><div>Completa el nombre, botón, descripción y mensajes en ES; copia o traduce a EN y a los demás idiomas activos.</div></li><li><div>En el constructor agrega los campos. Usa una clave <code>email</code> si habrá respuesta automática.</div></li><li><div>En cada campo define tipo, obligatorio, activo, etiqueta, placeholder, ayuda y opciones traducidas cuando aplique.</div></li><li><div>Guarda el formulario y confirma que aparezca activo en la lista.</div></li><li><div>En una página agrega el bloque <code>form_embed</code> y selecciona la clave del formulario.</div></li><li><div>Prueba validaciones, CAPTCHA, mensaje de éxito y recepción del email sin guardar datos reales innecesarios.</div></li></ol><p><strong>Resultado esperado:</strong> el formulario se ve en la página, valida los campos y el envío aparece en <strong>Envíos</strong>.</p></div></details>
+        <details><summary>E · Subir y reutilizar un archivo</summary><div><ol class="steps"><li><div>Abre <strong>Archivos</strong> y elige un archivo con un nombre reconocible.</div></li><li><div>Sube el archivo y espera la confirmación; no cierres la pantalla durante el procesamiento de variantes.</div></li><li><div>Abre <strong>Ver</strong> y, en el detalle, completa texto alternativo, pie de foto y crédito. La pantalla de carga no solicita esos datos.</div></li><li><div>Revisa <strong>Usado en</strong> y las variantes antes de reutilizarlo.</div></li><li><div>Desde una imagen o bloque multimedia, elige <strong>Biblioteca</strong> y selecciona el archivo.</div></li></ol><p><strong>Resultado esperado:</strong> el contenido usa la referencia central del archivo y no una copia duplicada sin metadata.</p></div></details>
+        <details><summary>F · Dar acceso a un editor</summary><div><ol class="steps"><li><div>Abre <strong>Usuarios → Crear usuario</strong> o edita una cuenta existente.</div></li><li><div>Completa nombre, apellido y email; confirma que el correo sea correcto.</div></li><li><div>Asigna <code>cms-editor</code> para trabajo editorial acotado, o <code>cms-admin</code> si necesita administrar estructura CMS.</div></li><li><div>Evita <code>admin</code> y <code>superadmin</code> salvo que la persona deba administrar usuarios, IAM o toda la plataforma.</div></li><li><div>Guarda, pide al usuario iniciar sesión y comprueba que solo vea los módulos necesarios.</div></li></ol><p><strong>Resultado esperado:</strong> la persona puede realizar su trabajo sin recibir permisos innecesarios.</p></div></details>
+        <details><summary>G · Corregir una URL antigua</summary><div><ol class="steps"><li><div>Confirma cuál era la ruta anterior y cuál es la URL nueva.</div></li><li><div>Abre <strong>Redirecciones → Nueva Redirección</strong>.</div></li><li><div>Escribe la ruta antigua empezando por <code>/</code>; usa <strong>301</strong> si el cambio es permanente y <strong>302</strong> si es temporal.</div></li><li><div>Activa la redirección solo después de revisar que el destino exista.</div></li><li><div>Prueba la ruta antigua, la nueva y una ruta distinta para comprobar que no se creó un bucle.</div></li></ol><p><strong>Resultado esperado:</strong> la ruta antigua lleva al destino correcto sin encadenar varias redirecciones.</p></div></details>
+      </section>
+
+      <section class="section searchable" id="publicacion" data-search="publicación publicar borrador revisión aprobación programar fecha preview vista previa url público traducción checklist rollback volver atrás ciclo de vida">
+        <div class="section-head"><div class="section-number">16</div><div class="section-title"><h2>Publicación y revisión</h2><p class="lead">Publicar es el último paso de una cadena. No es lo mismo guardar, activar, programar y hacer visible.</p></div></div>
+        <div class="flow"><div class="flow-item"><span>1</span><strong>Borrador</strong><p>El contenido está guardado y todavía no debe ser público.</p></div><div class="flow-item"><span>2</span><strong>Revisión</strong><p>Otra persona comprueba texto, enlaces, imágenes, SEO y permisos.</p></div><div class="flow-item"><span>3</span><strong>Idiomas</strong><p>Se completan traducciones y se revisa la auditoría.</p></div><div class="flow-item"><span>4</span><strong>Vista previa</strong><p>Se comprueba la composición antes de hacerla pública.</p></div><div class="flow-item"><span>5</span><strong>Publicar / programar</strong><p>Se define cuándo debe verse en el sitio público.</p></div></div>
+        <h3>Antes de pulsar Publicar ahora</h3>
+        <div class="checklist"><label><input type="checkbox"> El título, slug y estado son correctos.</label><label><input type="checkbox"> La URL no duplica otra y el enlace funciona.</label><label><input type="checkbox"> Las imágenes tienen alt text, proporción adecuada y variantes generadas.</label><label><input type="checkbox"> Las traducciones visibles están completas o la ausencia es intencional.</label><label><input type="checkbox"> Las categorías, etiquetas y fechas son correctas.</label><label><input type="checkbox"> Los bloques están en orden y los contenedores tienen los hijos esperados.</label><label><input type="checkbox"> Los formularios y enlaces del menú se probaron en cada idioma.</label><label><input type="checkbox"> Se revisó la página pública, no solo el formulario del Admin.</label></div>
+        <h3>Qué hacer después</h3>
+        <ol class="steps"><li><div>Abre la URL pública en una pestaña separada y prueba el flujo como visitante.</div></li><li><div>Comprueba escritorio y móvil, navegación, imágenes, idioma y formularios.</div></li><li><div>Si el sitio sigue mostrando una versión anterior, revisa caché/estado del servicio y vuelve a verificar; no publiques varias copias por impaciencia.</div></li><li><div>Consulta <strong>Auditoría</strong> para dejar evidencia del cambio.</div></li></ol>
+        <div class="callout warn"><div><strong>Sobre volver atrás</strong><div>En el recorrido del Admin no aparece un botón general de “rollback”. Para revertir un cambio, vuelve a introducir valores conocidos, guarda y publica de nuevo; si el cambio es grave, coordina la restauración desde el respaldo o procedimiento de operación del proyecto.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="roles-matriz" data-search="roles matriz permisos user cms-editor cms-admin admin superadmin least privilege acceso qué puede hacer qué no puede hacer">
+        <div class="section-head"><div class="section-number">17</div><div class="section-title"><h2>Matriz de roles para personas no técnicas</h2><p class="lead">El nombre del rol orienta, pero la matriz Roles × permisos es la autoridad final de cada instalación.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Rol</th><th>Puede hacer normalmente</th><th>No debería hacer</th><th>Asignarlo a</th></tr></thead><tbody>
+          <tr><td><code>user</code></td><td>Acceder a las funciones personales que la instalación le habilite.</td><td>No administrar contenido ni usuarios.</td><td>Personas sin tareas editoriales.</td></tr>
+          <tr><td><code>cms-editor</code></td><td>Editar contenido autorizado: páginas, entradas, traducciones, archivos o formularios según la matriz.</td><td>No administrar permisos globales, usuarios ni configuraciones sensibles.</td><td>Redactores, traductores y responsables de contenido.</td></tr>
+          <tr><td><code>cms-admin</code></td><td>Administrar la estructura CMS y los recursos de contenido que tenga marcados.</td><td>No recibir IAM, API keys o acceso total por defecto.</td><td>Responsables del sitio y estructura editorial.</td></tr>
+          <tr><td><code>admin</code></td><td>Administrar usuarios, archivos, auditoría, métricas y recursos generales según sus permisos.</td><td>No usarlo para tareas editoriales simples si un rol CMS alcanza.</td><td>Operadores de la plataforma.</td></tr>
+          <tr><td><code>superadmin</code></td><td>Acceder a operaciones reservadas, incluida la matriz IAM y <code>iam.superadmin-access</code>.</td><td>No asignarlo por comodidad ni compartir la cuenta.</td><td>Una o muy pocas personas responsables de la plataforma.</td></tr>
+        </tbody></table></div>
+        <h3>Cómo leer cada permiso</h3>
+        <div class="grid-3"><div class="card"><h4><code>read</code></h4><p>Permite consultar. Ejemplo: <code>cms.pages.read</code>.</p></div><div class="card"><h4><code>write</code></h4><p>Permite crear o editar. Ejemplo: <code>cms.pages.write</code>.</p></div><div class="card"><h4><code>admin</code></h4><p>Permite la administración completa del recurso; puede incluir eliminar o acciones sensibles.</p></div></div>
+        <p>La matriz observada agrupa Pages, Entries, Collections, Menus, Blocks, Categories, Tags, Settings, Languages, Redirects, Forms, Submissions, Analytics, CMS, Users, Files, Iam, Apikeys, Audit, Metrics y Self. Para un editor, parte de <code>cms.access</code> y de los permisos <code>read/write</code> estrictamente necesarios.</p>
+        <div class="callout danger"><div><strong>Importante</strong><div>Guardar Roles × permisos reemplaza la selección completa del rol. Antes de guardar, revisa las casillas ya marcadas y deja constancia de por qué se agregó o quitó cada permiso.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="errores" data-search="errores soluciones problema 403 csrf permiso denegado slug duplicado traducción bloque esquema archivo variante formulario captcha email menú 404 cache api límite no resultados">
+        <div class="section-head"><div class="section-number">18</div><div class="section-title"><h2>Errores frecuentes y cómo resolverlos</h2><p class="lead">Usa esta tabla para identificar si el problema es de sesión, permisos, datos, publicación o infraestructura.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Qué ves</th><th>Causa probable</th><th>Qué hacer</th></tr></thead><tbody>
+          <tr><td>403, CSRF inválido o vuelve al login</td><td>Se mezcló <code>localhost</code> con <code>127.0.0.1</code>, o la sesión expiró.</td><td>Cierra la pestaña, abre <code>http://localhost:8182/login</code>, inicia sesión otra vez y vuelve a intentar.</td></tr>
+          <tr><td>Permiso denegado / módulo no aparece</td><td>El usuario no tiene <code>read</code>, <code>write</code> o <code>admin</code>.</td><td>Pide a un administrador revisar Usuarios y Roles × permisos; no pidas superadmin como primera solución.</td></tr>
+          <tr><td>Slug o clave ya existe</td><td>Los identificadores deben ser únicos.</td><td>Busca el registro existente y decide si debes editarlo; no agregues un sufijo sin entender la URL.</td></tr>
+          <tr><td>Traducción faltante</td><td>Un idioma activo no tiene todos los valores.</td><td>Abre Auditoría de Traducciones, filtra por recurso/idioma y usa Traducir. Revisa la propuesta antes de guardar.</td></tr>
+          <tr><td>Bloque no aparece en el selector</td><td>El bloque está inactivo, no soporta ese propietario o la caché está desactualizada.</td><td>Revisa Tipos de Bloque, soporte para páginas/entradas, contenedor e hijos permitidos; usa Refrescar caché si corresponde.</td></tr>
+          <tr><td>El archivo no sube o faltan variantes</td><td>Tipo/tamaño no permitido o el procesamiento aún no terminó.</td><td>Confirma categoría, tamaño y extensión; espera la confirmación y revisa el detalle. Si persiste, consulta el estado del Hub.</td></tr>
+          <tr><td>Formulario no envía</td><td>CAPTCHA, email de notificación, clave de campo email o configuración global incompleta.</td><td>Revisa el formulario, CMS → Configuración, los mensajes por idioma y prueba con datos de demostración.</td></tr>
+          <tr><td>Menú abre 404 o idioma equivocado</td><td>Destino inexistente, slug incorrecto o traducción faltante.</td><td>Abre el destino directamente en cada idioma, corrige la URL y vuelve a probar el menú.</td></tr>
+          <tr><td>Se ve la versión antigua en público</td><td>El cambio quedó en borrador, fue programado para otra fecha o existe caché.</td><td>Confirma el estado y la fecha, abre la URL pública en una pestaña nueva y revisa Estado del Sistema antes de volver a publicar.</td></tr>
+          <tr><td>API devuelve límite excedido</td><td>La API key alcanzó su límite total, por ventana, usuario o IP.</td><td>Revisa API Keys y Métricas; ajusta el límite solo con autorización y rota la key si se expuso.</td></tr>
+          <tr><td>“No se encontraron resultados”</td><td>El filtro o la pestaña está vacía; no implica fallo.</td><td>Limpia filtros, cambia pestaña o crea el primer registro si la tarea lo requiere.</td></tr>
+        </tbody></table></div>
+        <div class="callout ok"><div><strong>Escala con evidencia</strong><div>Si necesitas pedir ayuda, copia la URL del módulo, el usuario/rol, la hora, el mensaje visible y el ID de auditoría si existe. Nunca envíes contraseñas, tokens ni API keys.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="recuperacion" data-search="recuperación revertir corregir deshacer error contenido publicado menú archivo acceso permiso traducción caché api key perdido no se puede recuperar respaldo rollback playbook">
+        <div class="section-head"><div class="section-number">19</div><div class="section-title"><h2>Recuperación ante errores</h2><p class="lead">Cuando algo sale mal, conserva el registro y corrige el objeto afectado. La primera reacción no debe ser borrar y volver a crear.</p></div></div>
+        <p>Estos recorridos sirven para incidentes comunes. Si el cambio afecta permisos, datos personales, URLs públicas o todo el sitio, detén nuevas modificaciones y avisa al responsable de la plataforma.</p>
+        <div class="table-wrap"><table><thead><tr><th>Situación</th><th>Pasos de recuperación</th><th>No hacer</th></tr></thead><tbody>
+          <tr><td>Se publicó contenido equivocado</td><td>1) Abre la página/entrada exacta. 2) Guarda los valores conocidos correctos o vuelve a <strong>Borrador</strong> si debe salir del público. 3) Verifica la URL pública. 4) Revisa Auditoría y deja nota del incidente.</td><td>No borres el registro ni publiques otra copia con otro slug.</td></tr>
+          <tr><td>Un menú apunta al lugar incorrecto</td><td>Abre el menú, identifica el elemento y corrige el destino o desactívalo temporalmente. Prueba ES/EN y móvil. Mantén intacta la página de destino.</td><td>No elimines la página solo porque el enlace está mal.</td></tr>
+          <tr><td>Se movió o eliminó un archivo</td><td>Ve a Archivos, filtra por estado/papelera y abre el detalle. Si existe <strong>Restaurar</strong>, úsalo y vuelve a revisar sus referencias <strong>Usado en</strong>.</td><td>No pulses <strong>Eliminar definitivamente</strong> mientras no sepas que ningún bloque o página lo necesita.</td></tr>
+          <tr><td>Perdiste acceso a un módulo</td><td>Confirma que estás con el usuario correcto y que la sesión no expiró. Pide al responsable que revise el rol y los permisos <code>read/write/admin</code> del recurso.</td><td>No crees otra cuenta superadmin ni compartas credenciales para saltar el problema.</td></tr>
+          <tr><td>Una traducción quedó mal</td><td>Filtra el idioma afectado en Auditoría, abre <strong>Traducir</strong>, corrige solo ese valor, guarda y prueba la URL en ese idioma. Comprueba el fallback.</td><td>No cambies el idioma predeterminado para ocultar el error.</td></tr>
+          <tr><td>El público sigue viendo la versión anterior</td><td>Confirma estado, fecha programada, idioma, URL y salud del sistema. Abre en ventana privada y revisa si hay caché. Documenta qué versión debería verse.</td><td>No dupliques la página ni cambies el slug como primera medida.</td></tr>
+          <tr><td>Se filtró una API key</td><td>Desactívala o revócala según las opciones disponibles, revisa Auditoría/Métricas y crea una nueva credencial para el consumidor autorizado. Actualiza el sistema que la usaba.</td><td>No la pegues en tickets, chats, capturas ni repositorios; una key expuesta debe considerarse comprometida.</td></tr>
+        </tbody></table></div>
+        <h3>Qué sí y qué no puede recuperar el Admin</h3>
+        <div class="grid-2"><div class="card"><h4>El Admin sí ayuda a</h4><ul><li>Editar un registro conservando su identificador.</li><li>Volver un contenido a borrador o archivarlo.</li><li>Restaurar un archivo si la instalación ofrece esa acción.</li><li>Consultar cambios en Auditoría.</li><li>Corregir traducciones, enlaces, estados y permisos.</li></ul></div><div class="card"><h4>El Admin no reemplaza</h4><ul><li>Una copia de seguridad completa.</li><li>Un rollback de base de datos o despliegue.</li><li>La recuperación de una API key que ya fue expuesta.</li><li>La reconstrucción de un archivo eliminado definitivamente.</li><li>La investigación de un problema de infraestructura fuera del panel.</li></ul></div></div>
+        <div class="callout warn"><div><strong>Registra la recuperación</strong><div>Anota fecha, módulo, registro afectado, estado anterior, corrección y verificación final. Esto permite que otra persona entienda qué ocurrió sin repetir el incidente.</div></div></div>
+      </section>
+
+      <section class="section searchable" id="faq" data-search="faq preguntas frecuentes no aparece módulo resultados activo publicado slug título colección entrada página bloque menú 404 traducción auto traducir formulario rol 301 302 archivo sitio antiguo">
+        <div class="section-head"><div class="section-number">20</div><div class="section-title"><h2>Preguntas frecuentes</h2><p class="lead">Respuestas cortas para las dudas que suelen bloquear a una persona que usa el panel por primera vez.</p></div></div>
+        <details open><summary>¿Por qué no veo un módulo?</summary><div>La barra lateral depende del permiso de lectura y del rol. Confirma el usuario, vuelve a iniciar sesión y pide revisar <code>read</code> para ese recurso. No significa automáticamente que el módulo esté roto.</div></details>
+        <details><summary>¿Por qué una lista no muestra resultados?</summary><div>Limpia la búsqueda y los filtros, revisa la pestaña de estado y confirma el idioma. Una lista vacía puede ser normal si todavía no existe el primer registro.</div></details>
+        <details><summary>¿Cuál es la diferencia entre activo y publicado?</summary><div><strong>Activo</strong> suele habilitar un recurso o configuración para que pueda usarse. <strong>Publicado</strong> describe el estado editorial de una página o entrada. Un formulario puede estar activo y aun así no aparecer si ninguna página lo inserta.</div></details>
+        <details><summary>¿Título y slug son lo mismo?</summary><div>No. El título es texto para personas; el slug es el identificador legible de la URL. Puedes cambiar el título sin cambiar la URL, pero cambiar el slug requiere revisar menús, enlaces y redirecciones.</div></details>
+        <details><summary>¿Qué diferencia hay entre colección y entrada?</summary><div>Una <strong>colección</strong> define el tipo de contenido, como Noticias o Portafolio. Una <strong>entrada</strong> es un registro concreto dentro de esa colección.</div></details>
+        <details><summary>¿Qué diferencia hay entre página y bloque?</summary><div>La página es el documento y su URL; los bloques son las piezas que componen su contenido visual. Un tipo de bloque es la plantilla de campos y una instancia de bloque es el contenido concreto.</div></details>
+        <details><summary>¿Por qué un elemento de menú muestra 404?</summary><div>El destino puede estar borrador, archivado, tener un slug cambiado, faltar en el idioma activo o apuntar a una URL manual incorrecta. Abre el destino directamente, corrígelo y vuelve a probar el menú.</div></details>
+        <details><summary>¿Por qué una traducción no aparece en público?</summary><div>Revisa que el idioma esté activo, que el contenido traducido esté guardado y que la URL corresponda a ese idioma. Comprueba el fallback: puede estar mostrando el idioma base cuando falta la traducción.</div></details>
+        <details><summary>¿Qué hace Auto-traducir?</summary><div>Genera o propone valores para los idiomas disponibles. No revisa tono, nombres propios, SEO, enlaces ni exactitud comercial. Siempre requiere revisión humana y auditoría posterior.</div></details>
+        <details><summary>¿Por qué no aparece un bloque en el selector?</summary><div>Puede estar inactivo, no soportar el propietario actual, no permitir ese contenedor o necesitar una actualización de caché. Revisa Tipos de Bloque y el soporte para páginas/entradas.</div></details>
+        <details><summary>¿Por qué un formulario no envía?</summary><div>Comprueba que esté activo, que la página use <code>form_embed</code> con la clave correcta, que los campos obligatorios tengan claves válidas, que CAPTCHA esté configurado y que el email de notificación sea correcto. Luego prueba con datos ficticios y mira Envíos.</div></details>
+        <details><summary>¿Qué rol debería asignar?</summary><div>Empieza por la tarea, no por el nombre de la persona: <code>cms-editor</code> para edición editorial, <code>cms-admin</code> para estructura CMS, <code>admin</code> para operación general y <code>superadmin</code> solo para responsabilidades IAM. Confirma siempre la matriz real.</div></details>
+        <details><summary>¿Cuándo uso 301 y cuándo 302?</summary><div>Usa <strong>301</strong> cuando la ruta cambió de forma permanente. Usa <strong>302</strong> para una sustitución temporal o una prueba. En ambos casos evita bucles.</div></details>
+        <details><summary>¿Puedo borrar un archivo?</summary><div>Solo después de comprobar <strong>Usado en</strong>, variantes y necesidad de recuperación. Si hay duda, desactívalo o déjalo en papelera según el flujo de la instalación y consulta al responsable.</div></details>
+        <details><summary>¿Por qué el sitio público sigue mostrando lo antiguo?</summary><div>El contenido puede seguir en borrador, estar programado para otra fecha, estar en otro idioma o estar detrás de caché. Verifica primero estado, fecha, URL, idioma y salud de los servicios.</div></details>
+      </section>
+
+      <section class="section searchable" id="configuracion" data-search="configuración idiomas traducciones identidad sitio logo favicon redes sociales recaptcha settings redirecciones csv block types schema caché">
+        <div class="section-head"><div class="section-number">21</div><div class="section-title"><h2>Configuración</h2><p class="lead">Estas pantallas afectan el comportamiento global del sitio y deben cambiarse con control.</p></div></div>
+        <h3>Tipos de Bloque</h3><p>El catálogo contiene clave, nombre, categoría, descripción, icono y estado. <strong>Refrescar caché</strong> vuelve a preparar el catálogo. Crear o editar un tipo permite definir fuente de contenido, esquema JSON, campos traducibles, campos de configuración, soporte para páginas/entradas, contenedor y tipos hijos.</p><p>No cambies un <code>block_key</code> usado por contenido existente sin planificar la migración: los bloques guardan esa referencia.</p>
+        <h3>Redirecciones</h3><p>En <strong>Nueva Redirección</strong> define <strong>Ruta anterior</strong> (debe comenzar por <code>/</code>), <strong>Nueva URL</strong>, nota, tipo 301 o 302 y estado activo. La lista permite exportar CSV; también ofrece importar CSV. Valida primero en un entorno de prueba para no crear bucles.</p>
+        <h3>Idiomas</h3><p>La lista muestra código, nombre, nombre nativo, predeterminado y activo. En crear/editar define código, nombre, nombre nativo, si será predeterminado, si estará activo y el <strong>Idioma de reserva</strong>. Usa <strong>Establecer como predeterminado</strong> solo cuando el cambio sea intencional; <strong>Reordenar</strong> cambia el orden de presentación.</p>
+        <h3>Auditoría de Traducciones</h3><p>Es el centro de revisión. Filtra por búsqueda, idioma, recurso y estado. Audita páginas, menús, colecciones, entradas, categorías, etiquetas, formularios, campos, bloques, ítems de menú y configuración. <strong>Traducir</strong> abre el editor exacto, normalmente con el idioma pendiente enfocado; vuelve aquí y repite hasta limpiar los faltantes.</p>
+        <h3>Identidad del sitio</h3><p>Es la pantalla para nombre, título, tagline, descripción, datos de contacto, mensajes de email, copyright, analytics, redes sociales, reCAPTCHA y diseño de menús de pie. Las pestañas de los idiomas activos editan valores localizados; <strong>Traducir todos los idiomas</strong> y <strong>Auto-traducir</strong> ayudan, pero deben revisarse. En Activos de marca selecciona o cambia logo y favicon desde la biblioteca, luego pulsa <strong>Guardar</strong>.</p>
+        <h3>Configuración</h3><p>Es una lista filtrable por clave, grupo y página. Cada fila muestra valor, tipo, grupo, si es traducible, traducciones y descripción. Usa <strong>Ver</strong> para consultar y <strong>Editar</strong> para cambiar; crea una configuración nueva solo si el equipo conoce cómo la consumirá el sitio.</p>
+      </section>
+
+      <section class="section searchable" id="mantenimiento" data-search="mantenimiento diario semanal mensual operación salud auditoría analytics usuarios archivos api keys respaldo backup cache publicar checklist rutina producción">
+        <div class="section-head"><div class="section-number">22</div><div class="section-title"><h2>Mantenimiento operativo</h2><p class="lead">Un sitio sano se mantiene con revisiones pequeñas y frecuentes, no solo cuando aparece un error.</p></div></div>
+        <div class="grid-3"><div class="card"><h4>Cada día de trabajo</h4><ul><li>Revisar Estado del Sistema al entrar.</li><li>Trabajar en borrador y limpiar pendientes de traducción.</li><li>Comprobar que el último contenido tenga imagen, alt text y URL.</li><li>Cerrar sesión al terminar.</li></ul></div><div class="card"><h4>Cada semana</h4><ul><li>Revisar Auditoría y actividad reciente.</li><li>Revisar Analytics y páginas con tráfico inesperado.</li><li>Revisar Envíos nuevos, spam y archivados.</li><li>Buscar archivos duplicados o sin uso antes de acumularlos.</li></ul></div><div class="card"><h4>Cada mes o ante cambios</h4><ul><li>Revisar usuarios, roles y API keys.</li><li>Rotar claves que ya no sean necesarias.</li><li>Revisar redirecciones, idiomas y configuraciones globales.</li><li>Probar una URL de cada menú y formulario.</li></ul></div></div>
+        <h3>Qué no está dentro del Admin</h3><p>En el recorrido del panel no aparece una pantalla general de copias de seguridad/restauración. Los respaldos, despliegues, variables secretas y recuperación completa deben seguir el procedimiento externo del proyecto. El Admin sirve para operar contenido y accesos; no reemplaza la operación de infraestructura.</p>
+        <div class="callout warn"><div><strong>Después de un cambio global</strong><div>Si cambias un idioma, identidad del sitio, configuración, tipo de bloque o permisos, registra qué cambió, quién lo hizo y cómo se verificó en el sitio público.</div></div></div>
+        <h3>Mantenimiento de esta guía</h3>
+        <p>La guía también necesita una revisión cuando cambia el producto. El siguiente registro deja claro qué se observó y cuándo hay que volver a recorrer el Admin.</p>
+        <div class="table-wrap"><table><thead><tr><th>Versión</th><th>Fecha</th><th>Base de verificación</th><th>Próxima revisión cuando…</th></tr></thead><tbody>
+          <tr><td><strong>v1 · recorrido profundo</strong></td><td>22/07/2026</td><td>28 módulos, formularios de creación/edición inspeccionados, reglas de validación del código y 48 capturas reales de la instancia local.</td><td>Se agregue un módulo, cambie una ruta, se modifique un formulario, un rol, un idioma, un tipo de bloque o se despliegue una nueva versión.</td></tr>
+        </tbody></table></div>
+        <div class="grid-2"><div class="card"><h4>Quién mantiene el manual</h4><p>La persona responsable del Admin o del onboarding debe actualizar textos, capturas, rutas, matriz de roles y fecha de revisión. Cada cambio debe conservar el mismo nivel de detalle: qué hace, cómo se usa, qué valida y qué riesgo tiene.</p></div><div class="card"><h4>Cómo verificar una actualización</h4><ol><li>Recorrer el módulo en la instancia de prueba.</li><li>Capturar listado y formulario.</li><li>Comparar opciones y mensajes con esta guía.</li><li>Probar un flujo sin guardar y otro de extremo a extremo.</li><li>Actualizar versión, fecha y checklist.</li></ol></div></div>
+      </section>
+
+      <section class="section searchable" id="glosario" data-search="glosario slug url seo meta open graph sitemap captcha api key slo fallback schema json metadata taxonomy colección entrada bloque contenedor borrador publicado programado redirección cache">
+        <div class="section-head"><div class="section-number">23</div><div class="section-title"><h2>Glosario en lenguaje simple</h2><p class="lead">Las palabras técnicas que aparecen en el panel, explicadas sin asumir conocimientos de desarrollo.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Término</th><th>Significa</th></tr></thead><tbody>
+          <tr><td><strong>Slug</strong></td><td>La parte legible de una URL, normalmente en minúsculas y con guiones. Debe ser estable y único.</td></tr>
+          <tr><td><strong>SEO</strong></td><td>Datos que ayudan a buscadores a entender y mostrar una página.</td></tr>
+          <tr><td><strong>Meta título / descripción</strong></td><td>Texto que puede aparecer en resultados de búsqueda; no necesariamente es el título visible de la página.</td></tr>
+          <tr><td><strong>Open Graph</strong></td><td>Título, descripción e imagen usados cuando una URL se comparte en redes o mensajería.</td></tr>
+          <tr><td><strong>Sitemap</strong></td><td>Listado técnico de URLs que el sitio puede comunicar a buscadores.</td></tr>
+          <tr><td><strong>CAPTCHA / reCAPTCHA</strong></td><td>Verificación que ayuda a distinguir personas de tráfico automatizado en un formulario.</td></tr>
+          <tr><td><strong>API key</strong></td><td>Credencial que permite a una aplicación llamar a una API. Trátala como una contraseña.</td></tr>
+          <tr><td><strong>SLO</strong></td><td>Objetivo medible de disponibilidad o tiempo de respuesta que aparece en Métricas.</td></tr>
+          <tr><td><strong>Fallback</strong></td><td>Idioma o valor de reserva usado cuando falta el contenido solicitado.</td></tr>
+          <tr><td><strong>Esquema JSON</strong></td><td>La descripción de qué campos y opciones tendrá un bloque o configuración. No es el contenido final.</td></tr>
+          <tr><td><strong>Metadata</strong></td><td>Información que describe un archivo o contenido: alt text, autor, crédito, fechas, etiquetas o SEO.</td></tr>
+          <tr><td><strong>Taxonomía</strong></td><td>Forma de clasificar contenido; aquí se expresa principalmente con categorías y etiquetas.</td></tr>
+          <tr><td><strong>Contenedor</strong></td><td>Bloque que agrupa otros bloques hijos para ordenar una sección, galería, slider o columnas.</td></tr>
+          <tr><td><strong>Borrador / publicado / programado</strong></td><td>Guardado sin público / visible ahora / preparado para hacerse visible en una fecha.</td></tr>
+          <tr><td><strong>301 / 302</strong></td><td>Redirección permanente / redirección temporal.</td></tr>
+          <tr><td><strong>Caché</strong></td><td>Copia temporal que acelera una pantalla o catálogo; a veces debe actualizarse para ver cambios recientes.</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section searchable" id="seguridad" data-search="seguridad no hacer eliminar borrar irreversibilidad publicar permisos api key host csrf privacidad producción confirmación">
+        <div class="section-head"><div class="section-number">24</div><div class="section-title"><h2>Qué hacer y qué evitar</h2><p class="lead">La administración es poderosa porque varias acciones tienen efecto inmediato sobre el sitio o los permisos.</p></div></div>
+        <div class="grid-2"><div class="card"><h4><span class="tag green">Sí hacer</span></h4><ul><li>Trabajar en borrador y programar cuando el contenido esté revisado.</li><li>Completar ES y revisar EN y los demás idiomas activos en la auditoría.</li><li>Usar la biblioteca de archivos y completar alt text.</li><li>Confirmar el detalle del elemento antes de editar o eliminar.</li><li>Revisar <strong>Usado en</strong> antes de retirar un archivo o formulario.</li><li>Guardar la matriz de permisos y cerrar sesión al terminar.</li></ul></div><div class="card"><h4><span class="tag red">No hacer</span></h4><ul><li>No mezclar <code>localhost</code> y <code>127.0.0.1</code> en el admin.</li><li>No usar <strong>Eliminar definitivamente</strong> salvo que el archivo esté verificado como prescindible.</li><li>No asignar <code>superadmin</code> o <code>iam.superadmin-access</code> por comodidad.</li><li>No publicar sin revisar slugs, enlaces, SEO y traducciones.</li><li>No compartir API keys ni subirlas al repositorio.</li><li>No modificar aplicaciones desde el panel: esa pantalla es solo lectura.</li></ul></div></div>
+        <h3>Acciones que requieren pausa</h3>
+        <div class="table-wrap"><table><thead><tr><th>Acción</th><th>Riesgo</th><th>Revisión mínima</th></tr></thead><tbody>
+          <tr><td>Eliminar página, entrada, colección, menú o permiso</td><td>Puede romper enlaces, bloques o permisos.</td><td>Consulta referencias, exporta si aplica y confirma el alcance.</td></tr>
+          <tr><td>Eliminar archivo definitivamente</td><td>Borra el original del disco.</td><td>Verifica <strong>Usado en</strong>, variantes y necesidad de recuperación.</td></tr>
+          <tr><td>Guardar Roles × permisos</td><td>Puede ampliar o retirar acceso a varias personas.</td><td>Revisa el rol activo y el conjunto completo marcado.</td></tr>
+          <tr><td>Publicar o programar</td><td>Hace visible contenido en el sitio público.</td><td>Prueba URL, idioma, imágenes y formularios.</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section searchable" id="checklist" data-search="checklist publicar revisión operación diario mantenimiento urls accesos soporte">
+        <div class="section-head"><div class="section-number">25</div><div class="section-title"><h2>Checklist operativo</h2><p class="lead">Puedes marcar esta lista durante una publicación o una revisión de mantenimiento.</p></div></div>
+        <div class="checklist">
+          <label><input type="checkbox"> La página o entrada tiene estado, título y slug correctos en el idioma base.</label>
+          <label><input type="checkbox"> Las traducciones EN y de los demás idiomas activos están completas y la Auditoría de Traducciones no muestra faltantes críticos.</label>
+          <label><input type="checkbox"> Las imágenes tienen alt text, variantes correctas y no hay referencias rotas.</label>
+          <label><input type="checkbox"> Los bloques están en el orden correcto y los contenedores tienen hijos válidos.</label>
+          <label><input type="checkbox"> Menús, URLs personalizadas y redirecciones apuntan a destinos válidos.</label>
+          <label><input type="checkbox"> Formularios activos tienen CAPTCHA/configuración de correo y los mensajes están traducidos.</label>
+          <label><input type="checkbox"> El sitio público muestra la versión publicada en las rutas esperadas.</label>
+          <label><input type="checkbox"> Después de administrar, cerré sesión y no dejé API keys ni credenciales expuestas.</label>
+        </div>
+        <h3>URLs rápidas</h3>
+        <div class="url-row"><code>http://localhost:8182/login</code><button class="copy" data-copy="http://localhost:8182/login">Copiar</button></div>
+        <div class="url-row"><code>http://localhost:8182/dashboard</code><button class="copy" data-copy="http://localhost:8182/dashboard">Copiar</button></div>
+        <div class="url-row"><code>http://localhost:8182/admin/cms/wizard</code><button class="copy" data-copy="http://localhost:8182/admin/cms/wizard">Copiar</button></div>
+        <div class="url-row"><code>http://localhost:8182/admin/cms/translations/audit</code><button class="copy" data-copy="http://localhost:8182/admin/cms/translations/audit">Copiar</button></div>
+        <div class="callout ok"><div><strong>Si algo no aparece</strong><div>Comprueba que tu usuario tenga el permiso <code>read</code> o <code>write</code> correspondiente, que el recurso esté activo y que los servicios Hub, Dominio y Sitio Web estén en línea desde el Escritorio.</div></div></div>
+      </section>
+
+      <footer class="footer">Manual v1.1 · revisión de contenido y navegación · 22/07/2026. Basado en el recorrido real del Admin local: 28 módulos, reglas de validación observadas y 48 capturas. Las imágenes se guardan en <code>public/assets/docs/admin-guide/screens/</code>. Durante la inspección no se crearon, editaron ni eliminaron registros.</footer>
+    </main>
+  </div>
+  <script>
+    (function () {
+      const sidebar = document.getElementById('sidebar');
+      const navToggle = document.getElementById('navToggle');
+      const search = document.getElementById('guideSearch');
+      const empty = document.getElementById('searchEmpty');
+      const sections = Array.from(document.querySelectorAll('.searchable'));
+
+      navToggle?.addEventListener('click', function () {
+        const open = sidebar.classList.toggle('open');
+        navToggle.setAttribute('aria-expanded', String(open));
+      });
+
+      search?.addEventListener('input', function () {
+        const term = search.value.trim().toLocaleLowerCase('es');
+        let visible = 0;
+        sections.forEach(function (section) {
+          const haystack = (section.dataset.search + ' ' + section.innerText).toLocaleLowerCase('es');
+          const match = !term || haystack.includes(term);
+          section.hidden = !match;
+          if (match) visible += 1;
+        });
+        empty.style.display = term && visible === 0 ? 'block' : 'none';
+      });
+
+      window.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          search?.focus();
+        }
+      });
+
+      document.querySelectorAll('.copy').forEach(function (button) {
+        button.addEventListener('click', function () {
+          const value = button.dataset.copy || '';
+          navigator.clipboard?.writeText(value).then(function () {
+            const original = button.textContent;
+            button.textContent = 'Copiado';
+            setTimeout(function () { button.textContent = original; }, 1200);
+          });
+        });
+      });
+
+      const links = Array.from(document.querySelectorAll('.toc a'));
+      const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (link) { link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id); });
+        });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+      sections.forEach(function (section) { observer.observe(section); });
+    }());
+  </script>
+</body>
+</html>

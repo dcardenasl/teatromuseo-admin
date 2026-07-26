@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ficha detallada de un módulo del Admin CI4 Website Builder.">
+  <title>Módulo del Admin · Documentación detallada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/docs/admin-guide/admin-guide-modules.css">
+</head>
+<body>
+  <div class="doc-shell">
+    <div class="doc-topbar">
+      <a class="doc-brand" href="/admin-guide-modules.html">
+        <span class="doc-mark">CI</span>
+        <span><strong>CI4 Website Builder</strong><span>Documentación del Admin</span></span>
+      </a>
+      <div class="doc-actions">
+        <a class="btn" href="/admin-guide-modules.html">Índice de módulos</a>
+        <a class="btn" href="/admin-guide.html">Guía general</a>
+        <button class="btn" type="button" onclick="window.print()">Imprimir / PDF</button>
+      </div>
+    </div>
+
+    <div id="modulePage"></div>
+    <footer class="footer">Manual v1 · revisado el 22/07/2026 · Basado en el recorrido real del Admin local y 48 capturas.</footer>
+  </div>
+  <script src="/assets/docs/admin-guide/admin-guide-modules.js"></script>
+  <script>
+    (function () {
+      const modules = window.ADMIN_GUIDE_MODULES || [];
+      const root = document.querySelector('#modulePage');
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('module') || 'escritorio';
+      const currentIndex = modules.findIndex(module => module.slug === slug);
+      const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+      if (currentIndex < 0) {
+        root.innerHTML = '<section class="doc-panel"><h1>Módulo no encontrado</h1><p class="lead">La ficha solicitada no existe en esta versión de la guía.</p><p><a class="btn" href="/admin-guide-modules.html">Volver al índice de módulos</a></p></section>';
+        return;
+      }
+      const module = modules[currentIndex];
+      const previous = modules[currentIndex - 1];
+      const next = modules[currentIndex + 1];
+      const related = (module.related || []).map(relatedSlug => modules.find(item => item.slug === relatedSlug)).filter(Boolean);
+      const novice = module.novice || {};
+    const list = items => {
+      const values = Array.isArray(items) ? items : (items ? [items] : []);
+      return values.map(item => `<li>${item}</li>`).join('');
+    };
+      const operationalSteps = novice.steps?.length ? novice.steps : module.steps;
+      document.title = `${module.title} · Documentación del Admin`;
+      const href = item => `/admin-guide-module.html?module=${encodeURIComponent(item.slug)}`;
+      root.innerHTML = `
+        <div class="breadcrumbs"><a href="/admin-guide-modules.html">Módulos</a> / ${escapeHtml(module.group)} / <strong>${escapeHtml(module.title)}</strong></div>
+        <div class="module-layout">
+          <main class="doc-panel module-main">
+            <div class="panel-head"><div><div class="number">MÓDULO ${escapeHtml(module.number)}</div><h1>${escapeHtml(module.title)}</h1><p class="lead">${escapeHtml(module.objective)}</p></div><div class="module-title-actions"><span class="tag">${escapeHtml(module.group)}</span><a class="btn primary" href="${escapeHtml(module.route)}" target="_blank" rel="noopener">Abrir pantalla real →</a></div></div>
+            <nav class="module-quicknav" aria-label="Secciones de esta ficha"><a href="#resumen">En una mirada</a><a href="#opciones">Opciones</a><a href="#pasos">Paso a paso</a><a href="#verificacion">Verificación</a><a href="#acciones">Qué hacer y evitar</a></nav>
+            <div class="module-quickfacts" id="resumen"><div class="module-quickfact"><span>Objetivo</span><strong>${novice.outcome || escapeHtml(module.objective)}</strong></div><div class="module-quickfact"><span>Error que conviene evitar</span><strong>${module.avoid?.[0] || 'No guardes ni publiques hasta revisar el registro y el idioma correctos.'}</strong></div><div class="module-quickfact"><span>Primera comprobación</span><strong>${module.verify?.[0] || 'Busca el mensaje de confirmación y revisa el listado.'}</strong></div></div>
+            <figure class="capture"><img src="/assets/docs/admin-guide/screens/${escapeHtml(module.image)}" alt="Captura real del módulo ${escapeHtml(module.title)}"><figcaption>Captura real de la pantalla <code>${escapeHtml(module.route)}</code>. Los datos visibles son de demostración; usa la estructura para reconocer la pantalla.</figcaption></figure>
+            <div class="callout ok"><strong>Regla de trabajo</strong><div>Primero confirma que estás en el módulo y registro correctos. Después completa los campos en el orden de la pantalla, guarda solo cuando hayas revisado opciones e idiomas y termina comprobando el resultado.</div></div>
+            <div class="beginner-grid">
+              <section class="callout beginner-card"><strong>Antes de empezar</strong><ul>${list(novice.before)}</ul></section>
+              <section class="callout beginner-card"><strong>Qué vas a conseguir</strong><p>${novice.outcome || module.objective}</p></section>
+            </div>
+            <h2 id="opciones">Opciones y campos</h2>
+            <div class="table-wrap"><table class="doc-table"><thead><tr><th>Campo / control</th><th>Qué significa</th><th>Cómo usarlo</th></tr></thead><tbody>${module.fields.map(row => `<tr><td><strong>${row[0]}</strong></td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join('')}</tbody></table></div>
+            <h2 id="pasos">Recorrido para la primera vez</h2>
+            <ol class="steps">${operationalSteps.map(step => `<li><div>${step}</div></li>`).join('')}</ol>
+            <div class="callout tip"><strong>Cómo saber que puedes continuar</strong><div>${novice.continue || 'No avances solo porque el botón está disponible: confirma que el registro, idioma, estado y contenido que ves son los que querías.'}</div></div>
+            <h2 id="salida">Salida segura y resultado esperado</h2>
+            <ul class="check-list">${list(novice.finish || module.verify)}</ul>
+            <div class="callout warn"><strong>Si algo no coincide</strong><ul>${list(novice.trouble || ['No guardes todavía.', 'Vuelve al paso anterior o al listado.', 'Comprueba permisos, idioma, registro y filtros antes de pedir ayuda.'])}</ul></div>
+            <h2 id="acciones">Qué se puede hacer y qué evitar</h2>
+            <div class="list-grid"><section class="list-card ok"><h3>Acciones recomendadas</h3><ul>${module.can.map(item => `<li>${item}</li>`).join('')}</ul></section><section class="list-card warn"><h3>Precauciones</h3><ul>${module.avoid.map(item => `<li>${item}</li>`).join('')}</ul></section></div>
+            <h2 id="verificacion">Resultado esperado y verificación</h2>
+            <ul class="check-list">${module.verify.map(item => `<li>${item}</li>`).join('')}</ul>
+            <div class="callout warn"><strong>Permisos y alcance</strong><div>${module.permissions}</div></div>
+            <h2 id="relacionados">Módulos relacionados</h2>
+            <div class="related">${related.map(item => `<a href="${href(item)}">${escapeHtml(item.title)} →</a>`).join('')}</div>
+            <div class="pager">${previous ? `<a class="btn" href="${href(previous)}">← ${escapeHtml(previous.title)}</a>` : '<span></span>'}${next ? `<a class="btn" href="${href(next)}">${escapeHtml(next.title)} →</a>` : '<a class="btn" href="/admin-guide-modules.html">Volver al índice</a>'}</div>
+          </main>
+          <aside class="doc-panel module-side"><p class="side-title">Todos los módulos</p><nav aria-label="Navegación por módulos">${modules.map(item => `<a class="${item.slug === module.slug ? 'active' : ''}" href="${href(item)}"><span class="number">${escapeHtml(item.number)}</span> · ${escapeHtml(item.title)}</a>`).join('')}</nav><div class="callout"><strong>Ruta del Admin</strong><div><code>${escapeHtml(module.route)}</code></div><p>Abre la pantalla en otra pestaña para conservar esta explicación.</p><p><a class="btn primary" href="${escapeHtml(module.route)}" target="_blank" rel="noopener">Abrir pantalla real →</a></p></div></aside>
+        </div>`;
+    }());
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+    "name": "ci4-admin-starter",
+    "private": true,
+    "packageManager": "npm@10.9.4",
+    "engines": {
+        "node": "^22.22.1 || >=24"
+    },
+    "scripts": {
+        "dev:css": "tailwindcss -i ./src/css/app.css -o ./public/assets/css/app.css --watch",
+        "build:css": "tailwindcss -i ./src/css/app.css -o ./public/assets/css/app.css --minify",
+        "dev:js": "node_modules/.bin/esbuild src/js/app.js --bundle --outfile=public/assets/js/app.js --format=iife --global-name=_app --watch",
+        "build:js": "node_modules/.bin/esbuild src/js/app.js --bundle --outfile=public/assets/js/app.js --format=iife --global-name=_app --minify",
+        "build:vendor": "node scripts/build-vendor.js",
+        "build:all": "npm run build:css && npm run build:js && npm run build:vendor",
+        "lint:js": "eslint 'src/js/**/*.js'",
+        "lint:all": "eslint 'src/js/**/*.js'",
+        "test:js": "vitest run",
+        "test:js:watch": "vitest",
+        "prepare": "husky"
+    },
+    "dependencies": {
+        "@tiptap/core": "^3.27.1",
+        "@tiptap/extension-link": "^3.27.1",
+        "@tiptap/extension-placeholder": "^3.27.1",
+        "@tiptap/starter-kit": "^3.27.1",
+        "alpinejs": "^3.14.9",
+        "lucide": "^1.16.0",
+        "sortablejs": "^1.15.2"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@tailwindcss/cli": "^4.3.0",
+        "esbuild": "^0.28.1",
+        "eslint": "^10.4.0",
+        "husky": "^9.1.7",
+        "lint-staged": "^17.0.5",
+        "tailwindcss": "^4.3.0",
+        "vitest": "^4.1.10"
+    },
+    "lint-staged": {
+        "src/js/**/*.js": [
+            "eslint --fix"
+        ]
+    }
+}

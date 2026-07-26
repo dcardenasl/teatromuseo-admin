@@ -1,0 +1,385 @@
+<?php
+
+declare(strict_types=1);
+
+if (! function_exists('active_nav')) {
+    function active_nav(string $uri, string $class = 'bg-brand-50 text-brand-700'): string
+    {
+        return url_is($uri) ? $class : '';
+    }
+}
+
+if (! function_exists('format_date')) {
+    function format_date(mixed $date, ?string $format = null): string
+    {
+        if ($format === null) {
+            $appConfig = config('App');
+            $locale = service('request')->getLocale();
+            $formats = $appConfig->dateFormats ?? [];
+            $format = (is_string($locale) && isset($formats[$locale]))
+                ? $formats[$locale]
+                : ($appConfig->dateFormat ?? 'd/m/Y H:i');
+        }
+
+        if (is_array($date)) {
+            $date = $date['date'] ?? $date[0] ?? null;
+        }
+
+        if (empty($date) || ! is_string($date)) {
+            return '-';
+        }
+
+        try {
+            return (new DateTime($date))->format($format);
+        } catch (Throwable) {
+            return $date;
+        }
+    }
+}
+
+// Authentication helpers are in app/Helpers/auth_helper.php
+// See: is_email_verified(), has_permission()
+
+if (! function_exists('safe_lang')) {
+    /**
+     * Resolve a language key, falling back to a default string when the
+     * key has no translation (CI4's lang() echoes the key itself in that
+     * case). Consolidated here from 6 duplicate inline declarations across
+     * view partials (audit finding H-014, 2026-07-10).
+     */
+    function safe_lang(string $key, string $fallback): string
+    {
+        $value = lang($key);
+
+        return $value === $key ? $fallback : (string) $value;
+    }
+}
+
+if (! function_exists('filter_label_class')) {
+    function filter_label_class(): string
+    {
+        return 'mb-1 block text-xs font-medium text-gray-600';
+    }
+}
+
+if (! function_exists('filter_input_class')) {
+    function filter_input_class(): string
+    {
+        return 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200';
+    }
+}
+
+if (! function_exists('filter_panel_class')) {
+    function filter_panel_class(): string
+    {
+        return 'mt-4 rounded-xl border border-gray-200 bg-white p-4';
+    }
+}
+
+if (! function_exists('confirm_delete_message')) {
+    function confirm_delete_message(?string $itemLabel = null): string
+    {
+        $label = trim((string) $itemLabel);
+        if ($label === '') {
+            return lang('App.confirm_delete');
+        }
+
+        return lang('App.confirm_delete_named', [$label]);
+    }
+}
+
+if (! function_exists('filter_submit_button_class')) {
+    function filter_submit_button_class(bool $fullWidth = false): string
+    {
+        $base = 'inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500';
+
+        return $fullWidth ? ('w-full ' . $base) : $base;
+    }
+}
+
+if (! function_exists('query_without_page')) {
+    /**
+     * @return array<string, mixed>
+     */
+    function query_without_page(): array
+    {
+        $query = request()->getGet();
+
+        if (! is_array($query)) {
+            return [];
+        }
+
+        return array_filter(
+            $query,
+            static fn ($key): bool => $key !== 'page' && $key !== 'cursor',
+            ARRAY_FILTER_USE_KEY,
+        );
+    }
+}
+
+if (! function_exists('has_active_filters')) {
+    /**
+     * Determine whether there are active filter values in a query payload.
+     *
+     * @param array<string, mixed>|null $query
+     * @param array<string, scalar|null> $defaults
+     * @param array<int, string> $ignoredKeys
+     */
+    function has_active_filters(?array $query = null, array $defaults = [], array $ignoredKeys = ['sort', 'page', 'cursor']): bool
+    {
+        if ($query === null) {
+            $currentQuery = request()->getGet();
+            $query = is_array($currentQuery) ? $currentQuery : [];
+        }
+
+        $ignored = [];
+        foreach ($ignoredKeys as $key) {
+            if (is_string($key) && $key !== '') {
+                $ignored[$key] = true;
+            }
+        }
+
+        $keys = [];
+        foreach (array_keys($defaults) as $key) {
+            if (is_string($key) && $key !== '') {
+                $keys[$key] = true;
+            }
+        }
+        foreach (array_keys($query) as $key) {
+            if (is_string($key) && $key !== '') {
+                $keys[$key] = true;
+            }
+        }
+
+        foreach (array_keys($keys) as $key) {
+            if (isset($ignored[$key])) {
+                continue;
+            }
+
+            $default = array_key_exists($key, $defaults) ? trim((string) $defaults[$key]) : '';
+            $current = $default;
+
+            if (array_key_exists($key, $query)) {
+                $value = $query[$key];
+                if (is_scalar($value) || $value === null) {
+                    $current = trim((string) $value);
+                } else {
+                    continue;
+                }
+            }
+
+            if ($current !== $default) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+if (! function_exists('section_heading_class')) {
+    /**
+     * Consistent page-section heading. Use for H2/H3 inside cards or
+     * section dividers — always `text-lg font-semibold text-gray-900`.
+     */
+    function section_heading_class(): string
+    {
+        return 'text-lg font-semibold text-gray-900';
+    }
+}
+
+if (! function_exists('card_class')) {
+    /**
+     * Surface card wrapper — mirrors the `.card` CSS component class.
+     * Optional $padding follows: 'sm' = p-4, 'md' = p-5 (default), 'none' = no padding.
+     */
+    function card_class(string $padding = 'md'): string
+    {
+        $pad = match ($padding) {
+            'sm'   => ' p-4',
+            'none' => '',
+            default => ' p-5',
+        };
+
+        return 'bg-white border border-gray-200 rounded-xl shadow-sm' . $pad;
+    }
+}
+
+if (! function_exists('table_wrapper_class')) {
+    function table_wrapper_class(): string
+    {
+        return 'mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-100';
+    }
+}
+
+if (! function_exists('table_scroll_class')) {
+    function table_scroll_class(): string
+    {
+        return 'overflow-x-auto';
+    }
+}
+
+if (! function_exists('table_class')) {
+    function table_class(): string
+    {
+        return 'min-w-full text-sm';
+    }
+}
+
+if (! function_exists('table_head_class')) {
+    function table_head_class(): string
+    {
+        return 'bg-gradient-to-b from-gray-50 to-gray-100 text-left text-gray-500';
+    }
+}
+
+if (! function_exists('table_th_class')) {
+    function table_th_class(): string
+    {
+        return 'py-3.5 px-4 text-[11px] font-bold uppercase tracking-wider';
+    }
+}
+
+if (! function_exists('table_body_class')) {
+    function table_body_class(): string
+    {
+        return 'divide-y divide-gray-100';
+    }
+}
+
+if (! function_exists('table_td_class')) {
+    function table_td_class(string $tone = 'default'): string
+    {
+        $base = 'py-3.5 px-4 align-middle';
+
+        return match ($tone) {
+            'primary' => $base . ' text-gray-800 font-medium',
+            'muted'   => $base . ' text-gray-600',
+            'subtle'  => $base . ' text-gray-500',
+            default   => $base . ' text-gray-700',
+        };
+    }
+}
+
+if (! function_exists('table_row_class')) {
+    function table_row_class(): string
+    {
+        return 'odd:bg-white even:bg-gray-50/45 hover:bg-brand-50/40 transition-colors';
+    }
+}
+
+if (! function_exists('action_button_class')) {
+    function action_button_class(string $variant = 'neutral'): string
+    {
+        $base = 'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition focus:outline-none focus:ring-2';
+
+        return match ($variant) {
+            'primary' => $base . ' bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500',
+            'danger'  => $base . ' bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+            default   => $base . ' border border-gray-200 bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-brand-500',
+        };
+    }
+}
+
+if (! function_exists('ui_icon')) {
+    function ui_icon(string $name, string $class = 'h-4 w-4'): string
+    {
+        $icons = [
+            'dashboard' => 'layout-dashboard',
+            'profile'   => 'user-round',
+            'files'     => 'files',
+            'users'     => 'users',
+            'audit'     => 'clipboard-list',
+            'api_keys'   => 'key-round',
+            'metrics'   => 'bar-chart-3',
+            'shield'    => 'shield',
+            'shield-check' => 'shield-check',
+            'lock'      => 'lock',
+            'user-check' => 'user-check',
+            'user'      => 'user',
+            'user-round' => 'user-round',
+            'activity'  => 'activity',
+            'zap'       => 'zap',
+            'clock'     => 'clock',
+            'search'    => 'search',
+            'plus'      => 'plus',
+            'eye'       => 'eye',
+            'edit'      => 'pencil',
+            'download'  => 'download',
+            'trash'     => 'trash-2',
+            'x'         => 'x',
+            'file'        => 'file',
+            'file-plus'   => 'file-plus',
+            'database'    => 'database',
+            'hard-drive'  => 'hard-drive',
+            'folder-lock' => 'folder-lock',
+            'list'        => 'list',
+            'grid'        => 'grid-2x2',
+            'layout-grid' => 'layout-grid',
+            'upload'        => 'upload',
+            'upload-cloud'  => 'upload-cloud',
+            'refresh-ccw'   => 'refresh-ccw',
+            'check'         => 'check',
+            'folder-open'     => 'folder-open',
+            'image'           => 'image',
+            'layers'          => 'layers',
+            'help-circle'     => 'circle-help',
+            'info'            => 'info',
+            'alert-circle'    => 'circle-alert',
+            'triangle-alert'  => 'triangle-alert',
+            'cart'            => 'shopping-cart',
+            'warehouse'       => 'warehouse',
+            'box'             => 'package',
+            'package'         => 'package',
+            'truck'           => 'truck',
+            'wallet'          => 'wallet',
+            'credit-card'     => 'credit-card',
+            'bank'            => 'banknote',
+            'settings'        => 'settings',
+            'mail'            => 'mail',
+            'bell'            => 'bell',
+            'calendar'        => 'calendar',
+            'map-pin'         => 'map-pin',
+            'tag'             => 'tag',
+            'ticket'          => 'ticket',
+            'store'           => 'store',
+            'cms-page'        => 'file-text',
+            'cms-menu'        => 'navigation',
+            'cms-block-type'  => 'layout-template',
+            'cms-entry'       => 'newspaper',
+            'cms-language'    => 'globe',
+            'cms-redirect'    => 'corner-up-right',
+            'cms-collection'  => 'archive',
+            'languages'       => 'languages',
+            'chevron-up'      => 'chevron-up',
+            'chevron-down'    => 'chevron-down',
+            'chevron-right'   => 'chevron-right',
+            'grip-vertical'   => 'grip-vertical',
+            'external-link'   => 'external-link',
+            'copy'            => 'copy',
+            'clipboard-list'  => 'clipboard-list',
+            'circle-check'    => 'circle-check',
+        ];
+
+        if (! isset($icons[$name])) {
+            log_message('warning', "ui_icon(): unknown icon '{$name}'. Add it to the icon map in ui_helper.php.");
+            // Pass the name as-is; Lucide silently ignores unrecognised icon IDs.
+            $icon = $name;
+        } else {
+            $icon = $icons[$name];
+        }
+
+        return '<i data-lucide="' . esc($icon) . '" class="' . esc($class) . '" aria-hidden="true"></i>';
+    }
+}
+
+if (! function_exists('cms_status_badge')) {
+    function cms_status_badge(string $status): string
+    {
+        return match ($status) {
+            'published' => '<span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">published</span>',
+            'archived'  => '<span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">archived</span>',
+            default     => '<span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">draft</span>',
+        };
+    }
+}

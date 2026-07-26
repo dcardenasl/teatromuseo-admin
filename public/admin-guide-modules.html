@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Documentación detallada por módulo del Admin CI4 Website Builder.">
+  <title>Módulos del Admin · Documentación detallada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/docs/admin-guide/admin-guide-modules.css">
+</head>
+<body>
+  <div class="doc-shell">
+    <div class="doc-topbar">
+      <a class="doc-brand" href="/admin-guide.html">
+        <span class="doc-mark">CI</span>
+        <span><strong>CI4 Website Builder</strong><span>Documentación del Admin</span></span>
+      </a>
+      <div class="doc-actions">
+        <a class="btn" href="/admin-guide.html">Guía general</a>
+        <button class="btn" type="button" onclick="window.print()">Imprimir / PDF</button>
+      </div>
+    </div>
+
+    <header class="hero">
+      <p class="eyebrow">Referencia pantalla por pantalla</p>
+      <h1>Documentación por módulos</h1>
+      <p>Abre una ficha independiente para aprender qué hace cada módulo, qué significa cada opción, cómo usarlo paso a paso, qué validar y qué conviene evitar.</p>
+      <div class="hero-meta"><span>28 módulos</span><span>48 capturas reales</span><span>Rutas compartibles</span><span>Manual para personas no técnicas</span></div>
+    </header>
+
+    <section class="doc-panel first-visit-panel" aria-labelledby="first-visit-title">
+      <div class="panel-head"><div><h2 id="first-visit-title">Si es tu primera vez, sigue esta ruta</h2><p>Es un recorrido de orientación. No tienes que completar todo de una vez: usa cada ficha cuando llegue el momento de trabajar en ese módulo.</p></div><span class="tag">Ruta recomendada</span></div>
+      <div class="first-visit-path" aria-label="Ruta recomendada para empezar">
+        <a href="/admin-guide-module.html?module=escritorio"><span>01</span><strong>Escritorio</strong><small>Entender el estado</small></a>
+        <a href="/admin-guide-module.html?module=wizard-contenido"><span>02</span><strong>Asistente</strong><small>Crear sin perderse</small></a>
+        <a href="/admin-guide-module.html?module=entradas"><span>03</span><strong>Contenido</strong><small>Guardar en borrador</small></a>
+        <a href="/admin-guide-module.html?module=paginas"><span>04</span><strong>Páginas</strong><small>Construir la estructura</small></a>
+        <a href="/admin-guide-module.html?module=menus"><span>05</span><strong>Menús</strong><small>Conectar navegación</small></a>
+        <a href="/admin-guide-module.html?module=traducciones"><span>06</span><strong>Idiomas</strong><small>Revisar y publicar</small></a>
+      </div>
+    </section>
+
+    <section class="doc-panel" aria-labelledby="module-index-title">
+      <div class="panel-head">
+        <div><h2 id="module-index-title">Elige un módulo</h2><p>Si no sabes dónde empezar, busca por nombre, tarea o URL del Admin.</p></div>
+        <div class="doc-actions">
+          <div class="search-wrapper">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+            </svg>
+            <input id="moduleSearch" class="search" type="search" placeholder="Buscar módulo…" aria-label="Buscar módulo">
+            <kbd class="search-shortcut">⌘K</kbd>
+          </div>
+          <select id="groupFilter" class="search" aria-label="Filtrar por grupo">
+            <option value="">Todos los grupos</option>
+          </select>
+        </div>
+      </div>
+      <p id="filterSummary" class="filter-summary" aria-live="polite"></p>
+      <div id="moduleGrid" class="module-grid"></div>
+      <p id="emptyState" class="empty" hidden>No encontramos módulos con ese criterio. Limpia la búsqueda o vuelve a la guía general.</p>
+    </section>
+
+    <section class="doc-panel">
+      <div class="callout ok"><strong>Cómo usar una ficha</strong><div>Lee primero el objetivo. Después sigue los pasos en orden, revisa la tabla de opciones, guarda solo en el momento indicado y termina con la lista de verificación. Cada ficha conserva enlaces a sus módulos relacionados.</div></div>
+      <div class="callout warn"><strong>Importante</strong><div>Las capturas y estados corresponden a la instancia local observada. Los registros de demostración pueden cambiar, pero la forma de trabajo y las reglas descritas sirven como referencia operativa.</div></div>
+    </section>
+    <footer class="footer">Manual v1.1 · revisión de contenido y navegación · 22/07/2026 · <a href="/admin-guide.html">Volver a la guía completa</a></footer>
+  </div>
+  <script src="/assets/docs/admin-guide/admin-guide-modules.js"></script>
+  <script>
+    (function () {
+      const modules = window.ADMIN_GUIDE_MODULES || [];
+      const grid = document.querySelector('#moduleGrid');
+      const search = document.querySelector('#moduleSearch');
+      const group = document.querySelector('#groupFilter');
+      const summary = document.querySelector('#filterSummary');
+      const empty = document.querySelector('#emptyState');
+      const groups = [...new Set(modules.map(module => module.group))];
+      groups.forEach(name => { const option = document.createElement('option'); option.value = name; option.textContent = name; group.appendChild(option); });
+      const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+      function render() {
+        const query = search.value.trim().toLowerCase();
+        const selectedGroup = group.value;
+        const result = modules.filter(module => {
+          const haystack = [module.title, module.nav, module.group, module.route, module.objective, ...module.fields.flat().map(String), ...module.steps].join(' ').toLowerCase();
+          return (!query || haystack.includes(query)) && (!selectedGroup || module.group === selectedGroup);
+        });
+        summary.textContent = `${result.length} de ${modules.length} módulos visibles`;
+        empty.hidden = result.length > 0;
+        grid.innerHTML = result.map(module => `<a class="module-card" href="/admin-guide-module.html?module=${encodeURIComponent(module.slug)}"><div class="module-card-top"><span class="number">${escapeHtml(module.number)}</span><span class="tag">${escapeHtml(module.group)}</span></div><h3>${escapeHtml(module.title)}</h3><p>${escapeHtml(module.objective)}</p><span class="module-route">Abrir ficha · ${escapeHtml(module.route)} →</span></a>`).join('');
+      }
+      search.addEventListener('input', render);
+      group.addEventListener('change', render);
+      window.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          search?.focus();
+        }
+      });
+      render();
+    }());
+  </script>
+</body>
+</html>

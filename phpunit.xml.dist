@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
+    bootstrap="vendor/codeigniter4/framework/system/Test/bootstrap.php"
+    backupGlobals="false"
+    beStrictAboutOutputDuringTests="true"
+    colors="true"
+    columns="max"
+    failOnRisky="true"
+    failOnWarning="false"
+    failOnDeprecation="false"
+    cacheDirectory="build/.phpunit.cache">
+    <coverage
+        includeUncoveredFiles="true"
+        pathCoverage="false"
+        ignoreDeprecatedCodeUnits="true"
+        disableCodeCoverageIgnore="true">
+        <report>
+            <clover outputFile="tests/coverage.xml"/>
+            <html outputDirectory="tests/coverage/"/>
+        </report>
+    </coverage>
+    <testsuites>
+        <testsuite name="App">
+            <directory>./tests/unit</directory>
+            <directory>./tests/feature</directory>
+        </testsuite>
+        <testsuite name="Contract">
+            <directory>./tests/contract</directory>
+        </testsuite>
+    </testsuites>
+    <logging>
+        <testdoxHtml outputFile="build/logs/testdox.html"/>
+        <testdoxText outputFile="build/logs/testdox.txt"/>
+        <junit outputFile="build/logs/logfile.xml"/>
+    </logging>
+    <source>
+        <include>
+            <directory suffix=".php">./app</directory>
+        </include>
+        <exclude>
+            <directory suffix=".php">./app/Views</directory>
+            <file>./app/Config/Routes.php</file>
+        </exclude>
+    </source>
+    <php>
+        <server name="app.baseURL" value="http://localhost:8182/"/>
+        <server name="CODEIGNITER_SCREAM_DEPRECATIONS" value="0"/>
+        <!-- Directory containing phpunit.xml -->
+        <const name="HOMEPATH" value="./"/>
+        <!-- Directory containing the Paths config file -->
+        <const name="CONFIGPATH" value="./app/Config/"/>
+        <!-- Directory containing the front controller (index.php) -->
+        <const name="PUBLICPATH" value="./public/"/>
+        <env name="DOMAIN_API_BASE_URL" value="http://localhost:8190"/>
+        <env name="API_BASE_URL" value="http://localhost:8180"/>
+        <env name="PUBLIC_SITE_URL" value="http://localhost:8186"/>
+        <env name="CMS_PREVIEW_SECRET" value="testing-preview-secret-at-least-32-characters"/>
+        <!-- Database configuration -->
+        <!-- Uncomment to provide your own database for testing
+            <env name="database.tests.hostname" value="localhost"/>
+            <env name="database.tests.database" value="tests"/>
+            <env name="database.tests.username" value="tests_user"/>
+            <env name="database.tests.password" value=""/>
+            <env name="database.tests.DBDriver" value="MySQLi"/>
+            <env name="database.tests.DBPrefix" value="tests_"/>
+            -->
+    </php>
+</phpunit>

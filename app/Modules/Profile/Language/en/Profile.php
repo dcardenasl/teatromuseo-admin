@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title'                   => 'Profile',
+    'personal_info'           => 'Personal information',
+    'first_name_label'        => 'First name',
+    'last_name_label'         => 'Last name',
+    'email_label'             => 'Email',
+    'email_immutable_help'    => 'Email is the security anchor of your account and cannot be changed. Contact a super administrator if you need a correction.',
+    'save_changes'            => 'Save changes',
+    'security'                => 'Security',
+    'password_reset_help'     => 'Use email reset flow to change your password.',
+    'send_password_reset'     => 'Send reset link',
+    'password_reset_sent'     => 'Password reset email sent.',
+    'password_reset_failed'   => 'Could not send password reset email.',
+    'email_verification'      => 'Email verification',
+    'status'                  => 'Status',
+    'verified'                => 'Verified',
+    'pending'                 => 'Pending',
+    'resend_verification'     => 'Resend verification',
+    'update_success'          => 'Profile updated.',
+    'update_failed'           => 'Could not update profile.',
+    'resend_success'          => 'Verification email resent.',
+    'resend_failed'           => 'Could not resend verification.',
+    'avatar'                  => 'Profile photo',
+    'avatar_help'             => 'Upload a photo to personalize your account.',
+    'avatar_upload'           => 'Upload photo',
+    'avatar_update_success'   => 'Profile photo updated.',
+    'avatar_update_failed'    => 'Could not update profile photo.',
+    'avatar_invalid_file'     => 'Please select a valid image (JPG, PNG, GIF or WebP).',
+];

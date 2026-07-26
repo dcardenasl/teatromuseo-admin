@@ -1,0 +1,85 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'settings_title'           => 'Configuración',
+    'settings_new'             => 'Nueva Configuración',
+    'settings_create'          => 'Nueva Configuración',
+    'settings_edit'            => 'Editar Configuración',
+    'settings_details'         => 'Detalles de la configuración',
+    'settings_not_found'       => 'Configuración no encontrada.',
+    'settings_create_success'  => 'Configuración creada exitosamente.',
+    'settings_create_failed'   => 'No se pudo crear la configuración.',
+    'settings_update_success'  => 'Configuración actualizada exitosamente.',
+    'settings_update_failed'   => 'No se pudo actualizar la configuración.',
+    'settings_delete_success'  => 'Configuración eliminada exitosamente.',
+    'settings_delete_failed'   => 'No se pudo eliminar la configuración.',
+    'settings_loading'         => 'Cargando configuración...',
+    'settings_search_placeholder' => 'Buscar configuración...',
+    'settings_translations'    => 'Traducciones',
+    'settings_value_section'   => 'Valores de la configuración',
+    'settings_metadata_section' => 'Detalles de la configuración',
+    'field_base_value'         => 'Valor base',
+    'field_base_value_help'    => 'Este es el valor canónico que usa el sistema como fuente de verdad.',
+
+    'field_setting_key'           => 'Clave de configuración',
+    'field_setting_key_placeholder' => 'sitio.nombre',
+    'field_setting_key_help'      => 'Clave única utilizada para leer esta configuración.',
+    'field_setting_value'         => 'Valor de configuración',
+    'field_setting_value_placeholder' => 'Ingrese valor de configuración',
+    'field_setting_type'          => 'Tipo de configuración',
+    'field_setting_type_placeholder' => 'Seleccione tipo de configuración',
+    'field_setting_type_help'     => 'Controla cómo se almacena el valor de configuración.',
+    'field_setting_group'         => 'Grupo',
+    'field_setting_group_placeholder' => 'general',
+    'field_setting_group_help'    => 'Grupo utilizado para organizar configuraciones.',
+    'group_identity'              => 'Identidad',
+    'group_contact'               => 'Contacto',
+    'group_integration'           => 'Integraciones',
+    'group_analytics'             => 'Analítica',
+    'group_social'                => 'Redes sociales',
+    'field_description'           => 'Descripción',
+    'field_description_placeholder' => 'Descripción opcional',
+    'field_description_help'      => 'Descripción interna breve.',
+    'field_is_translatable'       => 'Traducible',
+    'field_is_translatable_help'  => 'Activa traducciones por idioma para esta configuración.',
+    'field_is_translatable_on'    => 'Traducible',
+    'field_is_translatable_off'   => 'No traducible',
+    'field_language'              => 'Idioma',
+
+    // Tipo de control UI
+    'field_input_type'            => 'Tipo de control UI',
+    'field_input_type_help'       => 'Determina qué componente de formulario renderiza este setting en el admin.',
+    'input_type_text'             => 'Texto',
+    'input_type_textarea'         => 'Área de texto',
+    'input_type_richtext'         => 'Texto enriquecido',
+    'input_type_url'              => 'URL',
+    'input_type_email'            => 'Email',
+    'input_type_phone'            => 'Teléfono',
+    'input_type_color'            => 'Selector de color',
+    'input_type_number'           => 'Número',
+    'input_type_boolean'          => 'Toggle (sí/no)',
+    'input_type_image'            => 'Selector de imagen',
+    'input_type_file'             => 'Selector de archivo',
+    'input_type_select'           => 'Lista desplegable',
+    'input_type_code'             => 'Código / JSON',
+    'input_type_slug'             => 'Slug',
+
+    // Opciones JSON para select
+    'field_options_json'          => 'Opciones del selector (JSON)',
+    'field_options_json_placeholder' => '[{"value":"opc1","label":"Opción 1"},{"value":"opc2","label":"Opción 2"}]',
+    'field_options_json_help'     => 'Array de objetos {value, label}. Solo aplica cuando el tipo de control es "Lista desplegable".',
+
+    // Requerido / solo lectura
+    'field_is_required'           => 'Requerido',
+    'field_is_readonly'           => 'Solo lectura',
+
+    // Etiquetas UI por idioma (dentro de la sección de traducciones)
+    'ui_labels_section'           => 'Etiquetas UI (label / placeholder / texto de ayuda)',
+    'field_label_placeholder'     => 'Etiqueta del campo',
+    'field_placeholder_placeholder' => 'Texto de placeholder',
+    'field_help_text_placeholder' => 'Texto de ayuda que aparece debajo del campo',
+
+    'key_must_be_unique'          => 'Esta clave de configuración ya está en uso.',
+];
