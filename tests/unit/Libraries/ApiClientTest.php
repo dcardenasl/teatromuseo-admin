@@ -48,7 +48,7 @@ final class ApiClientTest extends CIUnitTestCase
         $this->assertSame(15, $config->timeout);
         $this->assertSame(5, $config->connectTimeout);
         $this->assertSame('/api/v1', $config->apiPrefix);
-        $this->assertSame('CI4 Website Builder Admin', $config->appName);
+        $this->assertSame('Teatromuseo Admin', $config->appName);
     }
 
     public function testConfigReadsEnvVariables(): void

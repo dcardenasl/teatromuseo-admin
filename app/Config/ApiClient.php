@@ -16,7 +16,7 @@ class ApiClient extends BaseConfig
 
     public string $apiPrefix = '/api/v1';
 
-    public string $appName = 'CI4 Website Builder Admin';
+    public string $appName = 'Teatromuseo Admin';
 
     public string $appKey = '';
 
