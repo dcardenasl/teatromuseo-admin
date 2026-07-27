@@ -23,6 +23,9 @@ final class BlockTypeOptionsResolver
     /** @var array<int, array{value: string, label: string}>|null */
     private ?array $entriesForIdsCache = null;
 
+    /** @var array<string, array{value: string, label: string}> */
+    private array $entryReferenceOptionsCache = [];
+
     public function __construct(
         private readonly BlockCatalogServiceInterface $blockCatalogService,
         private readonly FormApiService $formApiService,
@@ -149,8 +152,21 @@ final class BlockTypeOptionsResolver
         $hasCollectionId  = isset($schema['config_fields']['collection_id'])  || isset($blockType['config_fields']['collection_id']);
         $hasPageId        = isset($schema['config_fields']['page_id']) || isset($blockType['config_fields']['page_id']);
         $hasEntryId       = isset($schema['config_fields']['entry_id']) || isset($blockType['config_fields']['entry_id']);
+        $hasEntryReferences = false;
 
-        if (! $hasFormEmbed && ! $hasCollectionKey && ! $hasCollectionId && ! $hasPageId && ! $hasEntryId) {
+        $schemaFields = is_array($schema['fields'] ?? null) ? $schema['fields'] : [];
+        foreach ($schemaFields as $fieldKey => $fieldDefinition) {
+            if (! is_array($fieldDefinition)) {
+                continue;
+            }
+            if (in_array((string) ($fieldDefinition['type'] ?? ''), ['entry_reference', 'entry_reference_list'], true)) {
+                $hasEntryReferences = true;
+                $schema['fields'][$fieldKey]['options'] = $this->entryReferenceOptions($fieldDefinition);
+            }
+        }
+        $blockType['fields'] = $schemaFields;
+
+        if (! $hasFormEmbed && ! $hasCollectionKey && ! $hasCollectionId && ! $hasPageId && ! $hasEntryId && ! $hasEntryReferences) {
             return;
         }
 
@@ -262,6 +278,49 @@ final class BlockTypeOptionsResolver
         }
 
         $blockType['schema_definition'] = $schema;
+    }
+
+    /**
+     * @param array<string, mixed> $fieldDefinition
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function entryReferenceOptions(array $fieldDefinition): array
+    {
+        $allowed = $fieldDefinition['collection_keys'] ?? $fieldDefinition['allowed_collections'] ?? [];
+        if (isset($fieldDefinition['collection_key']) && is_string($fieldDefinition['collection_key'])) {
+            $allowed = [$fieldDefinition['collection_key']];
+        }
+        if (! is_array($allowed)) {
+            return [];
+        }
+
+        $collectionMap = $this->collectionsMap();
+        $options = [];
+        foreach ($allowed as $collectionKey) {
+            $collectionKey = trim((string) $collectionKey);
+            $collectionId = $collectionMap[$collectionKey] ?? null;
+            if ($collectionKey === '' || $collectionId === null) {
+                continue;
+            }
+
+            $cacheKey = $collectionKey . ':' . $collectionId;
+            if (! isset($this->entryReferenceOptionsCache[$cacheKey])) {
+                foreach ($this->entriesForCollection((int) $collectionId) as $option) {
+                    $this->entryReferenceOptionsCache[$cacheKey . ':' . $option['value']] = [
+                        'value' => $collectionKey . ':' . $option['value'],
+                        'label' => $option['label'] . ' · ' . $collectionKey,
+                    ];
+                }
+            }
+
+            foreach ($this->entryReferenceOptionsCache as $optionKey => $option) {
+                if (str_starts_with($optionKey, $cacheKey . ':')) {
+                    $options[] = $option;
+                }
+            }
+        }
+
+        return $options;
     }
 
     /**

@@ -507,6 +507,38 @@ $isImageAccept = static function (string $accept): bool {
                                         </template>
                                     </select>
                                 </template>
+                                <template x-if="field.type === 'entry_reference'">
+                                    <select :name="`translations[${langIndex}][block_data][${fieldKey}]`"
+                                            :required="field.required && lang.is_default == 1"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                        <option value="">— Seleccionar entrada —</option>
+                                        <template x-for="opt in (field.options || [])" :key="opt.value">
+                                            <option :value="opt.value" x-text="opt.label"></option>
+                                        </template>
+                                    </select>
+                                </template>
+                                <template x-if="field.type === 'entry_reference_list'">
+                                    <select :name="`translations[${langIndex}][block_data][${fieldKey}][]`"
+                                            multiple
+                                            :required="field.required && lang.is_default == 1"
+                                            size="6"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                        <template x-for="opt in (field.options || [])" :key="opt.value">
+                                            <option :value="opt.value" x-text="opt.label"></option>
+                                        </template>
+                                    </select>
+                                </template>
+                                <template x-if="field.type === 'number'">
+                                    <input type="number" :name="`translations[${langIndex}][block_data][${fieldKey}]`"
+                                           :required="field.required && lang.is_default == 1"
+                                           class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                </template>
+                                <template x-if="field.type === 'date' || field.type === 'datetime'">
+                                    <input :type="field.type === 'datetime' ? 'datetime-local' : 'date'"
+                                           :name="`translations[${langIndex}][block_data][${fieldKey}]`"
+                                           :required="field.required && lang.is_default == 1"
+                                           class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                </template>
                                 <template x-if="field.type === 'media_reference'">
                                     <div x-data="mediaReferenceField(field.default || {}, field.accept || 'image', fieldKey)" class="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                                         <div class="flex items-start justify-between gap-3">
@@ -887,7 +919,7 @@ $isImageAccept = static function (string $accept): bool {
                                     </div>
                                 </template>
 
-                                <template x-if="!['richtext','text','textarea','url','integer','int','select','file','repeater','color'].includes(field.type)">
+                                <template x-if="!['richtext','text','textarea','url','integer','int','number','date','datetime','select','entry_reference','entry_reference_list','file','repeater','color'].includes(field.type)">
                                     <input type="text" :name="`translations[${langIndex}][block_data][${fieldKey}]`"
                                            :required="field.required && lang.is_default == 1"
                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
@@ -1147,7 +1179,7 @@ function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', trans
             const translatableFieldKeys = [];
             Object.entries(this.contentFields).forEach(([fieldKey, field]) => {
                 const fieldType = field.type || 'string';
-                if (!['file', 'media_reference', 'repeater', 'boolean', 'integer', 'select'].includes(fieldType)) {
+                if (!['file', 'media_reference', 'repeater', 'boolean', 'integer', 'number', 'select', 'entry_reference', 'entry_reference_list'].includes(fieldType)) {
                     translatableFieldKeys.push(fieldKey);
                 }
             });

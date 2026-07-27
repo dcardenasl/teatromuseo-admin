@@ -361,8 +361,15 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                        <?= $freq ? 'required' : '' ?>>
                             </div>
                             <?= render_field_error($fieldName) ?>
-                        <?php elseif ($ft === 'integer'): ?>
+                        <?php elseif (in_array($ft, ['integer', 'int', 'number'], true)): ?>
                             <input type="number"
+                                   name="<?= esc($fieldName, 'attr') ?>"
+                                   value="<?= esc((string) old($fieldName, $fval)) ?>"
+                                   class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                   <?= $freq ? 'required' : '' ?>>
+                            <?= render_field_error($fieldName) ?>
+                        <?php elseif (in_array($ft, ['date', 'datetime'], true)): ?>
+                            <input type="<?= $ft === 'datetime' ? 'datetime-local' : 'date' ?>"
                                    name="<?= esc($fieldName, 'attr') ?>"
                                    value="<?= esc((string) old($fieldName, $fval)) ?>"
                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -377,6 +384,55 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                        class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
                                 <span class="text-sm text-gray-600"><?= esc($flabel) ?></span>
                             </label>
+                            <?= render_field_error($fieldName) ?>
+                        <?php elseif ($ft === 'entry_reference'): ?>
+                            <?php
+                            $referenceValue = old($fieldName, $fval);
+                            if (is_array($referenceValue)) {
+                                $referenceValue = (string) ($referenceValue['collection_key'] ?? '') . ':' . (string) ($referenceValue['entry_id'] ?? '');
+                            }
+                            ?>
+                            <select name="<?= esc($fieldName, 'attr') ?>"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                    <?= $freq ? 'required' : '' ?>>
+                                <option value="">— Seleccionar entrada —</option>
+                                <?php foreach ($foptions as $opt):
+                                    $val = is_array($opt) ? $opt['value'] : $opt;
+                                    $lbl = is_array($opt) ? $opt['label'] : $opt;
+                                    ?>
+                                    <option value="<?= esc((string) $val) ?>" <?= (string) $referenceValue === (string) $val ? 'selected' : '' ?>><?= esc((string) $lbl) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?= render_field_error($fieldName) ?>
+                        <?php elseif ($ft === 'entry_reference_list'): ?>
+                            <?php
+                            $referenceValues = is_array($fval) ? $fval : [];
+                            if (isset($referenceValues['entry_id'])) {
+                                $referenceValues = [$referenceValues];
+                            }
+                            $referenceValues = array_map(static function (mixed $reference): string {
+                                if (is_array($reference)) {
+                                    return (string) ($reference['collection_key'] ?? '') . ':' . (string) ($reference['entry_id'] ?? '');
+                                }
+                                return (string) $reference;
+                            }, $referenceValues);
+                            $oldReferenceValues = old($fieldName, null);
+                            if (is_array($oldReferenceValues)) {
+                                $referenceValues = array_map('strval', $oldReferenceValues);
+                            }
+                            ?>
+                            <select name="<?= esc($fieldName, 'attr') ?>[]"
+                                    multiple
+                                    size="6"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                    <?= $freq ? 'required' : '' ?>>
+                                <?php foreach ($foptions as $opt):
+                                    $val = is_array($opt) ? $opt['value'] : $opt;
+                                    $lbl = is_array($opt) ? $opt['label'] : $opt;
+                                    ?>
+                                    <option value="<?= esc((string) $val) ?>" <?= in_array((string) $val, $referenceValues, true) ? 'selected' : '' ?>><?= esc((string) $lbl) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                             <?= render_field_error($fieldName) ?>
                         <?php elseif ($ft === 'select' && ! empty($foptions)): ?>
                             <select name="<?= esc($fieldName, 'attr') ?>"

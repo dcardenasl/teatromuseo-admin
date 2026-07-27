@@ -11,7 +11,7 @@ final class CmsPresetCatalog
      */
     public static function collectionTypes(): array
     {
-        return ['blog', 'news', 'portfolio', 'services', 'other'];
+        return ['blog', 'news', 'portfolio', 'services', 'companias', 'personas', 'obras', 'videos', 'festivales', 'exposiciones', 'cursos', 'publicaciones', 'other'];
     }
 
     /**
@@ -49,7 +49,7 @@ final class CmsPresetCatalog
      */
     public static function collectionPresets(): array
     {
-        return [
+        $presets = [
             self::collectionPreset('blog', [
                 ['block_key' => 'rich_text', 'label' => 'Introducción', 'help_text' => 'Primer bloque editorial', 'required' => true, 'locked' => false, 'block_config_defaults' => new \stdClass()],
                 ['block_key' => 'image', 'label' => 'Imagen destacada', 'help_text' => 'Apoyo visual para la entrada', 'required' => false, 'locked' => false, 'block_config_defaults' => new \stdClass()],
@@ -99,6 +99,43 @@ final class CmsPresetCatalog
                 ]],
                 ['step_title' => 'Imagen destacada', 'step_hint' => 'Portada de la entrada (biblioteca o URL)', 'fields' => [['key' => 'featured_image', 'label' => 'Imagen destacada', 'type' => 'image', 'required' => false]]],
             ]),
+        ];
+
+        foreach (self::domainCollectionDefinitions() as $definition) {
+            $presets[] = self::collectionPreset(
+                $definition['type'],
+                [
+                    ['block_key' => $definition['block'], 'label' => $definition['label'], 'help_text' => $definition['help'], 'required' => true, 'locked' => true, 'auto_create' => true, 'block_config_defaults' => new \stdClass()],
+                    ['block_key' => 'related_entries', 'label' => 'Relaciones editoriales', 'help_text' => 'Vínculos opcionales con otras entradas', 'required' => false, 'locked' => false, 'auto_create' => false, 'block_config_defaults' => new \stdClass()],
+                ],
+                [
+                    ['step_title' => $definition['label'], 'step_hint' => $definition['help'], 'fields' => [
+                        ['key' => 'title', 'label' => $definition['label'], 'type' => 'text', 'required' => true],
+                        ['key' => 'excerpt', 'label' => 'Resumen', 'type' => 'textarea', 'required' => false],
+                    ]],
+                    ['step_title' => 'Publicación', 'step_hint' => 'Metadatos y publicación', 'fields' => [
+                        ['key' => 'meta_title', 'label' => 'Título SEO', 'type' => 'text', 'required' => false],
+                        ['key' => 'featured_image', 'label' => 'Imagen destacada', 'type' => 'image', 'required' => false],
+                    ]],
+                ]
+            );
+        }
+
+        return $presets;
+    }
+
+    /** @return list<array{type: string, block: string, label: string, help: string}> */
+    private static function domainCollectionDefinitions(): array
+    {
+        return [
+            ['type' => 'companias', 'block' => 'compania_ficha', 'label' => 'Compañías', 'help' => 'Ficha de compañía artística.'],
+            ['type' => 'personas', 'block' => 'persona_ficha', 'label' => 'Personas', 'help' => 'Ficha de persona y trayectoria.'],
+            ['type' => 'obras', 'block' => 'obra_ficha', 'label' => 'Obras', 'help' => 'Ficha artística con referencias.'],
+            ['type' => 'videos', 'block' => 'video_ficha', 'label' => 'Videos', 'help' => 'Video y metadatos editoriales.'],
+            ['type' => 'festivales', 'block' => 'festival_ficha', 'label' => 'Festivales', 'help' => 'Festival, edición y programación.'],
+            ['type' => 'exposiciones', 'block' => 'exposicion_ficha', 'label' => 'Exposiciones', 'help' => 'Fechas, autoría y media.'],
+            ['type' => 'cursos', 'block' => 'curso_ficha', 'label' => 'Cursos', 'help' => 'Modalidad, fechas e inscripción.'],
+            ['type' => 'publicaciones', 'block' => 'publicacion_metadata', 'label' => 'Publicaciones', 'help' => 'Metadatos y documentos.'],
         ];
     }
 
