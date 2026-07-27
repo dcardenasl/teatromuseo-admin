@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Legacy collection presets** — added Cms block-type/collection presets for companies, people,
   works, videos, festivals, exhibitions, courses and publications, in preparation for the legacy
   data migration.
+- **Museum admin module** — new `App\Modules\Museum` with full CRUD for Categories, Techniques
+  and Collection Items, wired to the catalog domain via the new `CatalogDomainApiClient`, plus a
+  "Museo (Catálogo)" sidebar section.
 
 ### Fixed
 
