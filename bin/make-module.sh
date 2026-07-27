@@ -60,18 +60,19 @@ Arguments:
 Flags:
   --dry-run         Print what would be generated without writing any file
   --force           Overwrite existing files (skipped by default)
-  --service=hub|domain
+  --service=hub|domain|event-domain
                     Which backend the new service should target. Default is 'hub'
                     (apiClient, port 8080). Pass 'domain' to wire the service
                     against domainApiClient (port 8090 — a ci4-domain-starter app).
+                    Pass event-domain to wire the service against eventDomainApiClient.
   --action=<verb>    Add a custom POST action for a single item. Repeat the flag
                     for multiple actions (e.g. --action=approve --action=publish).
                     Verbs must be lower-kebab-case.
   --csv             Scaffold CSV export/import hooks alongside the CRUD shell.
   --check-api[=URL] Probe the API endpoint with a 2s HEAD request before scaffolding
                     and warn if it doesn't respond. Default URL is read from
-                    apiClient.baseUrl in .env (or domainApiClient.baseUrl when
-                    --service=domain).
+                    apiClient.baseUrl in .env (or the matching domain client base URL
+                    when --service=domain or --service=event-domain).
 
 Examples:
   bash bin/make-module.sh Product Catalog /catalog/products
@@ -120,12 +121,15 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${POSITIONAL[@]}"
 
-if [[ "$SERVICE_TARGET" != "hub" && "$SERVICE_TARGET" != "domain" ]]; then
-    echo -e "${RED}❌ --service must be 'hub' or 'domain'. Got: '${SERVICE_TARGET}'${NC}"
+if [[ "$SERVICE_TARGET" != "hub" && "$SERVICE_TARGET" != "domain" && "$SERVICE_TARGET" != "event-domain" ]]; then
+    echo -e "${RED}❌ --service must be 'hub', 'domain' or 'event-domain'. Got: '${SERVICE_TARGET}'${NC}"
     exit 1
 fi
 
-if [[ "$SERVICE_TARGET" == "domain" ]]; then
+if [[ "$SERVICE_TARGET" == "event-domain" ]]; then
+    CLIENT_FACTORY="eventDomainApiClient"
+    CLIENT_ENV_KEY="eventDomainApiClient.baseUrl"
+elif [[ "$SERVICE_TARGET" == "domain" ]]; then
     CLIENT_FACTORY="domainApiClient"
     CLIENT_ENV_KEY="domainApiClient.baseUrl"
 else
@@ -1003,7 +1007,7 @@ for rel in relations:
     relation_service_impl.append(
         "\n\n    /**\n"
         "     * @param array<string, mixed> $filters\n"
-        "     * @return ApiResponse\n"
+        "     * @return array<string, mixed>\n"
         "     */\n"
         "    public function {method}(array $filters = []): array\n"
         "    {{\n"

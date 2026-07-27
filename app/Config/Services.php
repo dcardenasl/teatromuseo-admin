@@ -16,6 +16,8 @@ use App\Libraries\WebApiClientInterface;
 use App\Modules\ApiKeys\Services\ApiKeyApiService;
 use App\Modules\Audit\Services\AuditApiService;
 use App\Modules\Auth\Services\AuthApiService;
+use App\Modules\Bookings\Services\BookingApiService;
+use App\Modules\Bookings\Services\BookingApiServiceInterface;
 use App\Modules\Cms\Services\BlockCatalogService;
 use App\Modules\Cms\Services\BlockCatalogServiceInterface;
 use App\Modules\Cms\Services\BlockInstanceApiService;
@@ -33,14 +35,26 @@ use App\Modules\Cms\Services\SettingApiService;
 use App\Modules\Cms\Services\TagApiService;
 use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Dashboard\Services\HealthApiService;
+use App\Modules\EventReferences\Services\EventReferenceApiService;
+use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
+use App\Modules\Events\Services\EventApiService;
+use App\Modules\Events\Services\EventApiServiceInterface;
 use App\Modules\Files\Services\FileApiService;
 use App\Modules\Iam\Services\ApplicationApiService;
 use App\Modules\Iam\Services\PermissionApiService;
 use App\Modules\Iam\Services\RoleApiService;
 use App\Modules\Iam\Services\RoleMatrixApiService;
 use App\Modules\Metrics\Services\MetricsApiService;
+use App\Modules\Occurrences\Services\OccurrenceApiService;
+use App\Modules\Occurrences\Services\OccurrenceApiServiceInterface;
 use App\Modules\Profile\Services\ProfileApiService;
+use App\Modules\Tickets\Services\TicketApiService;
+use App\Modules\Tickets\Services\TicketApiServiceInterface;
+use App\Modules\TicketTypes\Services\TicketTypeApiService;
+use App\Modules\TicketTypes\Services\TicketTypeApiServiceInterface;
 use App\Modules\Users\Services\UserApiService;
+use App\Modules\Venues\Services\VenueApiService;
+use App\Modules\Venues\Services\VenueApiServiceInterface;
 use App\Support\Requests\FormRequestInterface;
 use CodeIgniter\Config\BaseService;
 use InvalidArgumentException;
@@ -98,6 +112,16 @@ class Services extends BaseService
         }
 
         return new DomainApiClient(config('DomainApiClient'));
+    }
+
+    public static function eventDomainApiClient(bool $getShared = true): DomainApiClientInterface
+    {
+        if ($getShared) {
+            /** @var DomainApiClientInterface */
+            return static::getSharedInstance('eventDomainApiClient');
+        }
+
+        return new DomainApiClient(config(EventDomainApiClient::class));
     }
 
     public static function bffApiClient(bool $getShared = true): BffApiClientInterface
@@ -429,5 +453,61 @@ class Services extends BaseService
             return static::getSharedInstance('formApiService');
         }
         return new \App\Modules\Cms\Services\FormApiService(static::domainApiClient());
+    }
+    public static function eventApiService(bool $getShared = true): EventApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var EventApiService */
+            return static::getSharedInstance('eventApiService');
+        }
+        return new EventApiService(static::eventDomainApiClient());
+    }
+    public static function ticketTypeApiService(bool $getShared = true): TicketTypeApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var TicketTypeApiService */
+            return static::getSharedInstance('ticketTypeApiService');
+        }
+        return new TicketTypeApiService(static::eventDomainApiClient());
+    }
+    public static function bookingApiService(bool $getShared = true): BookingApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var BookingApiService */
+            return static::getSharedInstance('bookingApiService');
+        }
+        return new BookingApiService(static::eventDomainApiClient());
+    }
+    public static function ticketApiService(bool $getShared = true): TicketApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var TicketApiService */
+            return static::getSharedInstance('ticketApiService');
+        }
+        return new TicketApiService(static::eventDomainApiClient());
+    }
+    public static function venueApiService(bool $getShared = true): VenueApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var VenueApiService */
+            return static::getSharedInstance('venueApiService');
+        }
+        return new VenueApiService(static::eventDomainApiClient());
+    }
+    public static function occurrenceApiService(bool $getShared = true): OccurrenceApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var OccurrenceApiService */
+            return static::getSharedInstance('occurrenceApiService');
+        }
+        return new OccurrenceApiService(static::eventDomainApiClient());
+    }
+    public static function eventReferenceApiService(bool $getShared = true): EventReferenceApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var EventReferenceApiService */
+            return static::getSharedInstance('eventReferenceApiService');
+        }
+        return new EventReferenceApiService(static::eventDomainApiClient());
     }
 }

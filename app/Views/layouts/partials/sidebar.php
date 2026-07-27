@@ -295,6 +295,39 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
             </div>
             <?php endif; ?>
         <?php endif; ?>
+        <!-- START Events -->
+        <?php if (has_permission('events.read')): ?>
+            <div class="pt-3 mt-3 border-t border-gray-800 text-xs uppercase text-gray-500"><?= lang('Events.sidebar_label') ?></div>
+            <a href="<?= route_to('admin.events.events') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/events/events*') ?>">
+                <?= ui_icon('calendar') ?>
+                <span><?= lang('Events.events_title') ?></span>
+            </a>
+            <a href="<?= route_to('admin.venues.venues') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/venues/venues*') ?>">
+                <?= ui_icon('calendar') ?>
+                <span><?= lang('Venues.venues_title') ?></span>
+            </a>
+            <a href="<?= route_to('admin.occurrences.occurrences') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/occurrences/occurrences*') ?>">
+                <?= ui_icon('calendar') ?>
+                <span><?= lang('Occurrences.occurrences_title') ?></span>
+            </a>
+            <a href="<?= route_to('admin.eventreferences.event_references') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/eventreferences/event-references*') ?>">
+                <?= ui_icon('calendar') ?>
+                <span><?= lang('EventReferences.event_references_title') ?></span>
+            </a>
+            <a href="<?= route_to('admin.tickettypes.ticket_types') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/tickettypes/ticket-types*') ?>">
+                <?= ui_icon('calendar') ?>
+                <span><?= lang('TicketTypes.ticket_types_title') ?></span>
+            </a>
+            <a href="<?= route_to('admin.bookings.bookings') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/bookings/bookings*') ?>">
+                <?= ui_icon('calendar') ?>
+                <span><?= lang('Bookings.bookings_title') ?></span>
+            </a>
+            <a href="<?= route_to('admin.tickets.tickets') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/tickets/tickets*') ?>">
+                <?= ui_icon('calendar') ?>
+                <span><?= lang('Tickets.tickets_title') ?></span>
+            </a>
+        <?php endif; ?>
+        <!-- END Events -->
         <!-- [DYNAMIC_MODULES_ANCHOR] -->
     </nav>
 </aside>

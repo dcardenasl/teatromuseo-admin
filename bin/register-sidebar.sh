@@ -90,13 +90,14 @@ for group in data['admin_sidebar']:
             route_seg = res_plural.replace('_', '-')
             
         route_seg_underscore = route_seg.replace('-', '_')
-        module_lower = module.lower()
-        
-        route_name = f"admin.{module_lower}.{route_seg_underscore}"
-        route_pattern = f"admin/{module_lower}/{route_seg}"
+        route_module = m_info.get('module', module)
+        route_module_lower = route_module.lower()
+
+        route_name = f"admin.{route_module_lower}.{route_seg_underscore}"
+        route_pattern = f"admin/{route_module_lower}/{route_seg}"
         res_snake = to_snake(item)
         res_plural = pluralize(res_snake)
-        lang_key = f"{module}.{res_plural}_title"
+        lang_key = f"{route_module}.{res_plural}_title"
         
         block_lines.append(f"            <a href=\"<?= route_to('{route_name}') ?>\" class=\"flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('{route_pattern}*') ?>\">")
         block_lines.append(f"                <?= ui_icon('{icon}') ?>")
