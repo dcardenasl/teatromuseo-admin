@@ -6,6 +6,12 @@
  */
 
 $isHtml = $isHtml ?? false;
+$displayValue = $value ?? '—';
+
+if (is_array($displayValue) || is_object($displayValue)) {
+    $encodedValue = json_encode($displayValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $displayValue = $encodedValue !== false ? $encodedValue : '—';
+}
 ?>
 <div class="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 border-b border-gray-100 last:border-0">
     <dt class="text-sm font-medium text-gray-500">
@@ -15,7 +21,7 @@ $isHtml = $isHtml ?? false;
         <?php if ($isHtml): ?>
             <?= $value ?>
         <?php else: ?>
-            <?= esc($value ?? '—') ?>
+            <?= esc($displayValue) ?>
         <?php endif; ?>
     </dd>
 </div>
