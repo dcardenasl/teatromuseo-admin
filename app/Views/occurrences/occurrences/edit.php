@@ -1,4 +1,8 @@
-<?php $item = $item ?? []; ?>
+<?php
+$item = $item ?? [];
+$occurrenceEventLabel = $events[(string) ($item['event_id'] ?? '')] ?? lang('Occurrences.occurrences_details');
+$occurrenceLabel = trim($occurrenceEventLabel . (! empty($item['start_time']) ? ' · ' . format_date($item['start_time']) : ''));
+?>
 <?= view('components/display/admin_page_header', [
     'backUrl' => route_to('admin.occurrences.occurrences'),
     'backLabel' => 'App.back',
@@ -6,7 +10,7 @@
     'title' => 'Occurrences.occurrences_edit',
 ]) ?>
 
-<form id="delete-item-form" method="post" action="<?= route_to('admin.occurrences.occurrences.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['title'] ?? $item['id'] ?? null), 'js') ?>', () => $el.submit())">
+<form id="delete-item-form" method="post" action="<?= route_to('admin.occurrences.occurrences.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($occurrenceLabel), 'js') ?>', () => $el.submit())">
     <?= csrf_field() ?>
 </form>
 
@@ -60,13 +64,18 @@
             'errors' => $errors ?? []
         ]) ?>
 
-        <?= view('components/form/text', [
+        <?= view('components/form/select', [
             'name' => 'status',
             'label' => 'Occurrences.field_status',
             'required' => true,
             'value' => $item['status'] ?? '',
             'placeholder' => 'Occurrences.field_status_placeholder',
             'help' => 'Occurrences.field_status_help',
+            'options' => [
+                'draft' => lang('Occurrences.option_status_draft'),
+                'published' => lang('Occurrences.option_status_published'),
+                'cancelled' => lang('Occurrences.option_status_cancelled'),
+            ],
             'errors' => $errors ?? []
         ]) ?>
 

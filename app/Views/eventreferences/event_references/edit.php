@@ -1,4 +1,8 @@
-<?php $item = $item ?? []; ?>
+<?php
+$item = $item ?? [];
+$eventReferenceEventLabel = $events[(string) ($item['event_id'] ?? '')] ?? lang('EventReferences.event_references_details');
+$eventReferenceLabel = trim($eventReferenceEventLabel . (! empty($item['source_id']) ? ' · ' . $item['source_id'] : ''));
+?>
 <?= view('components/display/admin_page_header', [
     'backUrl' => route_to('admin.eventreferences.event_references'),
     'backLabel' => 'App.back',
@@ -6,7 +10,7 @@
     'title' => 'EventReferences.event_references_edit',
 ]) ?>
 
-<form id="delete-item-form" method="post" action="<?= route_to('admin.eventreferences.event_references.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['title'] ?? $item['id'] ?? null), 'js') ?>', () => $el.submit())">
+<form id="delete-item-form" method="post" action="<?= route_to('admin.eventreferences.event_references.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($eventReferenceLabel), 'js') ?>', () => $el.submit())">
     <?= csrf_field() ?>
 </form>
 

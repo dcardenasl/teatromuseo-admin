@@ -16,12 +16,12 @@ class TicketStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'uuid' => 'required|min_length[2]|max_length[255]',
+            'uuid' => 'permit_empty|string|max_length[255]',
             'booking_id' => 'required',
             'ticket_type_id' => 'required',
             'holder_name' => 'required|min_length[2]|max_length[255]',
             'holder_email' => 'required|min_length[2]|max_length[255]',
-            'qr_code_token' => 'required|min_length[2]|max_length[255]',
+            'qr_code_token' => 'permit_empty|string|max_length[255]',
             'status' => 'required|in_list[valid,used,void]',
             'checked_in_at' => 'permit_empty|valid_date',
         ];
@@ -30,14 +30,12 @@ class TicketStoreRequest extends BaseFormRequest
     public function payload(): array
     {
         return [
-            'uuid' => $this->postString('uuid'),
             'booking_id' => $this->postInt('booking_id'),
             'ticket_type_id' => $this->postInt('ticket_type_id'),
             'holder_name' => $this->postString('holder_name'),
             'holder_email' => $this->postString('holder_email'),
-            'qr_code_token' => $this->postString('qr_code_token'),
             'status' => $this->postString('status'),
-            'checked_in_at' => $this->postString('checked_in_at'),
+            'checked_in_at' => $this->postString('checked_in_at') ?: null,
         ];
     }
 }

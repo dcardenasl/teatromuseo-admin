@@ -55,13 +55,18 @@
             'errors' => $errors ?? []
         ]) ?>
 
-        <?= view('components/form/text', [
+        <?= view('components/form/select', [
             'name' => 'status',
             'label' => 'Occurrences.field_status',
             'required' => true,
             'value' => $item['status'] ?? '',
             'placeholder' => 'Occurrences.field_status_placeholder',
             'help' => 'Occurrences.field_status_help',
+            'options' => [
+                'draft' => lang('Occurrences.option_status_draft'),
+                'published' => lang('Occurrences.option_status_published'),
+                'cancelled' => lang('Occurrences.option_status_cancelled'),
+            ],
             'errors' => $errors ?? []
         ]) ?>
 

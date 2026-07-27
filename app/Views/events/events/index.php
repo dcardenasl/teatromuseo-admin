@@ -1,4 +1,18 @@
-<?php /** @var array $limitOptions */ ?>
+<?php
+/** @var array $limitOptions */
+$eventTypeLabels = [
+    'function' => lang('Events.option_event_type_function'),
+    'festival' => lang('Events.option_event_type_festival'),
+    'course' => lang('Events.option_event_type_course'),
+    'workshop' => lang('Events.option_event_type_workshop'),
+    'other' => lang('Events.option_event_type_other'),
+];
+$eventStatusLabels = [
+    'draft' => lang('Events.option_status_draft'),
+    'published' => lang('Events.option_status_published'),
+    'cancelled' => lang('Events.option_status_cancelled'),
+];
+?>
 
 <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
     x-data="remoteTable({
@@ -50,12 +64,6 @@
             <table class="<?= esc(table_class()) ?>">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
-                        <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('uuid')">
-                            <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('uuid')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Events.field_uuid')])) ?>">
-                                <span><?= lang('Events.field_uuid') ?></span>
-                                <span aria-hidden="true" x-text="sortIcon('uuid')"></span>
-                            </button>
-                        </th>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('title')">
                             <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('title')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Events.field_title')])) ?>">
                                 <span><?= lang('Events.field_title') ?></span>
@@ -92,14 +100,13 @@
                 <tbody class="<?= esc(table_body_class()) ?>">
                     <template x-for="row in rows" :key="String(row.id ?? Math.random())">
                         <tr class="<?= esc(table_row_class()) ?>">
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.uuid ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.title ?? '-')"></td>
                             <td class="<?= esc(table_td_class()) ?>">
-                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10" x-text="String(row.event_type ?? '-')"></span>
+                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10" x-text="(<?= esc(json_encode($eventTypeLabels)) ?>)[String(row.event_type)] ?? String(row.event_type ?? '-')"></span>
                             </td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.description ?? '-')"></td>
                             <td class="<?= esc(table_td_class()) ?>">
-                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10" x-text="String(row.status ?? '-')"></span>
+                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10" x-text="(<?= esc(json_encode($eventStatusLabels)) ?>)[String(row.status)] ?? String(row.status ?? '-')"></span>
                             </td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate(row.created_at)"></td>
                             <td class="<?= esc(table_td_class()) ?>">

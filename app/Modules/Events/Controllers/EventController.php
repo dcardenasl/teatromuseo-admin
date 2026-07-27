@@ -63,8 +63,11 @@ class EventController extends BaseWebController
 
     public function create(): string
     {
+        $languageContext = $this->contentLanguageContext();
+
         return $this->render('events/events/create', [
             'title' => lang('Events.events_create'),
+            ...$languageContext,
 
         ]);
     }
@@ -97,6 +100,7 @@ class EventController extends BaseWebController
         return $this->render('events/events/edit', [
             'title' => lang('Events.events_edit'),
             'item'  => $this->extractData($response),
+            ...$this->contentLanguageContext($this->extractData($response)),
 
         ]);
     }
@@ -128,6 +132,81 @@ class EventController extends BaseWebController
         }
 
         return redirect()->to(route_to('admin.events.events'))->with('success', lang('Events.events_delete_success'));
+    }
+
+    /**
+     * Read the CMS language registry for every form render. The fallback keeps
+     * the Event UI usable during a CMS outage, while the API still remains the
+     * source of truth for persisted translations.
+     *
+     * @param array<string, mixed> $item
+     * @return array{languages: list<array<string, mixed>>, defaultLangCode: string, defaultLangIndex: int, translations: array<string, array<string, string>>}
+     */
+    private function contentLanguageContext(array $item = []): array
+    {
+        $response = $this->safeApiCall(
+            fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true])
+        );
+        $languages = [];
+
+        foreach ($this->extractItems($response) as $language) {
+            if (! is_array($language) || ! isset($language['code']) || ! is_scalar($language['code'])) {
+                continue;
+            }
+
+            $code = strtolower(str_replace('_', '-', trim((string) $language['code'])));
+            if (preg_match('/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $code) !== 1) {
+                continue;
+            }
+
+            $language['code'] = $code;
+            $languages[] = $language;
+        }
+
+        if ($languages === []) {
+            $fallbackCode = strtolower((string) ($this->viewData['currentLocale'] ?? 'es'));
+            $languages[] = [
+                'code' => $fallbackCode,
+                'name' => strtoupper($fallbackCode),
+                'native_name' => strtoupper($fallbackCode),
+                'is_default' => true,
+            ];
+        }
+
+        $defaultIndex = 0;
+        foreach ($languages as $index => $language) {
+            if (! empty($language['is_default'])) {
+                $defaultIndex = (int) $index;
+                break;
+            }
+        }
+
+        $translationValues = [];
+        foreach (is_array($item['translations'] ?? null) ? $item['translations'] : [] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $locale = isset($row['locale']) && is_scalar($row['locale'])
+                ? strtolower(str_replace('_', '-', trim((string) $row['locale'])))
+                : '';
+            if ($locale === '') {
+                continue;
+            }
+
+            $fields = is_array($row['fields'] ?? null) ? $row['fields'] : $row;
+            $translationValues[$locale] = [
+                'title' => is_scalar($fields['title'] ?? null) ? (string) $fields['title'] : '',
+                'description' => is_scalar($fields['description'] ?? null) ? (string) $fields['description'] : '',
+            ];
+        }
+
+        return [
+            'languages' => $languages,
+            'defaultLangCode' => (string) ($languages[$defaultIndex]['code'] ?? ''),
+            'defaultLangIndex' => $defaultIndex,
+            'translations' => $translationValues,
+        ];
     }
 
 

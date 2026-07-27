@@ -1,4 +1,13 @@
-<?php /** @var array $limitOptions */ ?>
+<?php
+/** @var array $limitOptions */
+$occurrenceStatusLabels = [
+    'draft' => lang('Occurrences.option_status_draft'),
+    'published' => lang('Occurrences.option_status_published'),
+    'cancelled' => lang('Occurrences.option_status_cancelled'),
+];
+$occurrenceEventLabels = array_map('strval', $events ?? []);
+$occurrenceVenueLabels = array_map('strval', $venues ?? []);
+?>
 
 <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
     x-data="remoteTable({
@@ -105,11 +114,11 @@
                 <tbody class="<?= esc(table_body_class()) ?>">
                     <template x-for="row in rows" :key="String(row.id ?? Math.random())">
                         <tr class="<?= esc(table_row_class()) ?>">
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.event_id ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.venue_id ?? '-')"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($occurrenceEventLabels)) ?>)[String(row.event_id)] ?? '—'"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($occurrenceVenueLabels)) ?>)[String(row.venue_id)] ?? '—'"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate(row.start_time)"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate(row.end_time)"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.status ?? '-')"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($occurrenceStatusLabels)) ?>)[String(row.status)] ?? String(row.status ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.capacity ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.available_spots ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate(row.created_at)"></td>

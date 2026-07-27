@@ -31,6 +31,6 @@ class TicketApiService extends ResourceApiService implements TicketApiServiceInt
      */
     public function ticketTypes(array $filters = []): array
     {
-        return $this->apiClient->get('/events/ticketTypes', $filters);
+        return $this->apiClient->get('/events/ticket-types', $filters);
     }
 }

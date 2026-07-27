@@ -17,6 +17,19 @@
 - [ ] Definir la relación con `status` de páginas y entradas.
 - [ ] Definir roles/permisos de aprobación antes de implementar migraciones, servicios y UI.
 
+## ✅ Completadas
+
+- **EVT-001 — Integración de módulos admin de event domain:** scaffold + ajustes manuales de
+  Bookings, Events, Occurrences, EventReferences, TicketTypes y Tickets (`EventDomainApiClient`,
+  rutas, controllers, requests, services, vistas). Auditoría posterior detectó y corrigió archivos
+  de idioma duplicados entre `app/Language/` y `app/Modules/*/Language/` para los 7 dominios
+  (incluyendo `Venues`, que tenía el mismo problema latente) — consolidados en la ubicación
+  canónica del módulo siguiendo el patrón de `Users`.
+- Los cambios de `app/Modules/Cms/Services/BlockTypeOptionsResolver.php`, `CmsPresetCatalog.php` y
+  `app/Language/{en,es}/Collections.php` en este mismo working tree son trabajo preparatorio para
+  la migración de colecciones legacy (ver `LEGACY-001` en `../teatromuseo-api/TASKS.md`), no parte
+  de EVT-001 — deben separarse en su propio commit al ejecutar `/commit-flow`.
+
 ## ⚪ Backlog
 
 ### ADM-DEP-002 — lint-staged 16 → 17

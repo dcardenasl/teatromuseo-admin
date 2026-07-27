@@ -50,18 +50,6 @@
             <table class="<?= esc(table_class()) ?>">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
-                        <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('uuid')">
-                            <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('uuid')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Bookings.field_uuid')])) ?>">
-                                <span><?= lang('Bookings.field_uuid') ?></span>
-                                <span aria-hidden="true" x-text="sortIcon('uuid')"></span>
-                            </button>
-                        </th>
-                        <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('user_id')">
-                            <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('user_id')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Bookings.field_user_id')])) ?>">
-                                <span><?= lang('Bookings.field_user_id') ?></span>
-                                <span aria-hidden="true" x-text="sortIcon('user_id')"></span>
-                            </button>
-                        </th>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('guest_email')">
                             <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('guest_email')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Bookings.field_guest_email')])) ?>">
                                 <span><?= lang('Bookings.field_guest_email') ?></span>
@@ -98,8 +86,6 @@
                 <tbody class="<?= esc(table_body_class()) ?>">
                     <template x-for="row in rows" :key="String(row.id ?? Math.random())">
                         <tr class="<?= esc(table_row_class()) ?>">
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.uuid ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.user_id ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.guest_email ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.total_amount ?? '-')"></td>
                             <td class="<?= esc(table_td_class()) ?>">

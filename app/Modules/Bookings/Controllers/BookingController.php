@@ -65,6 +65,7 @@ class BookingController extends BaseWebController
     {
         return $this->render('bookings/bookings/create', [
             'title' => lang('Bookings.bookings_create'),
+            'ticketTypes' => $this->ticketTypesOptions(),
 
         ]);
     }
@@ -128,6 +129,24 @@ class BookingController extends BaseWebController
         }
 
         return redirect()->to(route_to('admin.bookings.bookings'))->with('success', lang('Bookings.bookings_delete_success'));
+    }
+
+    /** @return array<string, string> */
+    private function ticketTypesOptions(): array
+    {
+        $response = $this->safeApiCall(fn () => $this->bookingService->ticketTypes(['limit' => 100]));
+        $options = [];
+
+        foreach ($this->extractItems($response) as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+
+            $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
+            $options[(string) $item['id']] = (string) $label;
+        }
+
+        return $options;
     }
 
 

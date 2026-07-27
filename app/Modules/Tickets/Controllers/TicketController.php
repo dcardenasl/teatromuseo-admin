@@ -149,7 +149,10 @@ class TicketController extends BaseWebController
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
-            $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['email'] ?? $item['id'];
+            $guestEmail = $item['guest_email'] ?? $item['email'] ?? null;
+            $label = is_string($guestEmail) && trim($guestEmail) !== ''
+                ? lang('Bookings.bookings_title') . ' · ' . trim($guestEmail)
+                : ($item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id']);
             $options[(string) $item['id']] = (string) $label;
         }
 

@@ -1,4 +1,8 @@
-<?php /** @var array $limitOptions */ ?>
+<?php
+/** @var array $limitOptions */
+$ticketTypeEventLabels = array_map('strval', $events ?? []);
+$ticketTypeOccurrenceLabels = array_map('strval', $occurrences ?? []);
+?>
 
 <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
     x-data="remoteTable({
@@ -111,8 +115,8 @@
                 <tbody class="<?= esc(table_body_class()) ?>">
                     <template x-for="row in rows" :key="String(row.id ?? Math.random())">
                         <tr class="<?= esc(table_row_class()) ?>">
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.event_id ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.occurrence_id ?? '-')"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($ticketTypeEventLabels)) ?>)[String(row.event_id)] ?? '—'"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($ticketTypeOccurrenceLabels)) ?>)[String(row.occurrence_id)] ?? '—'"></td>
                             <td class="<?= esc(table_td_class('primary')) ?>" x-text="String(row.name ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.price ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.capacity ?? '-')"></td>

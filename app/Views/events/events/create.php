@@ -13,26 +13,6 @@
             <h3 class="text-lg font-semibold text-gray-900"><?= esc(lang('Events.events_create')) ?></h3>
             <div class="mt-4 space-y-4">
 
-        <?= view('components/form/text', [
-            'name' => 'uuid',
-            'label' => 'Events.field_uuid',
-            'required' => true,
-            'value' => $item['uuid'] ?? '',
-            'placeholder' => 'Events.field_uuid_placeholder',
-            'help' => 'Events.field_uuid_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/text', [
-            'name' => 'title',
-            'label' => 'Events.field_title',
-            'required' => true,
-            'value' => $item['title'] ?? '',
-            'placeholder' => 'Events.field_title_placeholder',
-            'help' => 'Events.field_title_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
         <?= view('components/form/select', [
             'name' => 'event_type',
             'label' => 'Events.field_event_type',
@@ -40,23 +20,13 @@
             'placeholder' => 'Events.field_event_type_placeholder',
             'help' => 'Events.field_event_type_help',
             'options' => [
-                'function' => 'Function',
-                'festival' => 'Festival',
-                'course' => 'Course',
-                'workshop' => 'Workshop',
-                'other' => 'Other'
+                'function' => lang('Events.option_event_type_function'),
+                'festival' => lang('Events.option_event_type_festival'),
+                'course' => lang('Events.option_event_type_course'),
+                'workshop' => lang('Events.option_event_type_workshop'),
+                'other' => lang('Events.option_event_type_other'),
             ],
             'value' => $item['event_type'] ?? '',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/textarea', [
-            'name' => 'description',
-            'label' => 'Events.field_description',
-            'required' => true,
-            'value' => $item['description'] ?? '',
-            'placeholder' => 'Events.field_description_placeholder',
-            'help' => 'Events.field_description_help',
             'errors' => $errors ?? []
         ]) ?>
 
@@ -67,15 +37,23 @@
             'placeholder' => 'Events.field_status_placeholder',
             'help' => 'Events.field_status_help',
             'options' => [
-                'draft' => 'Draft',
-                'published' => 'Published',
-                'cancelled' => 'Cancelled'
+                'draft' => lang('Events.option_status_draft'),
+                'published' => lang('Events.option_status_published'),
+                'cancelled' => lang('Events.option_status_cancelled'),
             ],
             'value' => $item['status'] ?? '',
             'errors' => $errors ?? []
         ]) ?>
             </div>
         </section>
+
+        <?= view('events/events/partials/translations', [
+            'languages' => $languages ?? [],
+            'defaultLangCode' => $defaultLangCode ?? '',
+            'defaultLangIndex' => $defaultLangIndex ?? 0,
+            'translations' => $translations ?? [],
+            'errors' => $errors ?? [],
+        ]) ?>
     </div>
 
     <aside class="space-y-6">

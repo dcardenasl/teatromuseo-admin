@@ -1,4 +1,8 @@
-<?php /** @var array $limitOptions */ ?>
+<?php
+/** @var array $limitOptions */
+$ticketBookingLabels = array_map('strval', $bookings ?? []);
+$ticketTypeLabels = array_map('strval', $ticketTypes ?? []);
+?>
 
 <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
     x-data="remoteTable({
@@ -51,12 +55,6 @@
             <table class="<?= esc(table_class()) ?>">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
-                        <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('uuid')">
-                            <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('uuid')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Tickets.field_uuid')])) ?>">
-                                <span><?= lang('Tickets.field_uuid') ?></span>
-                                <span aria-hidden="true" x-text="sortIcon('uuid')"></span>
-                            </button>
-                        </th>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('booking_id')">
                             <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('booking_id')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Tickets.field_booking_id')])) ?>">
                                 <span><?= lang('Tickets.field_booking_id') ?></span>
@@ -79,12 +77,6 @@
                             <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('holder_email')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Tickets.field_holder_email')])) ?>">
                                 <span><?= lang('Tickets.field_holder_email') ?></span>
                                 <span aria-hidden="true" x-text="sortIcon('holder_email')"></span>
-                            </button>
-                        </th>
-                        <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('qr_code_token')">
-                            <button type="button" class="inline-flex items-center gap-1 hover:text-gray-700" @click="toggleSort('qr_code_token')" aria-label="<?= esc(lang('TableA11y.sort_by', [lang('Tickets.field_qr_code_token')])) ?>">
-                                <span><?= lang('Tickets.field_qr_code_token') ?></span>
-                                <span aria-hidden="true" x-text="sortIcon('qr_code_token')"></span>
                             </button>
                         </th>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('status')">
@@ -111,12 +103,10 @@
                 <tbody class="<?= esc(table_body_class()) ?>">
                     <template x-for="row in rows" :key="String(row.id ?? Math.random())">
                         <tr class="<?= esc(table_row_class()) ?>">
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.uuid ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.booking_id ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.ticket_type_id ?? '-')"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($ticketBookingLabels)) ?>)[String(row.booking_id)] ?? '—'"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($ticketTypeLabels)) ?>)[String(row.ticket_type_id)] ?? '—'"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.holder_name ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.holder_email ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.qr_code_token ?? '-')"></td>
                             <td class="<?= esc(table_td_class()) ?>">
                                 <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10" x-text="String(row.status ?? '-')"></span>
                             </td>

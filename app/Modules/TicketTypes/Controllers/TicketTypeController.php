@@ -166,7 +166,19 @@ class TicketTypeController extends BaseWebController
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
-            $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['email'] ?? $item['id'];
+            $eventLabel = $item['event_title'] ?? $item['event_name'] ?? null;
+            $startTime = $item['start_time'] ?? null;
+            $label = is_string($eventLabel) && trim($eventLabel) !== '' ? trim($eventLabel) : lang('Occurrences.occurrences_title');
+            if (is_string($startTime) && trim($startTime) !== '') {
+                try {
+                    $label .= ' · ' . (new \DateTime($startTime))->format('d/m/Y H:i');
+                } catch (\Throwable) {
+                    $label .= ' · ' . $startTime;
+                }
+            }
+            if ($label === lang('Occurrences.occurrences_title') && trim((string) $startTime) === '') {
+                $label .= ' · ' . (string) $item['id'];
+            }
             $options[(string) $item['id']] = (string) $label;
         }
 

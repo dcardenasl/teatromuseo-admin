@@ -12,7 +12,7 @@
         <select name="event_id" class="<?= esc(filter_input_class()) ?>">
             <option value=""><?= esc(lang('App.all')) ?></option>
             <?php $selected_event_id = (string) request()->getGet('event_id'); ?>
-            <?php foreach (($$events ?? []) as $optValue => $optLabel): ?>
+            <?php foreach (($events ?? []) as $optValue => $optLabel): ?>
                 <option value="<?= esc((string) $optValue, 'attr') ?>" <?= $selected_event_id === (string) $optValue ? 'selected' : '' ?>><?= esc((string) $optLabel) ?></option>
             <?php endforeach; ?>
         </select>
@@ -22,7 +22,7 @@
         <select name="occurrence_id" class="<?= esc(filter_input_class()) ?>">
             <option value=""><?= esc(lang('App.all')) ?></option>
             <?php $selected_occurrence_id = (string) request()->getGet('occurrence_id'); ?>
-            <?php foreach (($$occurrences ?? []) as $optValue => $optLabel): ?>
+            <?php foreach (($occurrences ?? []) as $optValue => $optLabel): ?>
                 <option value="<?= esc((string) $optValue, 'attr') ?>" <?= $selected_occurrence_id === (string) $optValue ? 'selected' : '' ?>><?= esc((string) $optLabel) ?></option>
             <?php endforeach; ?>
         </select>

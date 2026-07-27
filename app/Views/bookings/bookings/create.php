@@ -13,13 +13,28 @@
             <h3 class="text-lg font-semibold text-gray-900"><?= esc(lang('Bookings.bookings_create')) ?></h3>
             <div class="mt-4 space-y-4">
 
-        <?= view('components/form/text', [
-            'name' => 'uuid',
-            'label' => 'Bookings.field_uuid',
+        <input type="hidden" name="total_amount" value="0">
+        <input type="hidden" name="status" value="pending">
+
+        <?= view('components/form/relation', [
+            'name' => 'ticket_type_id',
+            'label' => 'Bookings.field_ticket_type_id',
             'required' => true,
-            'value' => $item['uuid'] ?? '',
-            'placeholder' => 'Bookings.field_uuid_placeholder',
-            'help' => 'Bookings.field_uuid_help',
+            'options' => $ticketTypes ?? [],
+            'placeholder' => 'Bookings.field_ticket_type_id_placeholder',
+            'help' => 'Bookings.field_ticket_type_id_help',
+            'value' => $item['ticket_type_id'] ?? '',
+            'errors' => $errors ?? []
+        ]) ?>
+
+        <?= view('components/form/number', [
+            'name' => 'quantity',
+            'label' => 'Bookings.field_quantity',
+            'required' => true,
+            'value' => $item['quantity'] ?? 1,
+            'placeholder' => 'Bookings.field_quantity_placeholder',
+            'help' => 'Bookings.field_quantity_help',
+            'min' => 1,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -43,41 +58,26 @@
             'errors' => $errors ?? []
         ]) ?>
 
-        <?= view('components/form/decimal', [
-            'name' => 'total_amount',
-            'label' => 'Bookings.field_total_amount',
-            'required' => true,
-            'value' => $item['total_amount'] ?? '',
-            'placeholder' => 'Bookings.field_total_amount_placeholder',
-            'help' => 'Bookings.field_total_amount_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/select', [
-            'name' => 'status',
-            'label' => 'Bookings.field_status',
-            'required' => true,
-            'placeholder' => 'Bookings.field_status_placeholder',
-            'help' => 'Bookings.field_status_help',
-            'options' => [
-                'pending' => 'Pending',
-                'confirmed' => 'Confirmed',
-                'cancelled' => 'Cancelled',
-                'expired' => 'Expired'
-            ],
-            'value' => $item['status'] ?? '',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/datetime', [
-            'name' => 'reserved_until',
-            'label' => 'Bookings.field_reserved_until',
+        <?= view('components/form/text', [
+            'name' => 'holder_name',
+            'label' => 'Bookings.field_holder_name',
             'required' => false,
-            'value' => $item['reserved_until'] ?? '',
-            'placeholder' => 'Bookings.field_reserved_until_placeholder',
-            'help' => 'Bookings.field_reserved_until_help',
+            'value' => $item['holder_name'] ?? '',
+            'placeholder' => 'Bookings.field_holder_name_placeholder',
+            'help' => 'Bookings.field_holder_name_help',
             'errors' => $errors ?? []
         ]) ?>
+
+        <?= view('components/form/text', [
+            'name' => 'holder_email',
+            'label' => 'Bookings.field_holder_email',
+            'required' => false,
+            'value' => $item['holder_email'] ?? '',
+            'placeholder' => 'Bookings.field_holder_email_placeholder',
+            'help' => 'Bookings.field_holder_email_help',
+            'errors' => $errors ?? []
+        ]) ?>
+
             </div>
         </section>
     </div>

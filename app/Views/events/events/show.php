@@ -56,7 +56,7 @@
     <?php $actionsContent = ob_get_clean(); ?>
 
     <?php ob_start(); ?>
-    <form method="post" action="<?= route_to('admin.events.events.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($event['name'] ?? $event['title'] ?? $event['id'] ?? null), 'js') ?>', () => $el.submit())">
+    <form method="post" action="<?= route_to('admin.events.events.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($event['title'] ?? null), 'js') ?>', () => $el.submit())">
         <?= csrf_field() ?>
         <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
             <?= ui_icon('trash', 'h-3.5 w-3.5') ?>

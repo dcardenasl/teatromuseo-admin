@@ -13,6 +13,15 @@ class BookingApiService extends ResourceApiService implements BookingApiServiceI
         return '/events/bookings';
     }
 
+    /**
+     * @param array<string, mixed> $filters
+     * @return array<string, mixed>
+     */
+    public function ticketTypes(array $filters = []): array
+    {
+        return $this->apiClient->get('/events/ticket-types', $filters);
+    }
+
 
 
 }

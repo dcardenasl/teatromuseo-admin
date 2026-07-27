@@ -1,4 +1,5 @@
 <?php $item = $item ?? []; ?>
+<?php $bookingLabel = ! empty($item['guest_email']) ? lang('Bookings.bookings_title') . ' · ' . $item['guest_email'] : lang('Bookings.bookings_details'); ?>
 <?= view('components/display/admin_page_header', [
     'backUrl' => route_to('admin.bookings.bookings'),
     'backLabel' => 'App.back',
@@ -6,7 +7,7 @@
     'title' => 'Bookings.bookings_edit',
 ]) ?>
 
-<form id="delete-item-form" method="post" action="<?= route_to('admin.bookings.bookings.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['title'] ?? $item['id'] ?? null), 'js') ?>', () => $el.submit())">
+<form id="delete-item-form" method="post" action="<?= route_to('admin.bookings.bookings.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($bookingLabel), 'js') ?>', () => $el.submit())">
     <?= csrf_field() ?>
 </form>
 
@@ -17,16 +18,6 @@
         <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <h3 class="text-lg font-semibold text-gray-900"><?= esc(lang('Bookings.bookings_edit')) ?></h3>
             <div class="mt-4 space-y-4">
-
-        <?= view('components/form/text', [
-            'name' => 'uuid',
-            'label' => 'Bookings.field_uuid',
-            'required' => true,
-            'value' => $item['uuid'] ?? '',
-            'placeholder' => 'Bookings.field_uuid_placeholder',
-            'help' => 'Bookings.field_uuid_help',
-            'errors' => $errors ?? []
-        ]) ?>
 
         <?= view('components/form/number', [
             'name' => 'user_id',
@@ -65,10 +56,10 @@
             'placeholder' => 'Bookings.field_status_placeholder',
             'help' => 'Bookings.field_status_help',
             'options' => [
-                'pending' => 'Pending',
-                'confirmed' => 'Confirmed',
-                'cancelled' => 'Cancelled',
-                'expired' => 'Expired'
+                'pending' => lang('Bookings.option_status_pending'),
+                'confirmed' => lang('Bookings.option_status_confirmed'),
+                'cancelled' => lang('Bookings.option_status_cancelled'),
+                'expired' => lang('Bookings.option_status_expired')
             ],
             'value' => $item['status'] ?? '',
             'errors' => $errors ?? []

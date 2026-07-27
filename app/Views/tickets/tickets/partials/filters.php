@@ -12,7 +12,7 @@
         <select name="booking_id" class="<?= esc(filter_input_class()) ?>">
             <option value=""><?= esc(lang('App.all')) ?></option>
             <?php $selected_booking_id = (string) request()->getGet('booking_id'); ?>
-            <?php foreach (($$bookings ?? []) as $optValue => $optLabel): ?>
+            <?php foreach (($bookings ?? []) as $optValue => $optLabel): ?>
                 <option value="<?= esc((string) $optValue, 'attr') ?>" <?= $selected_booking_id === (string) $optValue ? 'selected' : '' ?>><?= esc((string) $optLabel) ?></option>
             <?php endforeach; ?>
         </select>
@@ -22,7 +22,7 @@
         <select name="ticket_type_id" class="<?= esc(filter_input_class()) ?>">
             <option value=""><?= esc(lang('App.all')) ?></option>
             <?php $selected_ticket_type_id = (string) request()->getGet('ticket_type_id'); ?>
-            <?php foreach (($$ticketTypes ?? []) as $optValue => $optLabel): ?>
+            <?php foreach (($ticketTypes ?? []) as $optValue => $optLabel): ?>
                 <option value="<?= esc((string) $optValue, 'attr') ?>" <?= $selected_ticket_type_id === (string) $optValue ? 'selected' : '' ?>><?= esc((string) $optLabel) ?></option>
             <?php endforeach; ?>
         </select>

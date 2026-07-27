@@ -1,4 +1,7 @@
-<?php /** @var array $limitOptions */ ?>
+<?php
+/** @var array $limitOptions */
+$eventReferenceEventLabels = array_map('strval', $events ?? []);
+?>
 
 <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
     x-data="remoteTable({
@@ -98,12 +101,12 @@
                 <tbody class="<?= esc(table_body_class()) ?>">
                     <template x-for="row in rows" :key="String(row.id ?? Math.random())">
                         <tr class="<?= esc(table_row_class()) ?>">
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.event_id ?? '-')"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($eventReferenceEventLabels)) ?>)[String(row.event_id)] ?? '—'"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.source_system ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.source_type ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.source_id ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.relation ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.metadata ?? '-')"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="typeof row.metadata === 'object' && row.metadata !== null ? JSON.stringify(row.metadata) : String(row.metadata ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate(row.created_at)"></td>
                             <td class="<?= esc(table_td_class()) ?>">
                                 <div class="flex items-center gap-2">

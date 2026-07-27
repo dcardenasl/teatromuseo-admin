@@ -6,7 +6,7 @@
     'title' => 'Events.events_edit',
 ]) ?>
 
-<form id="delete-item-form" method="post" action="<?= route_to('admin.events.events.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['title'] ?? $item['id'] ?? null), 'js') ?>', () => $el.submit())">
+<form id="delete-item-form" method="post" action="<?= route_to('admin.events.events.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['title'] ?? null), 'js') ?>', () => $el.submit())">
     <?= csrf_field() ?>
 </form>
 
@@ -21,20 +21,9 @@
         <?= view('components/form/text', [
             'name' => 'uuid',
             'label' => 'Events.field_uuid',
-            'required' => true,
+            'readonly' => true,
             'value' => $item['uuid'] ?? '',
-            'placeholder' => 'Events.field_uuid_placeholder',
-            'help' => 'Events.field_uuid_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/text', [
-            'name' => 'title',
-            'label' => 'Events.field_title',
-            'required' => true,
-            'value' => $item['title'] ?? '',
-            'placeholder' => 'Events.field_title_placeholder',
-            'help' => 'Events.field_title_help',
+            'help' => 'Events.field_uuid_generated_help',
             'errors' => $errors ?? []
         ]) ?>
 
@@ -45,23 +34,13 @@
             'placeholder' => 'Events.field_event_type_placeholder',
             'help' => 'Events.field_event_type_help',
             'options' => [
-                'function' => 'Function',
-                'festival' => 'Festival',
-                'course' => 'Course',
-                'workshop' => 'Workshop',
-                'other' => 'Other'
+                'function' => lang('Events.option_event_type_function'),
+                'festival' => lang('Events.option_event_type_festival'),
+                'course' => lang('Events.option_event_type_course'),
+                'workshop' => lang('Events.option_event_type_workshop'),
+                'other' => lang('Events.option_event_type_other'),
             ],
             'value' => $item['event_type'] ?? '',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/textarea', [
-            'name' => 'description',
-            'label' => 'Events.field_description',
-            'required' => true,
-            'value' => $item['description'] ?? '',
-            'placeholder' => 'Events.field_description_placeholder',
-            'help' => 'Events.field_description_help',
             'errors' => $errors ?? []
         ]) ?>
 
@@ -72,15 +51,24 @@
             'placeholder' => 'Events.field_status_placeholder',
             'help' => 'Events.field_status_help',
             'options' => [
-                'draft' => 'Draft',
-                'published' => 'Published',
-                'cancelled' => 'Cancelled'
+                'draft' => lang('Events.option_status_draft'),
+                'published' => lang('Events.option_status_published'),
+                'cancelled' => lang('Events.option_status_cancelled'),
             ],
             'value' => $item['status'] ?? '',
             'errors' => $errors ?? []
         ]) ?>
             </div>
         </section>
+
+        <?= view('events/events/partials/translations', [
+            'item' => $item,
+            'languages' => $languages ?? [],
+            'defaultLangCode' => $defaultLangCode ?? '',
+            'defaultLangIndex' => $defaultLangIndex ?? 0,
+            'translations' => $translations ?? [],
+            'errors' => $errors ?? [],
+        ]) ?>
     </div>
 
     <aside class="space-y-6">
