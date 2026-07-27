@@ -327,7 +327,21 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
                 <span><?= lang('Tickets.tickets_title') ?></span>
             </a>
         <?php endif; ?>
-        <!-- END Events -->
+        <!-- START Museum Catalog -->
+        <div class="pt-3 mt-3 border-t border-gray-800 text-xs uppercase text-gray-500">Museo (Catálogo)</div>
+        <a href="<?= route_to('admin.museum.collection_items') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/museum/collection-items*') ?>">
+            <?= ui_icon('cms-collection') ?>
+            <span>Fichas de Colección</span>
+        </a>
+        <a href="<?= route_to('admin.museum.categories') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/museum/categories*') ?>">
+            <?= ui_icon('tag') ?>
+            <span>Categorías</span>
+        </a>
+        <a href="<?= route_to('admin.museum.techniques') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/museum/techniques*') ?>">
+            <?= ui_icon('settings') ?>
+            <span>Técnicas</span>
+        </a>
+        <!-- END Museum Catalog -->
         <!-- [DYNAMIC_MODULES_ANCHOR] -->
     </nav>
 </aside>

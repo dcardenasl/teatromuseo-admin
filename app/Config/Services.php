@@ -45,6 +45,12 @@ use App\Modules\Iam\Services\PermissionApiService;
 use App\Modules\Iam\Services\RoleApiService;
 use App\Modules\Iam\Services\RoleMatrixApiService;
 use App\Modules\Metrics\Services\MetricsApiService;
+use App\Modules\Museum\Services\CategoryApiService as MuseumCategoryApiService;
+use App\Modules\Museum\Services\CategoryApiServiceInterface;
+use App\Modules\Museum\Services\CollectionItemApiService;
+use App\Modules\Museum\Services\CollectionItemApiServiceInterface;
+use App\Modules\Museum\Services\TechniqueApiService;
+use App\Modules\Museum\Services\TechniqueApiServiceInterface;
 use App\Modules\Occurrences\Services\OccurrenceApiService;
 use App\Modules\Occurrences\Services\OccurrenceApiServiceInterface;
 use App\Modules\Profile\Services\ProfileApiService;
@@ -122,6 +128,16 @@ class Services extends BaseService
         }
 
         return new DomainApiClient(config(EventDomainApiClient::class));
+    }
+
+    public static function catalogDomainApiClient(bool $getShared = true): DomainApiClientInterface
+    {
+        if ($getShared) {
+            /** @var DomainApiClientInterface */
+            return static::getSharedInstance('catalogDomainApiClient');
+        }
+
+        return new DomainApiClient(config(CatalogDomainApiClient::class));
     }
 
     public static function bffApiClient(bool $getShared = true): BffApiClientInterface
@@ -509,5 +525,26 @@ class Services extends BaseService
             return static::getSharedInstance('eventReferenceApiService');
         }
         return new EventReferenceApiService(static::eventDomainApiClient());
+    }
+    public static function museumCategoryApiService(bool $getShared = true): CategoryApiServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('museumCategoryApiService');
+        }
+        return new MuseumCategoryApiService(static::catalogDomainApiClient());
+    }
+    public static function museumTechniqueApiService(bool $getShared = true): TechniqueApiServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('museumTechniqueApiService');
+        }
+        return new TechniqueApiService(static::catalogDomainApiClient());
+    }
+    public static function museumCollectionItemApiService(bool $getShared = true): CollectionItemApiServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('museumCollectionItemApiService');
+        }
+        return new CollectionItemApiService(static::catalogDomainApiClient());
     }
 }

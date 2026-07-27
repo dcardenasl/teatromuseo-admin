@@ -62,6 +62,7 @@ class Autoload extends AutoloadConfig
         'App\Modules\Venues'  => APPPATH . 'Modules/Venues',
         'App\Modules\Occurrences'  => APPPATH . 'Modules/Occurrences',
         'App\Modules\EventReferences'  => APPPATH . 'Modules/EventReferences',
+        'App\Modules\Museum'  => APPPATH . 'Modules/Museum',
     ];
 
     /**
