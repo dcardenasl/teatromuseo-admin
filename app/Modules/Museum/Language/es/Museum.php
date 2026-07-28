@@ -102,6 +102,25 @@ return [
     'field_is_active_help' => 'Controla si es visible públicamente.',
     'field_is_active_on' => 'Publicado',
     'field_is_active_off' => 'Borrador',
+    'field_slug' => 'Slug',
+    'field_slug_placeholder' => 'Ingrese slug',
+    'field_slug_help' => 'Identificador único apto para URL.',
+    'field_icon' => 'Ícono',
+    'field_icon_placeholder' => 'Ingrese ícono',
+    'field_icon_help' => 'Clase o nombre del ícono.',
+    'field_short_description' => 'Descripción breve',
+    'field_short_description_placeholder' => 'Ingrese descripción breve',
+    'field_short_description_help' => 'Texto corto mostrado en listados y tarjetas.',
+    'field_video_url' => 'URL del video',
+    'field_video_url_placeholder' => 'Ingrese URL del video',
+    'field_video_url_help' => 'Ingrese la URL del video.',
+    'field_pdf_file_id' => 'ID del archivo PDF',
+    'field_pdf_file_id_placeholder' => 'Ingrese ID del archivo PDF',
+    'field_pdf_file_id_help' => 'ID del archivo PDF relacionado.',
+    'field_sort_order' => 'Orden',
+    'field_sort_order_placeholder' => 'Ingrese orden',
+    'field_sort_order_help' => 'Los valores más bajos se muestran primero.',
+    'sort_order_saved' => 'Orden guardado correctamente.',
 
     // Categories
     'categories_title' => 'Categorías de Museo',
@@ -117,6 +136,8 @@ return [
     'categories_delete_success' => 'Categoría eliminada correctamente.',
     'categories_delete_failed' => 'No se pudo eliminar la categoría.',
     'categories_empty' => 'Aún no hay categorías registradas.',
+    'categories_loading' => 'Cargando categorías...',
+    'categories_search_placeholder' => 'Buscar por nombre...',
 
     // Techniques
     'techniques_title' => 'Técnicas de Museo',
@@ -132,4 +153,6 @@ return [
     'techniques_delete_success' => 'Técnica eliminada correctamente.',
     'techniques_delete_failed' => 'No se pudo eliminar la técnica.',
     'techniques_empty' => 'Aún no hay técnicas registradas.',
+    'techniques_loading' => 'Cargando técnicas...',
+    'techniques_search_placeholder' => 'Buscar por nombre...',
 ];

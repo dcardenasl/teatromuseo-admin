@@ -188,7 +188,7 @@ class TechniqueController extends BaseWebController
 
         return $this->response->setJSON([
             'ok' => true,
-            'message' => lang('Files.gallery_save_success') ?? 'Order saved.',
+            'message' => lang('Museum.sort_order_saved'),
         ]);
     }
 

@@ -9,7 +9,9 @@ use App\Libraries\ApiClientInterface;
 use App\Libraries\DomainApiClient;
 use App\Libraries\DomainApiClientInterface;
 use CodeIgniter\Test\CIUnitTestCase;
+use Config\CatalogDomainApiClient as CatalogDomainApiClientConfig;
 use Config\DomainApiClient as DomainApiClientConfig;
+use Config\EventDomainApiClient as EventDomainApiClientConfig;
 use Config\Services;
 
 /**
@@ -110,6 +112,28 @@ final class DomainApiClientTest extends CIUnitTestCase
         $this->assertInstanceOf(ApiClientInterface::class, $domain);
     }
 
+    public function testEventDomainFactoryUsesEventConfig(): void
+    {
+        $instance = Services::eventDomainApiClient(false);
+
+        $this->assertInstanceOf(DomainApiClient::class, $instance);
+        $config = $this->extractClientConfig($instance);
+
+        $this->assertInstanceOf(EventDomainApiClientConfig::class, $config);
+        $this->assertSame('http://localhost:8193', $config->baseUrl);
+    }
+
+    public function testCatalogDomainFactoryUsesCatalogConfig(): void
+    {
+        $instance = Services::catalogDomainApiClient(false);
+
+        $this->assertInstanceOf(DomainApiClient::class, $instance);
+        $config = $this->extractClientConfig($instance);
+
+        $this->assertInstanceOf(CatalogDomainApiClientConfig::class, $config);
+        $this->assertSame('http://localhost:8191', $config->baseUrl);
+    }
+
     private function setEnvVar(string $key, string $value): void
     {
         putenv($key . '=' . $value);
@@ -120,5 +144,21 @@ final class DomainApiClientTest extends CIUnitTestCase
     {
         putenv($key);
         unset($_ENV[$key], $_SERVER[$key]);
+    }
+
+    /**
+     * @return object
+     */
+    private function extractClientConfig(DomainApiClient $client): object
+    {
+        $reflection = new \ReflectionClass(ApiClient::class);
+        $property = $reflection->getProperty('config');
+        $property->setAccessible(true);
+
+        $config = $property->getValue($client);
+
+        $this->assertIsObject($config);
+
+        return $config;
     }
 }

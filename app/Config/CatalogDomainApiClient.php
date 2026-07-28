@@ -15,9 +15,10 @@ class CatalogDomainApiClient extends DomainApiClient
 
     public function __construct()
     {
+        $defaultBaseUrl = $this->baseUrl;
         parent::__construct();
 
-        $baseUrl = env('catalogDomainApiClient.baseUrl') ?: env('CATALOG_DOMAIN_API_BASE_URL') ?: $this->baseUrl;
+        $baseUrl = env('catalogDomainApiClient.baseUrl') ?: env('CATALOG_DOMAIN_API_BASE_URL') ?: $defaultBaseUrl;
         if (! is_string($baseUrl) || trim($baseUrl) === '') {
             throw new \LogicException(
                 'Missing CATALOG_DOMAIN_API_BASE_URL in .env. '

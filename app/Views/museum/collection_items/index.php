@@ -219,7 +219,7 @@
                     <template x-for="row in rows" :key="String(row.id ?? Math.random())">
                         <tr class="<?= esc(table_row_class()) ?>">
                             <td class="<?= esc(table_td_class('primary')) ?>" x-text="String(row.name ?? '-')"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.category_id ?? '-')"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.category ?? row.category_name ?? row.category_id ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.inventory_code ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.status ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.summary ?? '-')"></td>

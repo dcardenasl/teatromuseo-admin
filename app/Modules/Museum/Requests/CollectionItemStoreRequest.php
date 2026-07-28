@@ -62,7 +62,7 @@ class CollectionItemStoreRequest extends BaseFormRequest
             'materials' => $this->postString('materials'),
             'cover_file_id' => $this->postInt('cover_file_id'),
             'gallery_file_ids' => $this->postString('gallery_file_ids'),
-            'show_in_totem' => $this->postBool('show_in_totem'),
+            'show_in_totem' => $this->postInt('show_in_totem', 0),
             'internal_notes' => $this->postString('internal_notes'),
             'collection_number' => $this->postString('collection_number'),
             'collection_group' => $this->postString('collection_group'),
@@ -73,7 +73,7 @@ class CollectionItemStoreRequest extends BaseFormRequest
             'tags' => $this->postString('tags'),
             'links' => $this->postString('links'),
             'company_history' => $this->postString('company_history'),
-            'is_active' => $this->postBool('is_active'),
+            'is_active' => $this->postInt('is_active', 0),
         ];
     }
 }
