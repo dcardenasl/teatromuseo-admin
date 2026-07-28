@@ -129,7 +129,7 @@ class App extends BaseConfig
      *
      * @var list<string>
      */
-    public array $supportedLocales = ['es', 'en'];
+    public array $supportedLocales = ['es', 'en', 'fr', 'pt'];
 
     /**
      * --------------------------------------------------------------------------
@@ -165,6 +165,8 @@ class App extends BaseConfig
     public array $dateFormats = [
         'es' => 'd/m/Y H:i',
         'en' => 'm/d/Y H:i',
+        'fr' => 'd/m/Y H:i',
+        'pt' => 'd/m/Y H:i',
     ];
 
     /**

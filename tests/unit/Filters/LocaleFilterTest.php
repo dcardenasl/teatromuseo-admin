@@ -61,7 +61,7 @@ final class LocaleFilterTest extends CIUnitTestCase
 
     public function testInvalidSessionLocaleFallsBackToHeaderNegotiation(): void
     {
-        session()->set('locale', 'fr');
+        session()->set('locale', 'de');
 
         $filter = new LocaleFilter();
         $request = service('request');

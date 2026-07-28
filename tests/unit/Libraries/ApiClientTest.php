@@ -74,7 +74,7 @@ final class ApiClientTest extends CIUnitTestCase
 
     public function testBaseHeadersFallbackToSessionLocaleWhenCurrentLocaleUnsupported(): void
     {
-        Services::language()->setLocale('fr');
+        Services::language()->setLocale('de');
         session()->set('locale', 'es');
 
         $client = new ApiClient(new ApiClientConfig());
@@ -85,8 +85,8 @@ final class ApiClientTest extends CIUnitTestCase
 
     public function testBaseHeadersFallbackToDefaultLocaleWhenNoSupportedLocaleFound(): void
     {
-        Services::language()->setLocale('fr');
-        session()->set('locale', 'pt');
+        Services::language()->setLocale('de');
+        session()->set('locale', 'it');
 
         $client = new ApiClient(new ApiClientConfig());
         $headers = $this->invokeMethod($client, 'baseHeaders');
