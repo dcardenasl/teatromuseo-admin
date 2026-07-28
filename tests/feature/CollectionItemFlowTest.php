@@ -71,7 +71,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
 
-        Services::injectMock('collectionItemApiService', $mock);
+        Services::injectMock('museumCollectionItemApiService', $mock);
 
         $result = $this->withSession([
             'access_token' => 'token',

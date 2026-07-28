@@ -12,7 +12,7 @@
         <select name="category_id" class="<?= esc(filter_input_class()) ?>">
             <option value=""><?= esc(lang('App.all')) ?></option>
             <?php $selected_category_id = (string) request()->getGet('category_id'); ?>
-            <?php foreach (($$categories ?? []) as $optValue => $optLabel): ?>
+            <?php foreach (($categories ?? []) as $optValue => $optLabel): ?>
                 <option value="<?= esc((string) $optValue, 'attr') ?>" <?= $selected_category_id === (string) $optValue ? 'selected' : '' ?>><?= esc((string) $optLabel) ?></option>
             <?php endforeach; ?>
         </select>

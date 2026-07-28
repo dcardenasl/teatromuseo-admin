@@ -71,7 +71,7 @@ final class TechniqueFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
 
-        Services::injectMock('techniqueApiService', $mock);
+        Services::injectMock('museumTechniqueApiService', $mock);
 
         $result = $this->withSession([
             'access_token' => 'token',
