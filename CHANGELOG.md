@@ -18,8 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Museum admin module** — new `App\Modules\Museum` with full CRUD for Categories, Techniques
   and Collection Items, wired to the catalog domain via the new `CatalogDomainApiClient`, plus a
   "Museo (Catálogo)" sidebar section.
+- **French and Portuguese** — added to `supportedLocales` and `dateFormats`, with Museum module
+  translations for both.
 
 ### Fixed
 
 - **`field_row` / `text` form components** — no longer crash when a value is an array or object;
   it is now rendered as JSON instead.
+- **`CatalogDomainApiClient` / `EventDomainApiClient`** — the base-URL fallback read `$this->baseUrl`
+  *after* `parent::__construct()` had already overwritten it with the generic domain default,
+  so an unset `CATALOG_DOMAIN_API_BASE_URL`/`EVENT_DOMAIN_API_BASE_URL` silently pointed at the
+  wrong port instead of each client's own declared default.
+- **Museum collection items table** — now displays the resolved category name instead of the raw
+  `category_id`, and `is_active`/`show_in_totem` are sent as ints to match the catalog API's
+  contract instead of booleans.
+- **Museum sort-order save** — category/technique reorder success messages now use a real
+  `Museum.sort_order_saved` key instead of an unrelated `Files.*` one.
