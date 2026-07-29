@@ -25,6 +25,10 @@
                 'value' => $collectionItem['name'] ?? '—'
             ]) ?>
             <?= view('components/display/field_row', [
+                'label' => 'Museum.field_slug',
+                'value' => $collectionItem['slug'] ?? '—'
+            ]) ?>
+            <?= view('components/display/field_row', [
                 'label' => 'Museum.field_category_id',
                 'value' => ($categories[(string) ($collectionItem['category_id'] ?? '')] ?? ($collectionItem['category_id'] ?? '—'))
             ]) ?>

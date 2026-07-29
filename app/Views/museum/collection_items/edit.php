@@ -28,6 +28,16 @@
             'errors' => $errors ?? []
         ]) ?>
 
+        <?= view('components/form/slug', [
+            'name' => 'slug',
+            'label' => 'Museum.field_slug',
+            'sourceId' => 'name',
+            'checkUrl' => '',
+            'value' => $item['slug'] ?? '',
+            'errors' => $errors ?? [],
+            'help' => 'Museum.field_slug_help',
+        ]) ?>
+
         <?= view('components/form/relation', [
             'name' => 'category_id',
             'label' => 'Museum.field_category_id',

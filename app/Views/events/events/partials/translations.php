@@ -75,6 +75,18 @@ $translationLabel = static function (string $key, string $fallback): string {
                     'errors' => $errors ?? [],
                 ]) ?>
 
+                <?php $slugValue = (string) ($row['slug'] ?? ($isDefault ? ($item['slug'] ?? '') : '')); ?>
+                <?= view('components/form/text', [
+                    'name' => "translations[{$index}][slug]",
+                    'label' => 'Events.field_slug',
+                    'required' => false,
+                    'readonly' => false,
+                    'value' => old("translations.{$index}.slug", $slugValue),
+                    'placeholder' => 'Events.field_slug_placeholder',
+                    'help' => 'Events.field_slug_help',
+                    'errors' => $errors ?? [],
+                ]) ?>
+
                 <?= view('components/form/textarea', [
                     'name' => "translations[{$index}][description]",
                     'label' => 'Events.translation_description_label',
@@ -88,6 +100,7 @@ $translationLabel = static function (string $key, string $fallback): string {
         <?php endforeach; ?>
 
         <input type="hidden" name="title" value="<?= esc((string) ($defaultTranslation['title'] ?? ($item['title'] ?? '')), 'attr') ?>">
+        <input type="hidden" name="slug" value="<?= esc((string) ($defaultTranslation['slug'] ?? ($item['slug'] ?? '')), 'attr') ?>">
         <input type="hidden" name="description" value="<?= esc((string) ($defaultTranslation['description'] ?? ($item['description'] ?? '')), 'attr') ?>">
     </div>
 </section>
@@ -102,11 +115,14 @@ document.addEventListener('submit', function (event) {
 
     const index = wrapper.dataset.defaultTranslationIndex;
     const title = form.querySelector(`[name="translations[${index}][title]"]`);
+    const slug = form.querySelector(`[name="translations[${index}][slug]"]`);
     const description = form.querySelector(`[name="translations[${index}][description]"]`);
     const rootTitle = form.querySelector('[name="title"]');
+    const rootSlug = form.querySelector('[name="slug"]');
     const rootDescription = form.querySelector('[name="description"]');
 
     if (title && rootTitle) rootTitle.value = title.value;
+    if (slug && rootSlug) rootSlug.value = slug.value;
     if (description && rootDescription) rootDescription.value = description.value;
 }, true);
 </script>
