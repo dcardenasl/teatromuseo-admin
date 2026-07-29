@@ -30,7 +30,7 @@ class OccurrenceStoreRequest extends BaseFormRequest
     {
         return [
             'event_id' => $this->postInt('event_id'),
-            'venue_id' => $this->postInt('venue_id'),
+            'venue_id' => $this->postNullableInt('venue_id'),
             'start_time' => $this->postString('start_time'),
             'end_time' => $this->postString('end_time'),
             'status' => $this->postString('status'),
