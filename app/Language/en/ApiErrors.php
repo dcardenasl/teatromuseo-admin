@@ -27,4 +27,8 @@ return [
     'not_found'                => 'The requested resource was not found.',
     'server_error'             => 'An unexpected server error occurred.',
     'too_many_requests'        => 'Too many requests. Please slow down.',
+    'validation_unique'       => 'This field must contain a unique value.',
+    'validation_required'     => 'This field is required.',
+    'validation_min_length'   => 'This field must meet the minimum length.',
+    'validation_max_length'   => 'This field must not exceed the maximum length.',
 ];

@@ -52,6 +52,7 @@ return [
     'translate_all'          => 'Translate all languages',
     'translating'            => 'Translating…',
     'form_core'              => 'Core fields',
+    'form_additional'        => 'Additional fields',
     'back'            => 'Back',
     'select'          => 'Select…',
     'yes'             => 'Yes',

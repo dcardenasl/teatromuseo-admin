@@ -142,4 +142,32 @@ abstract class BaseFormRequest implements FormRequestInterface
 
         return is_array($value) ? $value : [];
     }
+
+    /**
+     * Resolve the translation row that belongs to the default language.
+     *
+     * Falls back to the first meaningful row when the default language id is
+     * not present in the payload, which keeps legacy forms working while the
+     * new multilingual forms provide an explicit default_language_id.
+     *
+     * @param array<int, array<string, mixed>> $translations
+     * @return array<string, mixed>
+     */
+    protected function resolveDefaultTranslation(array $translations): array
+    {
+        if ($translations === []) {
+            return [];
+        }
+
+        $defaultLanguageId = $this->postInt('default_language_id');
+        if ($defaultLanguageId > 0) {
+            foreach ($translations as $translation) {
+                if ((int) ($translation['language_id'] ?? 0) === $defaultLanguageId) {
+                    return $translation;
+                }
+            }
+        }
+
+        return $translations[0] ?? [];
+    }
 }

@@ -52,6 +52,7 @@ return [
     'translate_all'          => 'Traducir todos los idiomas',
     'translating'            => 'Traduciendo…',
     'form_core'              => 'Campos principales',
+    'form_additional'        => 'Campos adicionales',
     'back'            => 'Volver',
     'select'          => 'Seleccionar…',
     'yes'             => 'Sí',

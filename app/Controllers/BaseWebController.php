@@ -353,9 +353,32 @@ abstract class BaseWebController extends BaseController
         $localized  = lang('ApiErrors.' . $normalized);
 
         // lang() returns the key string (e.g. "ApiErrors.some_code") when not found.
-        // Fall back to the original message to avoid showing raw key strings.
         if (is_string($localized) && ! str_starts_with($localized, 'ApiErrors.')) {
             return $localized;
+        }
+
+        if (str_contains($normalized, 'must contain a unique value')) {
+            $fallback = lang('ApiErrors.validation_unique');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
+        }
+
+        if (str_contains($normalized, 'field is required')) {
+            $fallback = lang('ApiErrors.validation_required');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
+        }
+
+        if (str_contains($normalized, 'must be at least')) {
+            $fallback = lang('ApiErrors.validation_min_length');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
+        }
+
+        if (str_contains($normalized, 'may not exceed')) {
+            $fallback = lang('ApiErrors.validation_max_length');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
         }
 
         return $message;

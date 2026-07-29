@@ -34,9 +34,17 @@ final class TranslationStatus
     ): array {
         $isDefault = ! empty($language['is_default']);
         $languageId = (int) ($language['id'] ?? 0);
+        $languageCode = strtolower((string) ($language['code'] ?? ''));
         $translation = null;
         foreach ($translations as $candidate) {
-            if ((int) ($candidate['language_id'] ?? 0) === $languageId) {
+            if (! is_array($candidate)) {
+                continue;
+            }
+
+            $cLangId = (int) ($candidate['language_id'] ?? 0);
+            $cCode   = strtolower((string) ($candidate['locale'] ?? $candidate['language_code'] ?? ''));
+
+            if (($cLangId > 0 && $cLangId === $languageId) || ($cCode !== '' && $cCode === $languageCode)) {
                 $translation = $candidate;
                 break;
             }
