@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public site cache invalidation** — `PublicSiteCacheInvalidator` calls the public website's cache webhook after category, technique, collection item, and event writes, so admin edits reflect on the public site without waiting for TTL expiry.
+- **Event and collection item detail views** — event show pages now display the public slug and a status badge in the header, and collection item screens clarify `field_status` as publication status (draft/published/archived) instead of the previous conservation-state wording.
 - **Language-aware Museum forms and translation status** — category, technique, and collection item screens now use localized slug helpers, translated input labels, and translation status panels on detail pages.
 - **CMS menu link target & preset catalog enhancements** — added `target_blank` checkbox and validation in `MenuItemStoreRequest` and `CmsPresetCatalog` for managing external links and dynamic listing page presets in CMS menus.
 - **Multilingual translation management in Event and Museum modules** — added i18n translation tabs and input fields in event and collection item forms (`translations.php`), allowing administrative management of localized titles, summaries, and content.
@@ -26,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`PUBLIC_SITE_URL` port** — corrected the public website's default/example port (8186 → 8184) in `.env`/`.env.example`/`phpunit.xml.dist` so preview links and cache invalidation hit `teatromuseo-web` instead of the totem app's port.
+- **`OccurrenceStoreRequest::venue_id`** — now reads as a nullable int, so an occurrence can be submitted without a venue instead of coercing a missing value to `0`.
 - **Validation fallback matching** — `BaseWebController`, `BaseFormRequest`, and CMS translation helpers now resolve the current locale consistently when falling back to generic labels and error messages.
 - **`field_row` / `text` form components** — no longer crash when a value is an array or object;
   it is now rendered as JSON instead.
