@@ -22,6 +22,23 @@ final class CollectionItemFlowTest extends CIUnitTestCase
         parent::tearDown();
     }
 
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function apiSuccess(array $data = []): array
+    {
+        return [
+            'ok'          => true,
+            'status'      => 200,
+            'data'        => $data,
+            'raw'         => '',
+            'headers'     => [],
+            'messages'    => [],
+            'fieldErrors' => [],
+        ];
+    }
+
     public function testAdminRoutesRequireAuth(): void
     {
         $result = $this->get('/admin/museum/collection-items');
@@ -48,6 +65,41 @@ final class CollectionItemFlowTest extends CIUnitTestCase
         $result->assertStatus(200);
     }
 
+    public function testShowRendersForAdmin(): void
+    {
+        $itemMock = $this->createMock(CollectionItemApiService::class);
+        $itemMock->method('get')
+            ->with('test-uuid')
+            ->willReturn($this->apiSuccess([
+                'id'             => 15,
+                'name'           => 'Ficha de prueba',
+                'inventory_code' => 'UIC-TEST',
+                'category_id'    => 7,
+                'status'         => 'published',
+                'translations'   => [],
+            ]));
+        Services::injectMock('museumCollectionItemApiService', $itemMock);
+
+        $categoryMock = $this->createMock(\App\Modules\Museum\Services\CategoryApiService::class);
+        $categoryMock->method('list')->willReturn($this->apiSuccess([
+            ['id' => 7, 'name' => 'Categoría de prueba'],
+        ]));
+        Services::injectMock('museumCategoryApiService', $categoryMock);
+
+        $languageMock = $this->createMock(\App\Modules\Cms\Services\LanguageApiService::class);
+        $languageMock->method('list')->willReturn($this->apiSuccess([]));
+        Services::injectMock('languageApiService', $languageMock);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['users.read']],
+        ])->get('/admin/museum/collection-items/test-uuid');
+
+        $result->assertStatus(200);
+        $result->assertSee('Ficha de prueba');
+        $result->assertSee('UIC-TEST');
+    }
+
     public function testStoreValidationFailureRedirectsBack(): void
     {
         $result = $this->withSession([
@@ -60,18 +112,97 @@ final class CollectionItemFlowTest extends CIUnitTestCase
         $result->assertRedirect();
     }
 
+    public function testStoreSuccessInvalidatesPublicCache(): void
+    {
+        $mock = $this->createMock(CollectionItemApiService::class);
+        $mock->expects($this->once())
+            ->method('create')
+            ->with($this->callback(static function (array $payload): bool {
+                return (int) ($payload['category_id'] ?? 0) === 7
+                    && ($payload['inventory_code'] ?? '') === 'UIC-TEST'
+                    && ($payload['status'] ?? '') === 'published'
+                    && (int) ($payload['show_in_totem'] ?? 0) === 1
+                    && (int) ($payload['is_active'] ?? 0) === 1;
+            }))
+            ->willReturn($this->apiSuccess(['id' => 15]));
+        Services::injectMock('museumCollectionItemApiService', $mock);
+
+        $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
+        $cacheMock->expects($this->once())
+            ->method('invalidate')
+            ->with(['collection_items'])
+            ->willReturn(true);
+        Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['users.read']],
+        ])->post('/admin/museum/collection-items', [
+            csrf_token()      => csrf_hash(),
+            'name'            => 'Ficha de prueba',
+            'category_id'     => '7',
+            'inventory_code'  => 'UIC-TEST',
+            'status'          => 'published',
+            'show_in_totem'   => '1',
+            'is_active'       => '1',
+        ]);
+
+        $result->assertRedirectTo(site_url('admin/museum/collection-items'));
+    }
+
+    public function testUpdateSuccessInvalidatesPublicCache(): void
+    {
+        $mock = $this->createMock(CollectionItemApiService::class);
+        $mock->expects($this->once())
+            ->method('update')
+            ->with('test-uuid', $this->callback(static function (array $payload): bool {
+                return (int) ($payload['category_id'] ?? 0) === 7
+                    && ($payload['inventory_code'] ?? '') === 'UIC-TEST'
+                    && ($payload['status'] ?? '') === 'published'
+                    && (int) ($payload['show_in_totem'] ?? 0) === 1
+                    && (int) ($payload['is_active'] ?? 0) === 1;
+            }))
+            ->willReturn($this->apiSuccess(['id' => 15]));
+        Services::injectMock('museumCollectionItemApiService', $mock);
+
+        $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
+        $cacheMock->expects($this->once())
+            ->method('invalidate')
+            ->with(['collection_items'])
+            ->willReturn(true);
+        Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['users.read']],
+        ])->post('/admin/museum/collection-items/test-uuid', [
+            csrf_token()      => csrf_hash(),
+            'name'            => 'Ficha de prueba',
+            'category_id'     => '7',
+            'inventory_code'  => 'UIC-TEST',
+            'status'          => 'published',
+            'show_in_totem'   => '1',
+            'is_active'       => '1',
+        ]);
+
+        $result->assertRedirectTo(site_url('admin/museum/collection-items'));
+    }
+
     public function testDeleteSuccessRedirectsToList(): void
     {
         $mock = $this->createMock(CollectionItemApiService::class);
         $mock->expects($this->once())
             ->method('delete')
             ->with('test-uuid')
-            ->willReturn([
-                'ok' => true, 'status' => 200, 'data' => [],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-
+            ->willReturn($this->apiSuccess());
         Services::injectMock('museumCollectionItemApiService', $mock);
+
+        $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
+        $cacheMock->expects($this->once())
+            ->method('invalidate')
+            ->with(['collection_items'])
+            ->willReturn(true);
+        Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
 
         $result = $this->withSession([
             'access_token' => 'token',

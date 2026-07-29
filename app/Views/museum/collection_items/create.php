@@ -237,13 +237,13 @@
             <h3 class="text-sm font-semibold text-gray-900"><?= esc(lang('App.form_additional')) ?></h3>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <?= view('components/form/number', [
+                <?= view('components/form/file', [
                     'name' => 'cover_file_id',
                     'label' => 'Museum.field_cover_file_id',
                     'required' => false,
                     'value' => old('cover_file_id', ''),
-                    'placeholder' => 'Museum.field_cover_file_id_placeholder',
-                    'help' => 'Museum.field_cover_file_id_help',
+                    'accept' => 'image/*',
+                    'filterType' => 'image',
                     'errors' => $errors ?? []
                 ]) ?>
 
@@ -279,16 +279,6 @@
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
-
-            <?= view('components/form/textarea', [
-                'name' => 'gallery_file_ids',
-                'label' => 'Museum.field_gallery_file_ids',
-                'required' => false,
-                'value' => old('gallery_file_ids', ''),
-                'placeholder' => 'Museum.field_gallery_file_ids_placeholder',
-                'help' => 'Museum.field_gallery_file_ids_help',
-                'errors' => $errors ?? []
-            ]) ?>
 
             <?= view('components/form/textarea', [
                 'name' => 'physical_description',

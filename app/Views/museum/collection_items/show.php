@@ -1,6 +1,7 @@
 <?php
 $collectionItem = $collectionItem ?? [];
 $languages = $languages ?? [];
+$categories = is_array($categories ?? null) ? $categories : [];
 $langCodeMap = [];
 foreach ($languages as $language) {
     if (is_array($language) && isset($language['id'], $language['code'])) {
@@ -25,6 +26,27 @@ foreach ($translations as $translation) {
         }
     }
 }
+$collectionName = (string) ($collectionItem['name'] ?? $collectionItem['title'] ?? $collectionItem['id'] ?? lang('Museum.collection_items_details'));
+$inventoryCode = trim((string) ($collectionItem['inventory_code'] ?? ''));
+$categoryLabel = trim((string) ($categories[(string) ($collectionItem['category_id'] ?? '')] ?? ($collectionItem['category_id'] ?? '')));
+$publicationStatus = strtolower((string) ($collectionItem['status'] ?? ''));
+$publicationStatusLabels = [
+    'draft' => lang('Pages.status_draft'),
+    'published' => lang('Pages.status_published'),
+    'archived' => lang('Pages.status_archived'),
+];
+$publicationStatusClasses = [
+    'draft' => 'bg-amber-50 text-amber-700 ring-amber-200',
+    'published' => 'bg-green-50 text-green-700 ring-green-200',
+    'archived' => 'bg-gray-100 text-gray-600 ring-gray-200',
+];
+$headerSubtitleParts = [];
+if ($inventoryCode !== '') {
+    $headerSubtitleParts[] = lang('Museum.field_inventory_code') . ': ' . $inventoryCode;
+}
+if ($categoryLabel !== '') {
+    $headerSubtitleParts[] = lang('Museum.field_category_id') . ': ' . $categoryLabel;
+}
 ?>
 
 <?php if (! empty($error)): ?>
@@ -38,7 +60,8 @@ foreach ($translations as $translation) {
         'backUrl' => route_to('admin.museum.collection_items'),
         'backLabel' => 'Museum.collection_items_title',
         'eyebrow' => 'Museum.collection_items_details',
-        'title' => (string) ($collectionItem['name'] ?? $collectionItem['title'] ?? $collectionItem['id'] ?? lang('Museum.collection_items_details')),
+        'title' => $collectionName,
+        'subtitle' => $headerSubtitleParts !== [] ? implode(' · ', $headerSubtitleParts) : null,
     ]) ?>
 
     <?php if (!empty($languages)): ?>
@@ -60,20 +83,20 @@ foreach ($translations as $translation) {
             </div>
             <dl class="divide-y divide-gray-100">
                 <?= view('components/display/field_row', [
-                    'label' => 'Museum.field_name',
-                    'value' => $collectionItem['name'] ?? '—'
-                ]) ?>
-                <?= view('components/display/field_row', [
                     'label' => 'Museum.field_category_id',
-                    'value' => ($categories[(string) ($collectionItem['category_id'] ?? '')] ?? ($collectionItem['category_id'] ?? '—'))
+                    'value' => $categoryLabel !== '' ? $categoryLabel : '—'
                 ]) ?>
                 <?= view('components/display/field_row', [
                     'label' => 'Museum.field_inventory_code',
-                    'value' => $collectionItem['inventory_code'] ?? '—'
+                    'value' => $inventoryCode !== '' ? '<span class="font-mono text-xs text-gray-700">' . esc($inventoryCode) . '</span>' : '—',
+                    'isHtml' => true,
                 ]) ?>
                 <?= view('components/display/field_row', [
                     'label' => 'Museum.field_status',
-                    'value' => $collectionItem['status'] ?? '—'
+                    'value' => isset($publicationStatusLabels[$publicationStatus])
+                        ? '<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ' . esc($publicationStatusClasses[$publicationStatus]) . '">' . esc($publicationStatusLabels[$publicationStatus]) . '</span>'
+                        : ($collectionItem['status'] ?? '—'),
+                    'isHtml' => true,
                 ]) ?>
                 <?= view('components/display/field_row', [
                     'label' => 'Museum.field_origin',
