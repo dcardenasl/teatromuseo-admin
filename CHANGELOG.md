@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CMS menu link target & preset catalog enhancements** — added `target_blank` checkbox and validation in `MenuItemStoreRequest` and `CmsPresetCatalog` for managing external links and dynamic listing page presets in CMS menus.
+- **Multilingual translation management in Event and Museum modules** — added i18n translation tabs and input fields in event and collection item forms (`translations.php`), allowing administrative management of localized titles, summaries, and content.
 - **Event domain admin modules** — Bookings, Events, Occurrences, EventReferences, TicketTypes
   and Tickets are now fully wired against `EventDomainApiClient`, with consolidated en/es
   translations per module.
