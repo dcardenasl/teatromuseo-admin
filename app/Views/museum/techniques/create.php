@@ -8,68 +8,120 @@
 <form method="post" action="<?= route_to('admin.museum.techniques.store') ?>" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <?= csrf_field() ?>
 
-    <div class="lg:col-span-2">
-        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
-            <h3 class="text-lg font-semibold text-gray-900"><?= esc(lang('Museum.techniques_create')) ?></h3>
-            <div class="mt-4 space-y-4">
+    <div class="lg:col-span-2 space-y-6">
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5 space-y-4">
+            <h3 class="text-sm font-semibold text-gray-900"><?= esc(lang('App.form_core')) ?></h3>
 
-        <?= view('components/form/text', [
-            'name' => 'name',
-            'label' => 'Museum.field_name',
-            'required' => true,
-            'value' => $item['name'] ?? '',
-            'placeholder' => 'Museum.field_name_placeholder',
-            'help' => 'Museum.field_name_help',
-            'errors' => $errors ?? []
-        ]) ?>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <?= view('components/form/slug', [
+                    'name' => 'slug',
+                    'label' => 'Museum.field_slug',
+                    'required' => true,
+                    'sourceId' => sprintf('[name="translations[%d][name]"]', $defaultLangIndex ?? 0),
+                    'value' => old('slug', ''),
+                    'errors' => $errors ?? [],
+                    'help' => 'Museum.field_slug_help',
+                ]) ?>
 
-        <?= view('components/form/text', [
-            'name' => 'slug',
-            'label' => 'Museum.field_slug',
-            'required' => true,
-            'value' => $item['slug'] ?? '',
-            'placeholder' => 'Museum.field_slug_placeholder',
-            'help' => 'Museum.field_slug_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/textarea', [
-            'name' => 'summary',
-            'label' => 'Museum.field_summary',
-            'required' => false,
-            'value' => $item['summary'] ?? '',
-            'placeholder' => 'Museum.field_summary_placeholder',
-            'help' => 'Museum.field_summary_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/text', [
-            'name' => 'video_url',
-            'label' => 'Museum.field_video_url',
-            'required' => false,
-            'value' => $item['video_url'] ?? '',
-            'placeholder' => 'Museum.field_video_url_placeholder',
-            'help' => 'Museum.field_video_url_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
-        <?= view('components/form/number', [
-            'name' => 'pdf_file_id',
-            'label' => 'Museum.field_pdf_file_id',
-            'required' => false,
-            'value' => $item['pdf_file_id'] ?? '',
-            'placeholder' => 'Museum.field_pdf_file_id_placeholder',
-            'help' => 'Museum.field_pdf_file_id_help',
-            'errors' => $errors ?? []
-        ]) ?>
+                <?= view('components/form/text', [
+                    'name' => 'video_url',
+                    'label' => 'Museum.field_video_url',
+                    'required' => false,
+                    'value' => old('video_url', ''),
+                    'placeholder' => 'Museum.field_video_url_placeholder',
+                    'help' => 'Museum.field_video_url_help',
+                    'errors' => $errors ?? []
+                ]) ?>
             </div>
         </section>
+
+        <!-- Multilingual Translations with language tabs -->
+        <?php if (!empty($languages)): ?>
+            <?php
+            $defaultLangId    = (int) ($defaultLangId ?? 0);
+            $defaultLangIndex = (int) ($defaultLangIndex ?? 0);
+            $defaultLangCode  = (string) ($defaultLangCode ?? '');
+            $translateUrl     = route_to('admin.cms.translate');
+            ?>
+            <input type="hidden" name="default_language_id" value="<?= esc((string) $defaultLangId) ?>">
+            <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div class="mb-4">
+                    <h4 class="text-sm font-semibold text-gray-900"><?= esc(lang('Pages.translations_title')) ?></h4>
+                    <p class="mt-1 text-xs text-gray-500"><?= esc(lang('Pages.translations_help')) ?></p>
+                </div>
+
+                <div x-data="langTabs(<?= $defaultLangId ?>, '<?= esc($translateUrl, 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>')">
+                    <!-- Tab bar + translate-all button -->
+                    <div class="flex items-center justify-between border-b border-gray-200 mb-4">
+                        <div class="flex gap-0.5" role="tablist">
+                            <?php foreach ($languages as $lang): ?>
+                                <button type="button"
+                                    role="tab"
+                                    @click="setTab(<?= (int) $lang['id'] ?>)"
+                                    :aria-selected="isActive(<?= (int) $lang['id'] ?>)"
+                                    :class="isActive(<?= (int) $lang['id'] ?>) ? 'border-brand-600 text-brand-700 bg-brand-50/40' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                    class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors">
+                                    <?= esc(strtoupper($lang['code'])) ?>
+                                    <?php if (!empty($lang['is_default'])): ?>
+                                        <span class="ml-1 text-brand-400">★</span>
+                                    <?php endif; ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if (!empty($translateTargets)): ?>
+                        <button type="button"
+                            @click="autoTranslateAll(<?= esc(json_encode($translateTargets, JSON_THROW_ON_ERROR), 'attr') ?>)"
+                            :disabled="translating || translatingAll"
+                            class="mb-px inline-flex items-center gap-1.5 text-xs text-brand-600 hover:text-brand-700 border border-brand-200 rounded px-3 py-1.5 bg-brand-50 hover:bg-brand-100 transition-colors disabled:opacity-50">
+                            <span x-show="!translatingAll"><?= ui_icon('languages', 'h-3.5 w-3.5') ?> <?= esc(lang('App.translate_all')) ?></span>
+                            <span x-show="translatingAll" x-cloak><?= ui_icon('loader', 'h-3.5 w-3.5 animate-spin') ?> <span x-text="translateAllProgress"></span></span>
+                        </button>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Translate error message -->
+                    <p x-show="translateError !== ''" x-text="translateError" x-cloak class="mb-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2"></p>
+
+                    <!-- Tab panels -->
+                    <?php foreach ($languages as $index => $lang): ?>
+                        <?php
+                        $isDefault = !empty($lang['is_default']);
+                        ?>
+                        <div x-show="isActive(<?= (int) $lang['id'] ?>)" class="space-y-4">
+                            <input type="hidden" name="translations[<?= $index ?>][locale]" value="<?= esc($lang['code']) ?>">
+                            <input type="hidden" name="translations[<?= $index ?>][language_id]" value="<?= esc($lang['id']) ?>">
+
+                            <?= view('components/form/text', [
+                                'name' => "translations[{$index}][name]",
+                                'label' => 'Museum.field_name',
+                                'required' => $isDefault,
+                                'placeholder' => 'Museum.field_name_placeholder',
+                                'help' => 'Museum.field_name_help',
+                                'value' => old("translations.{$index}.name", ''),
+                                'errors' => $errors ?? []
+                            ]) ?>
+
+                            <?= view('components/form/textarea', [
+                                'name' => "translations[{$index}][summary]",
+                                'label' => 'Museum.field_summary',
+                                'required' => false,
+                                'placeholder' => 'Museum.field_summary_placeholder',
+                                'help' => 'Museum.field_summary_help',
+                                'value' => old("translations.{$index}.summary", ''),
+                                'rows' => 3,
+                                'errors' => $errors ?? []
+                            ]) ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
     </div>
 
     <aside class="space-y-6">
         <?= view('components/display/admin_actions_panel', [
-            'content' => '<button type="submit" class="' . esc(action_button_class('primary'), 'attr') . '">' . esc(lang('App.create')) . '</button>'
-                . '<a href="' . esc(route_to('admin.museum.techniques'), 'attr') . '" class="' . esc(action_button_class(), 'attr') . '">' . esc(lang('App.cancel')) . '</a>',
+            'content' => '<button type="submit" class="' . esc(action_button_class('primary'), 'attr') . ' w-full justify-center text-center py-2.5">' . esc(lang('App.create')) . '</button>'
+                . '<a href="' . esc(route_to('admin.museum.techniques'), 'attr') . '" class="' . esc(action_button_class(), 'attr') . ' w-full justify-center text-center py-2.5 mt-2">' . esc(lang('App.cancel')) . '</a>',
         ]) ?>
     </aside>
 </form>

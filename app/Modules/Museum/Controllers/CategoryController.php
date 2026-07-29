@@ -28,7 +28,6 @@ class CategoryController extends BaseWebController
         return $this->render('museum/categories/index', [
             'title'        => lang('Museum.categories_title'),
             'limitOptions' => [10, 25, 50, 100],
-
         ]);
     }
 
@@ -47,25 +46,36 @@ class CategoryController extends BaseWebController
 
         if (! $response['ok']) {
             return $this->render('museum/categories/show', [
-                'title' => lang('Museum.categories_details'),
-                'category' => [],
-                'error' => $this->firstMessage($response, lang('Museum.categories_not_found')),
-
+                'title'     => lang('Museum.categories_details'),
+                'category'  => [],
+                'error'     => $this->firstMessage($response, lang('Museum.categories_not_found')),
+                'languages' => $this->getLanguages(),
             ]);
         }
 
         return $this->render('museum/categories/show', [
-            'title' => lang('Museum.categories_details'),
-            'category' => $this->extractData($response),
-
+            'title'     => lang('Museum.categories_details'),
+            'category'  => $this->extractData($response),
+            'languages' => $this->getLanguages(),
         ]);
     }
 
     public function create(): string
     {
-        return $this->render('museum/categories/create', [
-            'title' => lang('Museum.categories_create'),
+        $languages = $this->getLanguages();
+        $languageContext = $this->resolveLanguageContext($languages);
+        $defaultLangId = $languageContext['defaultLangId'];
+        $translateTargets = ($defaultLangId > 0 && ! empty($languages))
+            ? $this->buildTranslateTargets($languages, ['name', 'short_description'], $defaultLangId)
+            : [];
 
+        return $this->render('museum/categories/create', [
+            'title'            => lang('Museum.categories_create'),
+            'languages'        => $languages,
+            'defaultLangId'    => $defaultLangId,
+            'defaultLangIndex' => $languageContext['defaultLangIndex'],
+            'defaultLangCode'  => $languageContext['defaultLangCode'],
+            'translateTargets' => $translateTargets,
         ]);
     }
 
@@ -94,10 +104,21 @@ class CategoryController extends BaseWebController
             return $this->withError(lang('Museum.categories_not_found'), route_to('admin.museum.categories'));
         }
 
-        return $this->render('museum/categories/edit', [
-            'title' => lang('Museum.categories_edit'),
-            'item'  => $this->extractData($response),
+        $languages = $this->getLanguages();
+        $languageContext = $this->resolveLanguageContext($languages);
+        $defaultLangId = $languageContext['defaultLangId'];
+        $translateTargets = ($defaultLangId > 0 && ! empty($languages))
+            ? $this->buildTranslateTargets($languages, ['name', 'short_description'], $defaultLangId)
+            : [];
 
+        return $this->render('museum/categories/edit', [
+            'title'            => lang('Museum.categories_edit'),
+            'item'             => $this->extractData($response),
+            'languages'        => $languages,
+            'defaultLangId'    => $defaultLangId,
+            'defaultLangIndex' => $languageContext['defaultLangIndex'],
+            'defaultLangCode'  => $languageContext['defaultLangCode'],
+            'translateTargets' => $translateTargets,
         ]);
     }
 
@@ -130,8 +151,6 @@ class CategoryController extends BaseWebController
         return redirect()->to(route_to('admin.museum.categories'))->with('success', lang('Museum.categories_delete_success'));
     }
 
-
-
     public function reorder(): string|RedirectResponse
     {
         $deny = $this->requireWrite();
@@ -153,7 +172,7 @@ class CategoryController extends BaseWebController
         $deny = $this->requireWrite();
         if ($deny !== null) {
             return $this->response->setJSON([
-                'ok' => false,
+                'ok'      => false,
                 'message' => lang('App.access_denied'),
             ])->setStatusCode(403);
         }
@@ -161,7 +180,7 @@ class CategoryController extends BaseWebController
         $request = $this->request;
         if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
             return $this->response->setJSON([
-                'ok' => false,
+                'ok'      => false,
                 'message' => 'Invalid request type',
             ])->setStatusCode(400);
         }
@@ -172,7 +191,7 @@ class CategoryController extends BaseWebController
 
         if (! is_array($items)) {
             return $this->response->setJSON([
-                'ok' => false,
+                'ok'      => false,
                 'message' => 'Invalid payload structure',
             ])->setStatusCode(400);
         }
@@ -187,17 +206,25 @@ class CategoryController extends BaseWebController
         }
 
         return $this->response->setJSON([
-            'ok' => true,
+            'ok'      => true,
             'message' => lang('Museum.sort_order_saved'),
         ]);
     }
 
+    /** @return array<string, mixed> */
+    private function getLanguages(): array
+    {
+        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
+
+        return $response['ok'] ? $this->extractItems($response) : [];
+    }
 
     private function requireWrite(): ?RedirectResponse
     {
         if (! has_permission('museum.write')) {
             return $this->withError(lang('App.no_permission'), route_to('admin.museum.categories'));
         }
+
         return null;
     }
 }

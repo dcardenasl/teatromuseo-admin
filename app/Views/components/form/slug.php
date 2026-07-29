@@ -26,6 +26,7 @@ $help      = $help ?? '';
 $attrs     = $attrs ?? '';
 $invalidMessage = $invalidMessage ?? '';
 $languageSelector = $languageSelector ?? '';
+$checkUrl = $checkUrl ?? '';
 ?>
 
 <div data-slug-field>

@@ -28,7 +28,6 @@ class TechniqueController extends BaseWebController
         return $this->render('museum/techniques/index', [
             'title'        => lang('Museum.techniques_title'),
             'limitOptions' => [10, 25, 50, 100],
-
         ]);
     }
 
@@ -47,25 +46,36 @@ class TechniqueController extends BaseWebController
 
         if (! $response['ok']) {
             return $this->render('museum/techniques/show', [
-                'title' => lang('Museum.techniques_details'),
+                'title'     => lang('Museum.techniques_details'),
                 'technique' => [],
-                'error' => $this->firstMessage($response, lang('Museum.techniques_not_found')),
-
+                'error'     => $this->firstMessage($response, lang('Museum.techniques_not_found')),
+                'languages' => $this->getLanguages(),
             ]);
         }
 
         return $this->render('museum/techniques/show', [
-            'title' => lang('Museum.techniques_details'),
+            'title'     => lang('Museum.techniques_details'),
             'technique' => $this->extractData($response),
-
+            'languages' => $this->getLanguages(),
         ]);
     }
 
     public function create(): string
     {
-        return $this->render('museum/techniques/create', [
-            'title' => lang('Museum.techniques_create'),
+        $languages = $this->getLanguages();
+        $languageContext = $this->resolveLanguageContext($languages);
+        $defaultLangId = $languageContext['defaultLangId'];
+        $translateTargets = ($defaultLangId > 0 && ! empty($languages))
+            ? $this->buildTranslateTargets($languages, ['name', 'summary'], $defaultLangId)
+            : [];
 
+        return $this->render('museum/techniques/create', [
+            'title'            => lang('Museum.techniques_create'),
+            'languages'        => $languages,
+            'defaultLangId'    => $defaultLangId,
+            'defaultLangIndex' => $languageContext['defaultLangIndex'],
+            'defaultLangCode'  => $languageContext['defaultLangCode'],
+            'translateTargets' => $translateTargets,
         ]);
     }
 
@@ -94,10 +104,21 @@ class TechniqueController extends BaseWebController
             return $this->withError(lang('Museum.techniques_not_found'), route_to('admin.museum.techniques'));
         }
 
-        return $this->render('museum/techniques/edit', [
-            'title' => lang('Museum.techniques_edit'),
-            'item'  => $this->extractData($response),
+        $languages = $this->getLanguages();
+        $languageContext = $this->resolveLanguageContext($languages);
+        $defaultLangId = $languageContext['defaultLangId'];
+        $translateTargets = ($defaultLangId > 0 && ! empty($languages))
+            ? $this->buildTranslateTargets($languages, ['name', 'summary'], $defaultLangId)
+            : [];
 
+        return $this->render('museum/techniques/edit', [
+            'title'            => lang('Museum.techniques_edit'),
+            'item'             => $this->extractData($response),
+            'languages'        => $languages,
+            'defaultLangId'    => $defaultLangId,
+            'defaultLangIndex' => $languageContext['defaultLangIndex'],
+            'defaultLangCode'  => $languageContext['defaultLangCode'],
+            'translateTargets' => $translateTargets,
         ]);
     }
 
@@ -129,8 +150,6 @@ class TechniqueController extends BaseWebController
 
         return redirect()->to(route_to('admin.museum.techniques'))->with('success', lang('Museum.techniques_delete_success'));
     }
-
-
 
     public function reorder(): string|RedirectResponse
     {
@@ -192,12 +211,20 @@ class TechniqueController extends BaseWebController
         ]);
     }
 
-
     private function requireWrite(): ?RedirectResponse
     {
         if (! has_permission('museum.write')) {
             return $this->withError(lang('App.no_permission'), route_to('admin.museum.techniques'));
         }
+
         return null;
+    }
+
+    /** @return array<string, mixed> */
+    private function getLanguages(): array
+    {
+        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
+
+        return $response['ok'] ? $this->extractItems($response) : [];
     }
 }
