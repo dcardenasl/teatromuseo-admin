@@ -53,4 +53,5 @@ return [
     'page_type_about' => 'About',
     'page_type_history' => 'History',
     'page_type_events' => 'Events',
+    'page_type_catalog_listing' => 'Museum Collection',
 ];

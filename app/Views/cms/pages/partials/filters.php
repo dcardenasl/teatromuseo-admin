@@ -1,4 +1,8 @@
-<?php /** @var array $limitOptions */ ?>
+<?php
+use App\Modules\Cms\Support\CmsPresetCatalog;
+
+/** @var array $limitOptions */
+?>
 
 <div class="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
     <div>
@@ -32,14 +36,11 @@
         <select name="page_type" class="<?= esc(filter_input_class()) ?>">
             <option value=""><?= esc(lang('App.all')) ?></option>
             <?php $selected_type = (string) request()->getGet('page_type'); ?>
-            <option value="home" <?= $selected_type === 'home' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_home')) ?></option>
-            <option value="generic" <?= $selected_type === 'generic' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_generic')) ?></option>
-            <option value="contact" <?= $selected_type === 'contact' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_contact')) ?></option>
-            <option value="privacy" <?= $selected_type === 'privacy' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_privacy')) ?></option>
-            <option value="terms" <?= $selected_type === 'terms' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_terms')) ?></option>
-            <option value="404" <?= $selected_type === '404' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_404')) ?></option>
-            <option value="500" <?= $selected_type === '500' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_500')) ?></option>
-            <option value="maintenance" <?= $selected_type === 'maintenance' ? 'selected' : '' ?>><?= esc(lang('Pages.page_type_maintenance')) ?></option>
+            <?php foreach (CmsPresetCatalog::pageTypeOptions() as $option): ?>
+                <option value="<?= esc((string) $option['key'], 'attr') ?>" <?= $selected_type === (string) $option['key'] ? 'selected' : '' ?>>
+                    <?= esc((string) $option['label']) ?>
+                </option>
+            <?php endforeach; ?>
         </select>
     </div>
     <div class="md:col-span-2 xl:col-span-4">
