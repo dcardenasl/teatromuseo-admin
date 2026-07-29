@@ -10,7 +10,21 @@ $sourceUpdatedAt = $sourceUpdatedAt ?? null;
 $languageStates = [];
 $translationByLanguage = [];
 foreach ($translations as $translation) {
-    $translationByLanguage[(int) ($translation['language_id'] ?? 0)] = $translation;
+    if (! is_array($translation)) {
+        continue;
+    }
+    $langId = (int) ($translation['language_id'] ?? 0);
+    if ($langId > 0) {
+        $translationByLanguage[$langId] = $translation;
+    } else {
+        $loc = strtolower((string) ($translation['locale'] ?? $translation['language_code'] ?? ''));
+        foreach ($languages as $l) {
+            if (is_array($l) && strtolower((string) ($l['code'] ?? '')) === $loc) {
+                $translationByLanguage[(int) $l['id']] = $translation;
+                break;
+            }
+        }
+    }
 }
 foreach ($languages as $language) {
     $language['_source'] = $sourceFields;
