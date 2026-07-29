@@ -28,7 +28,7 @@ class CollectionItemController extends BaseWebController
         return $this->render('museum/collection_items/index', [
             'title'        => lang('Museum.collection_items_title'),
             'limitOptions' => [10, 25, 50, 100],
-            'categories' => $this->categoriesOptions(),
+            'categories'   => $this->categoriesOptions(),
         ]);
     }
 
@@ -77,25 +77,40 @@ class CollectionItemController extends BaseWebController
 
         if (! $response['ok']) {
             return $this->render('museum/collection_items/show', [
-                'title' => lang('Museum.collection_items_details'),
+                'title'          => lang('Museum.collection_items_details'),
                 'collectionItem' => [],
-                'error' => $this->firstMessage($response, lang('Museum.collection_items_not_found')),
-            'categories' => $this->categoriesOptions(),
+                'error'          => $this->firstMessage($response, lang('Museum.collection_items_not_found')),
+                'categories'     => $this->categoriesOptions(),
+                'languages'      => $this->getLanguages(),
             ]);
         }
 
         return $this->render('museum/collection_items/show', [
-            'title' => lang('Museum.collection_items_details'),
+            'title'          => lang('Museum.collection_items_details'),
             'collectionItem' => $this->extractData($response),
-            'categories' => $this->categoriesOptions(),
+            'categories'     => $this->categoriesOptions(),
+            'languages'      => $this->getLanguages(),
         ]);
     }
 
     public function create(): string
     {
+        $languages = $this->getLanguages();
+        $languageContext = $this->resolveLanguageContext($languages);
+        $defaultLangId = $languageContext['defaultLangId'];
+        $translateTargets = ($defaultLangId > 0 && ! empty($languages))
+            ? $this->buildTranslateTargets($languages, ['name', 'summary', 'curiosidad', 'contenido', 'physical_description', 'ubicacion'], $defaultLangId)
+            : [];
+
         return $this->render('museum/collection_items/create', [
-            'title' => lang('Museum.collection_items_create'),
-            'categories' => $this->categoriesOptions(),
+            'title'            => lang('Museum.collection_items_create'),
+            'categories'       => $this->categoriesOptions(),
+            'techniques'       => $this->techniquesOptions(),
+            'languages'        => $languages,
+            'defaultLangId'    => $defaultLangId,
+            'defaultLangIndex' => $languageContext['defaultLangIndex'],
+            'defaultLangCode'  => $languageContext['defaultLangCode'],
+            'translateTargets' => $translateTargets,
         ]);
     }
 
@@ -124,10 +139,23 @@ class CollectionItemController extends BaseWebController
             return $this->withError(lang('Museum.collection_items_not_found'), route_to('admin.museum.collection_items'));
         }
 
+        $languages = $this->getLanguages();
+        $languageContext = $this->resolveLanguageContext($languages);
+        $defaultLangId = $languageContext['defaultLangId'];
+        $translateTargets = ($defaultLangId > 0 && ! empty($languages))
+            ? $this->buildTranslateTargets($languages, ['name', 'summary', 'curiosidad', 'contenido', 'physical_description', 'ubicacion'], $defaultLangId)
+            : [];
+
         return $this->render('museum/collection_items/edit', [
-            'title' => lang('Museum.collection_items_edit'),
-            'item'  => $this->extractData($response),
-            'categories' => $this->categoriesOptions(),
+            'title'            => lang('Museum.collection_items_edit'),
+            'item'             => $this->extractData($response),
+            'categories'       => $this->categoriesOptions(),
+            'techniques'       => $this->techniquesOptions(),
+            'languages'        => $languages,
+            'defaultLangId'    => $defaultLangId,
+            'defaultLangIndex' => $languageContext['defaultLangIndex'],
+            'defaultLangCode'  => $languageContext['defaultLangCode'],
+            'translateTargets' => $translateTargets,
         ]);
     }
 
@@ -160,9 +188,13 @@ class CollectionItemController extends BaseWebController
         return redirect()->to(route_to('admin.museum.collection_items'))->with('success', lang('Museum.collection_items_delete_success'));
     }
 
+    /** @return array<string, mixed> */
+    private function getLanguages(): array
+    {
+        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
 
-
-
+        return $response['ok'] ? $this->extractItems($response) : [];
+    }
 
     /** @return array<string, string> */
     private function categoriesOptions(): array
@@ -176,6 +208,24 @@ class CollectionItemController extends BaseWebController
                 continue;
             }
             $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['email'] ?? $item['id'];
+            $options[(string) $item['id']] = (string) $label;
+        }
+
+        return $options;
+    }
+
+    /** @return array<string, string> */
+    private function techniquesOptions(): array
+    {
+        $techniqueService = service('museumTechniqueApiService');
+        $response = $this->safeApiCall(fn () => $techniqueService->list(['per_page' => 100]));
+        $options = [];
+
+        foreach ($this->extractItems($response) as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+            $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
             $options[(string) $item['id']] = (string) $label;
         }
 
