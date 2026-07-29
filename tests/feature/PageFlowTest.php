@@ -95,14 +95,15 @@ final class PageFlowTest extends CIUnitTestCase
         ])->get('/admin/cms/pages/create');
 
         $body = (string) $result->getBody();
+        $bodyText = html_entity_decode($body, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $result->assertStatus(200);
         $this->assertStringContainsString('name="page_type"', $body);
-        // Editorial classifications (about/history/events) were deliberately
-        // normalized to generic pages by the domain migration. The admin must
-        // expose only the page types that the current Domain contract accepts.
         $this->assertStringContainsString('Inicio', $body);
         $this->assertStringContainsString('Gen&eacute;rica', $body);
+        $this->assertStringContainsString('Colecci&oacute;n del museo', $body);
         $this->assertStringContainsString('&Iacute;ndice de Colecci&oacute;n', $body);
+        $this->assertStringContainsString('Plantilla de ficha de catálogo', $bodyText);
+        $this->assertStringContainsString('Plantilla de ficha de evento', $bodyText);
     }
 
     public function testDeleteSuccessRedirectsToList(): void

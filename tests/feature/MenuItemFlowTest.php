@@ -71,6 +71,7 @@ final class MenuItemFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('name="collection_id"', (string) $result->getBody());
         $this->assertStringContainsString('value="entry"', (string) $result->getBody());
         $this->assertStringContainsString('value="collection_listing"', (string) $result->getBody());
+        $this->assertStringContainsString('value="event_listing"', (string) $result->getBody());
     }
 
     public function testCreateStillRendersWhenOptionServicesFail(): void
@@ -152,6 +153,54 @@ final class MenuItemFlowTest extends CIUnitTestCase
             'parent_id' => '',
             'link_type' => 'collection_listing',
             'collection_id' => (string) $collection['id'],
+            'link_target' => '_self',
+            'icon' => '',
+            'css_class' => '',
+            'sort_order' => '4',
+            'is_active' => '1',
+            'translations' => [
+                1 => [
+                    'label' => $label,
+                ],
+            ],
+        ]);
+
+        $result->assertRedirectTo(site_url('admin/cms/menus/' . $menu['id']));
+    }
+
+    public function testUpdateAcceptsEventListingTarget(): void
+    {
+        $fixtures = new AdminFixtureFactory(__METHOD__);
+        $menu = $fixtures->menu();
+        $item = $fixtures->menuItem($menu['id'], 4);
+        $label = $fixtures->value('menu-label');
+
+        $menuMock = $this->createMock(MenuApiService::class);
+        $menuMock->expects($this->once())
+            ->method('updateItem')
+            ->with((string) $item['id'], $this->callback(static function (array $payload) use ($menu, $label): bool {
+                return $payload['menu_id'] === $menu['id']
+                    && $payload['link_type'] === 'event_listing'
+                    && $payload['page_id'] === null
+                    && $payload['entry_id'] === null
+                    && $payload['collection_id'] === null
+                    && $payload['sort_order'] === 4
+                    && $payload['translations'][0]['label'] === $label;
+            }))
+            ->willReturn($fixtures->response(['id' => $item['id']]));
+        Services::injectMock('menuApiService', $menuMock);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['cms.menus.write', 'cms.menus.read']],
+        ])->post('/admin/cms/menus/' . $menu['id'] . '/items/' . $item['id'], [
+            csrf_token() => csrf_hash(),
+            'menu_id' => (string) $menu['id'],
+            'parent_id' => '',
+            'link_type' => 'event_listing',
+            'page_id' => '',
+            'entry_id' => '',
+            'collection_id' => '',
             'link_target' => '_self',
             'icon' => '',
             'css_class' => '',

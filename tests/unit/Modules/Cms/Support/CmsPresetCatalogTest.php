@@ -85,6 +85,15 @@ final class CmsPresetCatalogTest extends CIUnitTestCase
         $this->assertSame([], $result);
     }
 
+    public function testExposesTemplatePageTypes(): void
+    {
+        $pageTypes = CmsPresetCatalog::pageTypes();
+
+        $this->assertContains('template_catalog_item', $pageTypes);
+        $this->assertContains('template_event_item', $pageTypes);
+        $this->assertContains('catalog_listing', $pageTypes);
+    }
+
     public function testKeepsPresetWithoutBlocksAsIsAndDeclaresNothingMissing(): void
     {
         $presets = [
