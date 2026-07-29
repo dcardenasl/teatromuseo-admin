@@ -226,6 +226,7 @@ $suggestedSortOrder = count($items);
                     <option value="page"><?= esc(lang('Menus.items_link_type_page')) ?></option>
                     <option value="entry"><?= esc(lang('Menus.items_link_type_entry')) ?></option>
                     <option value="collection_listing"><?= esc(lang('Menus.items_link_type_collection_listing')) ?></option>
+                    <option value="event_listing"><?= esc(lang('Menus.items_link_type_event_listing')) ?></option>
                     <option value="custom_url"><?= esc(lang('Menus.items_link_type_custom_url')) ?></option>
                     <option value="no_link"><?= esc(lang('Menus.items_link_type_no_link')) ?></option>
                 </select>

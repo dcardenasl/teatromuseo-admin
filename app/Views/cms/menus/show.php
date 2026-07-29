@@ -154,6 +154,7 @@ foreach ($languages as $lang) {
                         <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-blue-200 shrink-0"></span> <?= esc(lang('Menus.items_link_type_page')) ?></span>
                         <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-purple-200 shrink-0"></span> <?= esc(lang('Menus.items_link_type_entry')) ?></span>
                         <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-orange-200 shrink-0"></span> <?= esc(lang('Menus.items_link_type_collection_listing')) ?></span>
+                        <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-rose-200 shrink-0"></span> <?= esc(lang('Menus.items_link_type_event_listing')) ?></span>
                         <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-green-200 shrink-0"></span> <?= esc(lang('Menus.items_link_type_custom_url')) ?></span>
                     </div>
 
@@ -210,6 +211,10 @@ foreach ($languages as $lang) {
                         $suffix = $name ? ': ' . $name : (! empty($item['collection_id']) ? ' #' . $item['collection_id'] : '');
                         $linkBadge = lang('Menus.items_link_type_collection_listing') . $suffix;
                         $linkBadgeClass = 'bg-orange-50 text-orange-700';
+                        break;
+                    case 'event_listing':
+                        $linkBadge = lang('Menus.items_link_type_event_listing');
+                        $linkBadgeClass = 'bg-rose-50 text-rose-700';
                         break;
                     case 'custom_url':
                         $url = '';
