@@ -55,7 +55,7 @@
         <const name="PUBLICPATH" value="./public/"/>
         <env name="DOMAIN_API_BASE_URL" value="http://localhost:8190"/>
         <env name="API_BASE_URL" value="http://localhost:8180"/>
-        <env name="PUBLIC_SITE_URL" value="http://localhost:8186"/>
+        <env name="PUBLIC_SITE_URL" value="http://localhost:8184"/>
         <env name="CMS_PREVIEW_SECRET" value="testing-preview-secret-at-least-32-characters"/>
         <!-- Database configuration -->
         <!-- Uncomment to provide your own database for testing

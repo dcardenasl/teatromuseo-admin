@@ -6,7 +6,7 @@ namespace Config;
 
 /**
  * Configuration for the HTTP client that monitors the public website
- * (ci4-website-builder-web, port 8186 by default).
+ * (teatromuseo-web, port 8184 by default).
  *
  * Leave $baseUrl empty (the default) to disable web health monitoring on
  * the dashboard.

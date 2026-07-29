@@ -11,6 +11,7 @@ use App\Libraries\BffApiClientInterface;
 use App\Libraries\DomainApiClient;
 use App\Libraries\DomainApiClientInterface;
 use App\Libraries\PermissionsSessionRefresher;
+use App\Libraries\PublicSiteCacheInvalidator;
 use App\Libraries\WebApiClient;
 use App\Libraries\WebApiClientInterface;
 use App\Modules\ApiKeys\Services\ApiKeyApiService;
@@ -267,6 +268,20 @@ class Services extends BaseService
         }
 
         return new HealthApiService(static::webApiClient(), config('WebApiClient')->healthPaths);
+    }
+
+    public static function publicSiteCacheInvalidator(bool $getShared = true): PublicSiteCacheInvalidator
+    {
+        if ($getShared) {
+            /** @var PublicSiteCacheInvalidator */
+            return static::getSharedInstance('publicSiteCacheInvalidator');
+        }
+
+        return new PublicSiteCacheInvalidator(
+            rtrim((string) env('PUBLIC_SITE_URL', ''), '/'),
+            (string) env('CACHE_INVALIDATE_KEY', ''),
+            5
+        );
     }
 
     public static function profileApiService(bool $getShared = true): ProfileApiService

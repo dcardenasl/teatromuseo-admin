@@ -87,6 +87,8 @@ class EventController extends BaseWebController
             return $this->failApi($response, lang('Events.events_create_failed'));
         }
 
+        $this->invalidatePublicSiteCache('events');
+
         return redirect()->to(route_to('admin.events.events'))->with('success', lang('Events.events_create_success'));
     }
 
@@ -120,6 +122,8 @@ class EventController extends BaseWebController
             return $this->failApi($response, lang('Events.events_update_failed'));
         }
 
+        $this->invalidatePublicSiteCache('events');
+
         return redirect()->to(route_to('admin.events.events'))->with('success', lang('Events.events_update_success'));
     }
 
@@ -130,6 +134,8 @@ class EventController extends BaseWebController
         if (! $response['ok']) {
             return $this->failApi($response, lang('Events.events_delete_failed'), route_to('admin.events.events'), false);
         }
+
+        $this->invalidatePublicSiteCache('events');
 
         return redirect()->to(route_to('admin.events.events'))->with('success', lang('Events.events_delete_success'));
     }

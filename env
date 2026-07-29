@@ -136,7 +136,7 @@ DOMAIN_API_BASE_URL = http://localhost:8190
 # Leave webApiClient.baseUrl empty (default) to disable web health card on dashboard.
 # Set it to the web app base URL to show its health status alongside hub/domain.
 #
-# webApiClient.baseUrl = http://localhost:8186
+# webApiClient.baseUrl = http://localhost:8184
 # webApiClient.logRequests = false
 
 # Maximum file upload size in bytes (applies to frontend validation + server rules)
@@ -147,7 +147,7 @@ DOMAIN_API_BASE_URL = http://localhost:8190
 #--------------------------------------------------------------------
 # URL of the ci4-website-builder-web frontend. Used in the page blocks editor
 # to open a live preview of the page. No trailing slash.
-PUBLIC_SITE_URL = http://localhost:8186
+PUBLIC_SITE_URL = http://localhost:8184
 
 #--------------------------------------------------------------------
 # CMS PREVIEW LINKS

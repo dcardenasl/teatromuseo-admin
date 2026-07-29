@@ -94,6 +94,8 @@ class CategoryController extends BaseWebController
             return $this->failApi($response, lang('Museum.categories_create_failed'));
         }
 
+        $this->invalidatePublicSiteCache('categories');
+
         return redirect()->to(route_to('admin.museum.categories'))->with('success', lang('Museum.categories_create_success'));
     }
 
@@ -137,6 +139,8 @@ class CategoryController extends BaseWebController
             return $this->failApi($response, lang('Museum.categories_update_failed'));
         }
 
+        $this->invalidatePublicSiteCache('categories');
+
         return redirect()->to(route_to('admin.museum.categories'))->with('success', lang('Museum.categories_update_success'));
     }
 
@@ -147,6 +151,8 @@ class CategoryController extends BaseWebController
         if (! $response['ok']) {
             return $this->failApi($response, lang('Museum.categories_delete_failed'), route_to('admin.museum.categories'), false);
         }
+
+        $this->invalidatePublicSiteCache('categories');
 
         return redirect()->to(route_to('admin.museum.categories'))->with('success', lang('Museum.categories_delete_success'));
     }
@@ -204,6 +210,8 @@ class CategoryController extends BaseWebController
                 $this->categoryService->update($id, ['sort_order' => $value]);
             }
         }
+
+        $this->invalidatePublicSiteCache('categories');
 
         return $this->response->setJSON([
             'ok'      => true,

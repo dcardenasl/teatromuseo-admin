@@ -484,6 +484,23 @@ abstract class BaseWebController extends BaseController
         }
     }
 
+    /**
+     * Best-effort invalidation for public website cache entries touched by the
+     * current admin write action.
+     *
+     * @param string|list<string> $scopes
+     */
+    protected function invalidatePublicSiteCache(string|array $scopes): void
+    {
+        $scopeList = is_array($scopes) ? $scopes : [$scopes];
+
+        try {
+            service('publicSiteCacheInvalidator')->invalidate($scopeList);
+        } catch (\Throwable $e) {
+            log_message('warning', '[BaseWebController] Public cache invalidation failed: ' . $e->getMessage());
+        }
+    }
+
     protected function positiveIntFromQuery(string $key, int $default, int $max = 200): int
     {
         $raw = $this->request->getGet($key);

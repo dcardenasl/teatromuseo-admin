@@ -104,6 +104,8 @@ class CategoryController extends BaseWebController
             return $this->failApi($response, lang('Categories.categories_create_failed'));
         }
 
+        $this->invalidatePublicSiteCache('categories');
+
         return redirect()->to(route_to('admin.cms.categories'))->with('success', lang('Categories.categories_create_success'));
     }
 
@@ -158,6 +160,8 @@ class CategoryController extends BaseWebController
             return $this->failApi($response, lang('Categories.categories_update_failed'));
         }
 
+        $this->invalidatePublicSiteCache('categories');
+
         return redirect()->to($this->resolveReturnUrl(route_to('admin.cms.categories')))->with('success', lang('Categories.categories_update_success'));
     }
 
@@ -168,6 +172,8 @@ class CategoryController extends BaseWebController
         if (! $response['ok']) {
             return $this->failApi($response, lang('Categories.categories_delete_failed'), route_to('admin.cms.categories'), false);
         }
+
+        $this->invalidatePublicSiteCache('categories');
 
         return redirect()->to(route_to('admin.cms.categories'))->with('success', lang('Categories.categories_delete_success'));
     }
@@ -246,6 +252,8 @@ class CategoryController extends BaseWebController
                 $this->categoryService->update($id, ['sort_order' => $value]);
             }
         }
+
+        $this->invalidatePublicSiteCache('categories');
 
         return $this->response->setJSON([
             'ok' => true,

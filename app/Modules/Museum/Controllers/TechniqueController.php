@@ -94,6 +94,8 @@ class TechniqueController extends BaseWebController
             return $this->failApi($response, lang('Museum.techniques_create_failed'));
         }
 
+        $this->invalidatePublicSiteCache('techniques');
+
         return redirect()->to(route_to('admin.museum.techniques'))->with('success', lang('Museum.techniques_create_success'));
     }
 
@@ -137,6 +139,8 @@ class TechniqueController extends BaseWebController
             return $this->failApi($response, lang('Museum.techniques_update_failed'));
         }
 
+        $this->invalidatePublicSiteCache('techniques');
+
         return redirect()->to(route_to('admin.museum.techniques'))->with('success', lang('Museum.techniques_update_success'));
     }
 
@@ -147,6 +151,8 @@ class TechniqueController extends BaseWebController
         if (! $response['ok']) {
             return $this->failApi($response, lang('Museum.techniques_delete_failed'), route_to('admin.museum.techniques'), false);
         }
+
+        $this->invalidatePublicSiteCache('techniques');
 
         return redirect()->to(route_to('admin.museum.techniques'))->with('success', lang('Museum.techniques_delete_success'));
     }
@@ -204,6 +210,8 @@ class TechniqueController extends BaseWebController
                 $this->techniqueService->update($id, ['sort_order' => $value]);
             }
         }
+
+        $this->invalidatePublicSiteCache('techniques');
 
         return $this->response->setJSON([
             'ok' => true,

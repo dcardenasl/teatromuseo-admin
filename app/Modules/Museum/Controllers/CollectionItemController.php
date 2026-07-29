@@ -129,6 +129,8 @@ class CollectionItemController extends BaseWebController
             return $this->failApi($response, lang('Museum.collection_items_create_failed'));
         }
 
+        $this->invalidatePublicSiteCache('collection_items');
+
         return redirect()->to(route_to('admin.museum.collection_items'))->with('success', lang('Museum.collection_items_create_success'));
     }
 
@@ -174,6 +176,8 @@ class CollectionItemController extends BaseWebController
             return $this->failApi($response, lang('Museum.collection_items_update_failed'));
         }
 
+        $this->invalidatePublicSiteCache('collection_items');
+
         return redirect()->to(route_to('admin.museum.collection_items'))->with('success', lang('Museum.collection_items_update_success'));
     }
 
@@ -184,6 +188,8 @@ class CollectionItemController extends BaseWebController
         if (! $response['ok']) {
             return $this->failApi($response, lang('Museum.collection_items_delete_failed'), route_to('admin.museum.collection_items'), false);
         }
+
+        $this->invalidatePublicSiteCache('collection_items');
 
         return redirect()->to(route_to('admin.museum.collection_items'))->with('success', lang('Museum.collection_items_delete_success'));
     }

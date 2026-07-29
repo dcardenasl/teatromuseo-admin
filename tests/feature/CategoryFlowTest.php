@@ -87,6 +87,13 @@ final class CategoryFlowTest extends CIUnitTestCase
 
         Services::injectMock('categoryApiService', $mock);
 
+        $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
+        $cacheMock->expects($this->once())
+            ->method('invalidate')
+            ->with(['categories'])
+            ->willReturn(true);
+        Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
+
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['permissions' => ['cms.categories.write', 'cms.categories.read']],

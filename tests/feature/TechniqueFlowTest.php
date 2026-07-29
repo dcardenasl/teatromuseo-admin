@@ -73,6 +73,13 @@ final class TechniqueFlowTest extends CIUnitTestCase
 
         Services::injectMock('museumTechniqueApiService', $mock);
 
+        $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
+        $cacheMock->expects($this->once())
+            ->method('invalidate')
+            ->with(['techniques'])
+            ->willReturn(true);
+        Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
+
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['permissions' => ['users.read']],
