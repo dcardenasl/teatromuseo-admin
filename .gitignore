@@ -96,3 +96,6 @@ node_modules/
 #-------------------------
 public/assets/vendor/
 npm-debug.log*
+
+# Local FTP deploy tooling (credentials + generated artifacts)
+.deploy/
