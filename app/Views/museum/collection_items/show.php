@@ -40,9 +40,13 @@ $publicationStatusClasses = [
     'published' => 'bg-green-50 text-green-700 ring-green-200',
     'archived' => 'bg-gray-100 text-gray-600 ring-gray-200',
 ];
+$publicSlug = trim((string) ($collectionItem['slug'] ?? ''));
 $headerSubtitleParts = [];
 if ($inventoryCode !== '') {
     $headerSubtitleParts[] = lang('Museum.field_inventory_code') . ': ' . $inventoryCode;
+}
+if ($publicSlug !== '') {
+    $headerSubtitleParts[] = lang('Museum.field_slug') . ': ' . $publicSlug;
 }
 if ($categoryLabel !== '') {
     $headerSubtitleParts[] = lang('Museum.field_category_id') . ': ' . $categoryLabel;

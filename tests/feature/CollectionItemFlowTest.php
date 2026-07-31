@@ -77,6 +77,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
                 'category_id'    => 7,
                 'status'         => 'published',
                 'translations'   => [],
+                'slug'           => 'ficha-de-prueba',
             ]));
         Services::injectMock('museumCollectionItemApiService', $itemMock);
 
@@ -98,6 +99,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
         $result->assertStatus(200);
         $result->assertSee('Ficha de prueba');
         $result->assertSee('UIC-TEST');
+        $result->assertSee('ficha-de-prueba');
     }
 
     public function testStoreValidationFailureRedirectsBack(): void
