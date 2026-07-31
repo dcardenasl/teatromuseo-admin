@@ -73,8 +73,8 @@
                     <?php foreach ($metrics['slow_requests'] as $req): ?>
                         <tr class="<?= esc(table_row_class()) ?>">
                             <td class="<?= esc(table_td_class()) ?>"><?= esc($req['method'] ?? '-') ?></td>
-                            <td class="<?= esc(table_td_class()) ?>"><?= esc($req['path'] ?? '-') ?></td>
-                            <td class="<?= esc(table_td_class('primary')) ?>"><?= esc($req['duration_ms'] ?? 0) ?> ms</td>
+                            <td class="<?= esc(table_td_class()) ?>"><?= esc($req['uri'] ?? $req['path'] ?? '-') ?></td>
+                            <td class="<?= esc(table_td_class('primary')) ?>"><?= esc($req['response_time'] ?? $req['duration_ms'] ?? 0) ?> ms</td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

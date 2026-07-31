@@ -31,7 +31,12 @@ final class MetricsFlowTest extends CIUnitTestCase
             ->willReturn([
                 'ok' => true,
                 'status' => 200,
-                'data' => ['request_stats' => ['total_requests' => 321, 'avg_response_time_ms' => 87, 'availability_percent' => 99.2, 'successful_requests' => 315]],
+                'data' => [
+                    'request_stats' => ['total_requests' => 321, 'avg_response_time_ms' => 87, 'availability_percent' => 99.2, 'successful_requests' => 315],
+                    'slow_requests' => [
+                        ['method' => 'GET', 'uri' => '/api/v1/slow-route', 'response_time' => 1500]
+                    ]
+                ],
                 'raw' => '',
                 'headers' => [],
                 'messages' => [],
@@ -60,6 +65,8 @@ final class MetricsFlowTest extends CIUnitTestCase
         $result->assertStatus(200);
         $this->assertStringContainsString('321', $result->getBody());
         $this->assertStringContainsString('10:00', $result->getBody());
+        $this->assertStringContainsString('/api/v1/slow-route', $result->getBody());
+        $this->assertStringContainsString('1500 ms', $result->getBody());
     }
 
     public function testMetricsPageFallsBackToDefaultPeriodWhenFilterIsInvalid(): void
