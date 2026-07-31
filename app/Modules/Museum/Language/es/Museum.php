@@ -63,7 +63,7 @@ return [
     'field_cover_file_id_help' => 'Imagen principal de la pieza.',
     'field_gallery_file_ids' => 'Galería de Imágenes',
     'field_gallery_file_ids_placeholder' => 'IDs de Galería',
-    'field_gallery_file_ids_help' => 'IDs separados por comas.',
+    'field_gallery_file_ids_help' => 'Imágenes adicionales mostradas en la ficha pública de la pieza.',
     'field_show_in_totem' => 'Mostrar en Tótem',
     'field_show_in_totem_help' => 'Indica si se mostrará en el totem interactivo.',
     'field_show_in_totem_on' => 'Sí',

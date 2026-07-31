@@ -63,7 +63,7 @@ return [
     'field_cover_file_id_help' => 'Enter Cover File.',
     'field_gallery_file_ids' => 'Gallery Files',
     'field_gallery_file_ids_placeholder' => 'Enter Gallery Files',
-    'field_gallery_file_ids_help' => 'Enter Gallery Files.',
+    'field_gallery_file_ids_help' => 'Additional images shown on the item public detail page.',
     'field_show_in_totem' => 'Show on Totem',
     'field_show_in_totem_help' => 'Show this item on the interactive totem.',
     'field_show_in_totem_on' => 'Yes',

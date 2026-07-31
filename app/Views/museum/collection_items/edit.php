@@ -285,6 +285,16 @@
                 ]) ?>
             </div>
 
+            <?= view('components/form/file_gallery', [
+                'name' => 'gallery_file_ids',
+                'label' => 'Museum.field_gallery_file_ids',
+                'value' => old('gallery_file_ids', $item['gallery_file_ids'] ?? ''),
+                'accept' => 'image/*',
+                'filterType' => 'image',
+                'help' => 'Museum.field_gallery_file_ids_help',
+                'errors' => $errors ?? []
+            ]) ?>
+
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <?= view('components/form/text', [
                     'name' => 'ingress_type',
