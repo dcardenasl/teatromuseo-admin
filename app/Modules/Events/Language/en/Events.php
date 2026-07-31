@@ -50,4 +50,6 @@ return [
     'translation_description_label' => 'Description in this language',
     'translation_optional_help' => 'Optional. The API resolves missing fields using its fallback chain.',
     'sidebar_label' => 'Events',
+    'sidebar_group_scheduling' => 'Scheduling',
+    'sidebar_group_ticketing' => 'Ticketing',
 ];

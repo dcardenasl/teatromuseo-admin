@@ -50,4 +50,6 @@ return [
     'translation_description_label' => 'Descripción en este idioma',
     'translation_optional_help' => 'Opcional. La API resolverá los campos faltantes mediante su cadena de fallback.',
     'sidebar_label' => 'Eventos',
+    'sidebar_group_scheduling' => 'Programación',
+    'sidebar_group_ticketing' => 'Boletería',
 ];
