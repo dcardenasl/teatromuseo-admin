@@ -19,6 +19,52 @@
 
 ## ✅ Completadas
 
+- **GALLERY-001 — Picker múltiple para gallery_file_ids en Events y Museum (2026-07-30):**
+  `gallery_file_ids` existía en ambos domains (catalog/event) y en `CollectionItemStoreRequest`,
+  pero no había ningún campo de formulario que lo llenara, y `EventStoreRequest` ni siquiera lo
+  tenía en su whitelist. Se agregó: componente Alpine `fileGalleryField` (`src/js/components/`,
+  registrado en `app.js`) que reutiliza el store `filePicker` ya existente en modo `multi: true`
+  (soporte de multi-selección que estaba implementado en `file_picker_modal.php` pero nunca se
+  usaba en ningún componente); vista `components/form/file_gallery.php` con grid de miniaturas +
+  botón quitar por imagen, guardando CSV de IDs en un input oculto (mismo formato que ya
+  consumen `PublicEventController`/`PublicCollectionItemController::resolveMediaFields()`).
+  Cableado en `events/events/{create,edit}.php` y `museum/collection_items/{create,edit}.php`;
+  `EventStoreRequest` ahora incluye `gallery_file_ids` en fields/rules/payload (antes se
+  descartaba en silencio si llegaba por POST). Confirmado además que el web público ya tenía
+  `EventItemGalleryViewModel`/`CatalogItemGalleryViewModel` esperando `gallery_images` en este
+  shape exacto — quedaba huérfano hasta ahora.
+  Verificado: `composer analyse` ✅, `composer format:check` ✅, 726/726 PHPUnit ✅,
+  `npm run lint:js` ✅, 83/83 Vitest ✅, verificado visualmente en `/admin/events/events/1/edit`
+  y `/admin/museum/collection-items/1/edit` (campo renderiza, picker abre filtrado en imágenes).
+  No se hizo upload real de prueba (la herramienta de navegador no soporta subir archivos);
+  el flujo de selección múltiple se apoya en `$store.filePicker.confirm()`, código compartido
+  y ya cubierto por el modal existente.
+  **Fuera de alcance, pendiente de decisión:** invalidación de caché de archivos
+  (`invalidateFileMetaCache()` sigue sin ningún llamador en los 3 domains) y el guard de borrado
+  del Hub sigue sin visibilidad sobre usages en domain apps — ambos señalados en el audit previo,
+  no tocados en esta entrega.
+
+- **EVT-COVER-001 — Selector de imagen de portada en el módulo Events (2026-07-30):**
+  `event-domain` ganó soporte de `cover_file_id`/`gallery_file_ids` (ver su propio
+  `TASKS.md` EVT-DOM-004). Añadido el campo correspondiente al admin: `EventStoreRequest`
+  (heredado por `EventUpdateRequest`) acepta `cover_file_id` vía `postNullableInt()`,
+  y `create.php`/`edit.php` reutilizan el componente `components/form/file` +
+  `file_picker_field` ya usado en `museum/collection_items` — sin JS nuevo, el picker
+  global (`file_picker_modal.php` en el layout) ya cubre cualquier módulo. Lang keys
+  `field_cover_file_id*` añadidas en `es`/`en`. Motivado por que `/es/cartelera` en el
+  sitio público nunca mostraba imágenes de portada porque no existía ni el campo en la
+  BD ni el control de carga en el admin.
+  Verificado: `composer analyse` ✅, `composer format:check` ✅, 726/726 tests ✅.
+  Pendiente (no incluido en este cambio): backfill de imágenes reales para los eventos
+  existentes — es trabajo editorial, no de código.
+
+- **MUS-SLUG-001 — Paridad de slug público en la ficha de Colección del Museo (2026-07-29):**
+  `Events` ya mostraba el slug público resuelto en su vista `show`; `museum/collection_items/show.php`
+  no lo hacía pese a que el catalog-domain ya lo expone (`CollectionItemResponseDTO::slug`, aditivo,
+  vía passthrough genérico de `ResourceApiService`). Añadido al subtítulo de cabecera, solo lectura,
+  mismo patrón que Events. Test de feature actualizado con el campo `slug` en el fixture y su
+  aserción. `composer quality` ✅.
+
 - **EVT-001 — Integración de módulos admin de event domain:** scaffold + ajustes manuales de
   Bookings, Events, Occurrences, EventReferences, TicketTypes y Tickets (`EventDomainApiClient`,
   rutas, controllers, requests, services, vistas). Auditoría posterior detectó y corrigió archivos
