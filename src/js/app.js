@@ -14,6 +14,7 @@ import { appShell } from './components/appShell.js';
 import { remoteTableFactory } from './components/remoteTable.js';
 import { formFieldBuilderFactory } from './components/formFieldBuilder.js';
 import { filePickerField } from './components/filePickerField.js';
+import { fileGalleryField } from './components/fileGalleryField.js';
 import { translatableFileField } from './components/translatableFileField.js';
 import { mediaReferenceField } from './components/mediaReferenceField.js';
 import { blockRepeaterField } from './components/blockRepeaterField.js';
@@ -46,6 +47,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('remoteTable', remoteTableFactory);
     Alpine.data('formFieldBuilder', formFieldBuilderFactory);
     Alpine.data('filePickerField', filePickerField);
+    Alpine.data('fileGalleryField', fileGalleryField);
     Alpine.data('translatableFileField', translatableFileField);
     Alpine.data('mediaReferenceField', mediaReferenceField);
     Alpine.data('blockRepeaterField', blockRepeaterField);

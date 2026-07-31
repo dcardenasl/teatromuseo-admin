@@ -18,15 +18,6 @@
             <h3 class="text-lg font-semibold text-gray-900"><?= esc(lang('Events.events_edit')) ?></h3>
             <div class="mt-4 space-y-4">
 
-        <?= view('components/form/text', [
-            'name' => 'uuid',
-            'label' => 'Events.field_uuid',
-            'readonly' => true,
-            'value' => $item['uuid'] ?? '',
-            'help' => 'Events.field_uuid_generated_help',
-            'errors' => $errors ?? []
-        ]) ?>
-
         <?= view('components/form/select', [
             'name' => 'event_type',
             'label' => 'Events.field_event_type',
@@ -56,6 +47,27 @@
                 'cancelled' => lang('Events.option_status_cancelled'),
             ],
             'value' => $item['status'] ?? '',
+            'errors' => $errors ?? []
+        ]) ?>
+
+        <?= view('components/form/file', [
+            'name' => 'cover_file_id',
+            'label' => 'Events.field_cover_file_id',
+            'required' => false,
+            'value' => old('cover_file_id', $item['cover_file_id'] ?? ''),
+            'accept' => 'image/*',
+            'filterType' => 'image',
+            'help' => 'Events.field_cover_file_id_help',
+            'errors' => $errors ?? []
+        ]) ?>
+
+        <?= view('components/form/file_gallery', [
+            'name' => 'gallery_file_ids',
+            'label' => 'Events.field_gallery_file_ids',
+            'value' => old('gallery_file_ids', $item['gallery_file_ids'] ?? ''),
+            'accept' => 'image/*',
+            'filterType' => 'image',
+            'help' => 'Events.field_gallery_file_ids_help',
             'errors' => $errors ?? []
         ]) ?>
             </div>

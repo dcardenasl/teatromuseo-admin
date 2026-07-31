@@ -10,7 +10,7 @@ class EventStoreRequest extends BaseFormRequest
 {
     protected function fields(): array
     {
-        return ['title', 'event_type', 'description', 'status', 'translations'];
+        return ['title', 'event_type', 'description', 'cover_file_id', 'gallery_file_ids', 'status', 'translations'];
     }
 
     public function rules(): array
@@ -19,6 +19,8 @@ class EventStoreRequest extends BaseFormRequest
             'title' => 'required|min_length[2]|max_length[255]',
             'event_type' => 'required|in_list[function,festival,course,workshop,other]',
             'description' => 'required|string',
+            'cover_file_id' => 'permit_empty',
+            'gallery_file_ids' => 'permit_empty|string',
             'status' => 'required|in_list[draft,published,cancelled]',
             'translations' => 'permit_empty',
         ];
@@ -30,6 +32,8 @@ class EventStoreRequest extends BaseFormRequest
             'title' => $this->postString('title'),
             'event_type' => $this->postString('event_type'),
             'description' => $this->postString('description'),
+            'cover_file_id' => $this->postNullableInt('cover_file_id'),
+            'gallery_file_ids' => $this->postString('gallery_file_ids'),
             'status' => $this->postString('status'),
             'translations' => $this->normalizeTranslations(),
         ];
