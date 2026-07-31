@@ -424,13 +424,23 @@ class FileController extends BaseWebController
 
             $safeFilename = str_replace(['"', "\r", "\n", "\0"], '', basename((string) $filename));
 
-            return $this->response
-                ->setStatusCode(200)
-                ->setHeader('Content-Type', $contentType)
-                ->setHeader('Content-Disposition', $disposition . '; filename="' . $safeFilename . '"')
+            // Binary bodies must go through DownloadResponse: CI4's debug toolbar
+            // (dev env) crashes trying to collect non-UTF8 body content, but it
+            // explicitly skips instances of DownloadResponse.
+            $download = $this->response->download($safeFilename, $raw);
+            if ($download === null) {
+                return $this->response->setStatusCode(404)->setBody('File content empty or invalid');
+            }
+
+            $download->setContentType($contentType, '')
                 ->setHeader('Cache-Control', 'private, max-age=3600')
-                ->setHeader('ETag', $etag)
-                ->setBody($raw);
+                ->setHeader('ETag', $etag);
+
+            if ($disposition === 'inline') {
+                $download->inline();
+            }
+
+            return $download;
         }
 
         return $this->response->setStatusCode(404)->setBody('File content empty or invalid');

@@ -71,8 +71,14 @@ final class FileUploadFlowTest extends CIUnitTestCase
         $result = $this->withSession($this->authSession)->get('/files/abc-123/download');
 
         $result->assertStatus(200);
-        $this->assertStringContainsString('%PDF-1.7 content', $result->getBody());
         $result->assertHeader('Content-Type', 'application/pdf');
+
+        // Binary bodies are streamed via DownloadResponse (CI4's debug toolbar
+        // crashes on non-UTF8 bodies otherwise), so the content isn't reachable
+        // through the normal getBody()/$body property — assert its length instead.
+        $response = $result->response();
+        $this->assertInstanceOf(\CodeIgniter\HTTP\DownloadResponse::class, $response);
+        $this->assertSame(strlen('%PDF-1.7 content'), $response->getContentLength());
     }
 
     public function testDownloadApiFailureReturnsNotFound(): void
