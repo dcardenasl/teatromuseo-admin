@@ -25,6 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Museo (Catálogo)" sidebar section.
 - **French and Portuguese** — added to `supportedLocales` and `dateFormats`, with Museum module
   translations for both.
+- **Cover and gallery image pickers** — new `fileGalleryField` Alpine component and
+  `components/form/file_gallery` view let editors pick multiple images (reusing the existing
+  `filePicker` store's multi-select mode) for `gallery_file_ids`; wired into the Events and Museum
+  collection item forms, alongside a single-image `cover_file_id` picker on Events.
+- **Public slug on collection item detail page** — `museum/collection_items/show.php` now shows
+  the resolved public slug in the header subtitle, matching the existing Events pattern.
+- **Collapsible sidebar sub-groups** — `bin/register-sidebar.sh` now supports grouping a module's
+  sidebar items into collapsible sections; used to regroup Events' 7 flat items into
+  "Scheduling"/"Ticketing".
 
 ### Fixed
 
@@ -33,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Validation fallback matching** — `BaseWebController`, `BaseFormRequest`, and CMS translation helpers now resolve the current locale consistently when falling back to generic labels and error messages.
 - **`field_row` / `text` form components** — no longer crash when a value is an array or object;
   it is now rendered as JSON instead.
+- **Metrics dashboard** — slow-request rows now read `uri`/`response_time` (with a fallback to
+  the older `path`/`duration_ms` keys) to match the hub's actual metrics payload shape.
+- **File downloads** — binary file bodies are now streamed via `DownloadResponse` instead of
+  written directly to the response body, avoiding a CI4 debug-toolbar crash on non-UTF8 content
+  in the dev environment.
 - **`CatalogDomainApiClient` / `EventDomainApiClient`** — the base-URL fallback read `$this->baseUrl`
   *after* `parent::__construct()` had already overwritten it with the generic domain default,
   so an unset `CATALOG_DOMAIN_API_BASE_URL`/`EVENT_DOMAIN_API_BASE_URL` silently pointed at the
