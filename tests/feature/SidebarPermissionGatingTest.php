@@ -40,9 +40,9 @@ final class SidebarPermissionGatingTest extends CIUnitTestCase
     public function testMuseumSectionHiddenWithoutAnyMuseumPermission(): void
     {
         // Mirrors the real "Administrator" role: admin-panel entry + other
-        // domains, but none of the cms.category/technique/collectionItem
+        // domains, but none of the catalog.category/technique/collectionItem
         // read permissions the catalog-domain routes actually require.
-        $result = $this->withSession($this->sessionWithPermissions(['users.read', 'events.read']))->get('/files');
+        $result = $this->withSession($this->sessionWithPermissions(['users.read', 'event.events.read']))->get('/files');
 
         $result->assertStatus(200);
         $body = $this->decodedBody($result->getBody());
@@ -54,7 +54,7 @@ final class SidebarPermissionGatingTest extends CIUnitTestCase
 
     public function testMuseumSectionShowsOnlyItemsMatchingGrantedPermissions(): void
     {
-        $result = $this->withSession($this->sessionWithPermissions(['cms.technique.read']))->get('/files');
+        $result = $this->withSession($this->sessionWithPermissions(['catalog.technique.read']))->get('/files');
 
         $result->assertStatus(200);
         $body = $this->decodedBody($result->getBody());
@@ -67,7 +67,7 @@ final class SidebarPermissionGatingTest extends CIUnitTestCase
     public function testMuseumSectionShowsAllItemsForSuperadminEquivalentPermissions(): void
     {
         $result = $this->withSession($this->sessionWithPermissions([
-            'cms.collectionItem.read', 'cms.category.read', 'cms.technique.read',
+            'catalog.collectionItem.read', 'catalog.category.read', 'catalog.technique.read',
         ]))->get('/files');
 
         $result->assertStatus(200);

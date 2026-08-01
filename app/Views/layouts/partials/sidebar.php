@@ -296,7 +296,7 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
             <?php endif; ?>
         <?php endif; ?>
         <!-- START Events -->
-        <?php if (has_permission('events.read')): ?>
+        <?php if (has_permission('event.events.read')): ?>
             <div class="pt-3 mt-3 border-t border-gray-800 text-xs uppercase text-gray-500"><?= lang('Events.sidebar_label') ?></div>
             <?php $sidebarActive_events_scheduling = url_is('admin/events/events*') || url_is('admin/venues/venues*') || url_is('admin/occurrences/occurrences*') || url_is('admin/eventreferences/event-references*'); ?>
             <div x-data="{ open: <?= $sidebarActive_events_scheduling ? 'true' : "localStorage.getItem('events-g-scheduling') !== 'false'" ?> }" class="space-y-1">
@@ -361,26 +361,26 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
             // Permission codes match the catalog-domain route filters exactly
             // (teatromuseo-catalog-domain/app/Config/Routes/v1/catalog.php):
             // GET collection-items/categories/techniques each require their own
-            // cms.{resource}.read permission — there is no single "museum.read".
-            $hasMuseumItem = has_permission('cms.collectionItem.read')
-                || has_permission('cms.category.read')
-                || has_permission('cms.technique.read');
+            // catalog.{resource}.read permission — there is no single "museum.read".
+            $hasMuseumItem = has_permission('catalog.collectionItem.read')
+                || has_permission('catalog.category.read')
+                || has_permission('catalog.technique.read');
 ?>
         <?php if ($hasMuseumItem): ?>
             <div class="pt-3 mt-3 border-t border-gray-800 text-xs uppercase text-gray-500">Museo (Catálogo)</div>
-            <?php if (has_permission('cms.collectionItem.read')): ?>
+            <?php if (has_permission('catalog.collectionItem.read')): ?>
                 <a href="<?= route_to('admin.museum.collection_items') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/museum/collection-items*') ?>">
                     <?= ui_icon('cms-collection') ?>
                     <span>Fichas de Colección</span>
                 </a>
             <?php endif; ?>
-            <?php if (has_permission('cms.category.read')): ?>
+            <?php if (has_permission('catalog.category.read')): ?>
                 <a href="<?= route_to('admin.museum.categories') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/museum/categories*') ?>">
                     <?= ui_icon('tag') ?>
                     <span>Categorías</span>
                 </a>
             <?php endif; ?>
-            <?php if (has_permission('cms.technique.read')): ?>
+            <?php if (has_permission('catalog.technique.read')): ?>
                 <a href="<?= route_to('admin.museum.techniques') ?>" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 <?= active_nav('admin/museum/techniques*') ?>">
                     <?= ui_icon('settings') ?>
                     <span>Técnicas</span>
