@@ -143,7 +143,11 @@ class BlockInstanceController extends BaseWebController
         // Only show top-level blocks in the page editor (children managed via their parent's UI)
         $blocks = array_values(array_filter($allBlocks, static fn (array $b) => empty($b['parent_instance_id'])));
 
-        $typesIndexed = $this->blockTypeOptions->resolve();
+        // Index only renders static metadata (name/icon/block_key/category/
+        // description/is_container) — never config_fields/schema_definition
+        // options — so it skips resolve()'s forms/collections/pages/entries
+        // hydration entirely instead of paying for it unused.
+        $typesIndexed = $this->blockTypeOptions->rawIndexed();
         $routes = BlockOwnerRouting::routes($ownerType);
         $previewUrl = BlockOwnerRouting::previewUrl($ownerType, $page, $this->activeLanguages());
 
@@ -698,7 +702,9 @@ class BlockInstanceController extends BaseWebController
         $allBlocks      = $blocksResponse['ok'] ? $this->extractItems($blocksResponse) : [];
         $children       = array_values(array_filter($allBlocks, static fn (array $b) => (int) ($b['parent_instance_id'] ?? 0) === (int) $instanceId));
 
-        $typesIndexed = $this->blockTypeOptions->resolve();
+        // Same reasoning as index(): this view only renders name/icon, so it
+        // uses the cheap, unhydrated catalog instead of resolve().
+        $typesIndexed = $this->blockTypeOptions->rawIndexed();
 
         $parentType = $typesIndexed[$parentBlock['block_id']] ?? [];
 

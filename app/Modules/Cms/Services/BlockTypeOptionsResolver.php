@@ -26,6 +26,23 @@ final class BlockTypeOptionsResolver
     /** @var array<string, array{value: string, label: string}> */
     private array $entryReferenceOptionsCache = [];
 
+    /**
+     * Raw active-collections payload, fetched at most once per resolve()
+     * call regardless of how many block types reference it (collection_key,
+     * collection_id, entry_reference fields all share this).
+     *
+     * @var list<array<string, mixed>>|null
+     */
+    private ?array $activeCollectionsCache = null;
+
+    /**
+     * Active form keys, fetched at most once per resolve() call regardless
+     * of how many form_embed block types are in the catalog.
+     *
+     * @var list<string>|null
+     */
+    private ?array $activeFormKeysCache = null;
+
     public function __construct(
         private readonly BlockCatalogServiceInterface $blockCatalogService,
         private readonly FormApiService $formApiService,
@@ -58,6 +75,23 @@ final class BlockTypeOptionsResolver
     }
 
     /**
+     * The raw active block-type catalog with no dynamic option hydration —
+     * for list/read-only views (block index, children list) that only
+     * render static metadata (name, icon, block_key, category, description,
+     * is_container) and never touch config_fields/schema_definition options.
+     * Skips every forms/collections/pages/entries lookup that resolve()
+     * performs, since none of that is rendered there. Callers that need
+     * populated select options (create/edit forms) must use resolve() or
+     * augment() instead.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function rawIndexed(): array
+    {
+        return $this->blockCatalogService->indexed();
+    }
+
+    /**
      * Augments a single already-fetched block type in place — for callers
      * (e.g. the edit form) that load one block type by id instead of the
      * whole catalog via resolve().
@@ -75,17 +109,10 @@ final class BlockTypeOptionsResolver
     public function collectionsMap(): array
     {
         $collectionsMap = [];
-        try {
-            $response = $this->safeApiCall(fn () => $this->collectionApiService->list(['limit' => 100, 'is_active' => true]));
-            if ($response['ok']) {
-                foreach ($this->extractItems($response) as $c) {
-                    if (is_array($c) && ! empty($c['collection_key']) && isset($c['id'])) {
-                        $collectionsMap[(string) $c['collection_key']] = (int) $c['id'];
-                    }
-                }
+        foreach ($this->activeCollections() as $c) {
+            if (! empty($c['collection_key']) && isset($c['id'])) {
+                $collectionsMap[(string) $c['collection_key']] = (int) $c['id'];
             }
-        } catch (\Throwable $e) {
-            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch collections for map: ' . $e->getMessage());
         }
 
         return $collectionsMap;
@@ -171,21 +198,7 @@ final class BlockTypeOptionsResolver
         }
 
         if ($hasFormEmbed) {
-            $forms = [];
-            try {
-                $formsResponse = $this->safeApiCall(
-                    fn () => $this->formApiService->list(['limit' => 100, 'is_active' => true])
-                );
-                if ($formsResponse['ok']) {
-                    foreach ($this->extractItems($formsResponse) as $f) {
-                        if (is_array($f) && ! empty($f['form_key'])) {
-                            $forms[] = (string) $f['form_key'];
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                log_message('error', '[BlockTypeOptionsResolver] Failed to fetch forms for options: ' . $e->getMessage());
-            }
+            $forms = $this->activeFormKeys();
 
             if ($forms === []) {
                 $forms = ['contact'];
@@ -205,29 +218,17 @@ final class BlockTypeOptionsResolver
         if ($hasCollectionKey || $hasCollectionId) {
             $collectionsForKeys = [];
             $collectionsForIds  = [];
-            try {
-                $collectionsResponse = $this->safeApiCall(
-                    fn () => $this->collectionApiService->list(['limit' => 100, 'is_active' => true])
-                );
-                if ($collectionsResponse['ok']) {
-                    foreach ($this->extractItems($collectionsResponse) as $c) {
-                        if (! is_array($c)) {
-                            continue;
-                        }
-                        if (! empty($c['collection_key'])) {
-                            $collectionsForKeys[] = (string) $c['collection_key'];
-                        }
-                        if (isset($c['id'])) {
-                            $label = $c['name'] ?? $c['collection_key'] ?? $c['title'] ?? $c['label'] ?? $c['id'];
-                            $collectionsForIds[] = [
-                                'value' => (int) $c['id'],
-                                'label' => (string) $label,
-                            ];
-                        }
-                    }
+            foreach ($this->activeCollections() as $c) {
+                if (! empty($c['collection_key'])) {
+                    $collectionsForKeys[] = (string) $c['collection_key'];
                 }
-            } catch (\Throwable $e) {
-                log_message('error', '[BlockTypeOptionsResolver] Failed to fetch collections for options: ' . $e->getMessage());
+                if (isset($c['id'])) {
+                    $label = $c['name'] ?? $c['collection_key'] ?? $c['title'] ?? $c['label'] ?? $c['id'];
+                    $collectionsForIds[] = [
+                        'value' => (int) $c['id'],
+                        'label' => (string) $label,
+                    ];
+                }
             }
 
             if ($hasCollectionKey) {
@@ -375,6 +376,54 @@ final class BlockTypeOptionsResolver
         }
 
         return $this->entriesForIdsCache = $entries;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function activeCollections(): array
+    {
+        if ($this->activeCollectionsCache !== null) {
+            return $this->activeCollectionsCache;
+        }
+
+        $collections = [];
+        try {
+            $response = $this->safeApiCall(fn () => $this->collectionApiService->list(['limit' => 100, 'is_active' => true]));
+            if ($response['ok']) {
+                $collections = array_values(array_filter($this->extractItems($response), 'is_array'));
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch active collections: ' . $e->getMessage());
+        }
+
+        return $this->activeCollectionsCache = $collections;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function activeFormKeys(): array
+    {
+        if ($this->activeFormKeysCache !== null) {
+            return $this->activeFormKeysCache;
+        }
+
+        $forms = [];
+        try {
+            $response = $this->safeApiCall(fn () => $this->formApiService->list(['limit' => 100, 'is_active' => true]));
+            if ($response['ok']) {
+                foreach ($this->extractItems($response) as $f) {
+                    if (is_array($f) && ! empty($f['form_key'])) {
+                        $forms[] = (string) $f['form_key'];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch forms for options: ' . $e->getMessage());
+        }
+
+        return $this->activeFormKeysCache = $forms;
     }
 
     /**

@@ -19,6 +19,38 @@
 
 ## ✅ Completadas
 
+- **PERF-BLOCKS-001 — "Bloques de Contenido" tardaba 3-8s en cargar, ahora ~1s (2026-08-02):**
+  Reporte: navegar a `/admin/cms/pages/{id}/blocks` se sentía "muy lento". Dos causas
+  independientes, ambas en el hot path de 63 tipos de bloque activos:
+  (1) `BlockTypeOptionsResolver::resolve()` refetchaba por HTTP la lista completa de
+  colecciones activas y de formularios activos **una vez por cada tipo de bloque** que
+  las usara (sin memoización, a diferencia de `pagesForIds()`/`entriesForIds()` que sí la
+  tenían) — con ~15-20 de los 63 tipos referenciando colecciones, eso eran 15-20+
+  round-trips redundantes al CMS domain pidiendo el mismo dato. Fix: memoicé colecciones
+  y formularios en la misma clase, siguiendo el patrón ya existente — ahora se piden como
+  máximo una vez por request.
+  (2) La causa mayor: `BlockInstanceController::index()` y `children()` — vistas de
+  **solo lectura** que solo renderizan `name`/`icon`/`block_key`/`category`/`description`/
+  `is_container` (verificado leyendo `blocks/index.php` y `blocks/children/index.php`) —
+  llamaban al `resolve()` **completo** igual, pagando por toda la hidratación de opciones
+  de formulario (colecciones, formularios, páginas, entradas, entry-references) sin usar
+  nada de eso. `edit()` ya usaba el patrón correcto y liviano (`augment()` sobre un solo
+  tipo); solo faltaba aplicarlo a las vistas de lista. Fix: nuevo método
+  `BlockTypeOptionsResolver::rawIndexed()` — catálogo crudo sin ninguna llamada extra —
+  usado ahora en `index()`/`children()`.
+  Medido en vivo (Chrome real, sesión ya logueada, `performance.getEntriesByType('navigation')`):
+  TTFB ~3.9s (cache-miss del catálogo) / ~2.7s (cache-hit) antes del segundo fix → ~520ms
+  TTFB / ~970ms total después, incluso con la suite de tests completa compitiendo por CPU
+  en background. Sin deuda técnica: mismo patrón de memoización ya usado en la clase,
+  mismo patrón `augment()`/vista-liviana ya usado en `edit()` — solo faltaba aplicarlos
+  consistentemente.
+  Cobertura nueva: 5 tests en `tests/unit/Modules/Cms/Services/BlockTypeOptionsResolverTest.php`
+  (incluye uno que prueba que `rawIndexed()` nunca llama a las APIs de formularios/colecciones/
+  páginas/entradas).
+  Verificado: `composer analyse` ✅ · `composer format:check` ✅ · 740/740 tests ✅ (735 previos
+  + 5 nuevos, 1 skip preexistente sin relación) · verificado visualmente en
+  `/admin/cms/pages/12/blocks` (4 bloques, badges de idioma y botones Editar/Eliminar intactos).
+
 - **AUTH-DOMAIN-001 — Token refresh de DomainApiClient/BffApiClient apuntaba al host equivocado (2026-08-02):**
   Reporte: "Páginas" (y por extensión Menús/Tipos de bloque/Redirecciones/Colecciones/Entradas/
   Categorías/Tags/Formularios y todos los módulos de Catalog/Event domain) mostraba
