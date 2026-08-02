@@ -19,6 +19,31 @@
 
 ## ✅ Completadas
 
+- **AUTH-DOMAIN-001 — Token refresh de DomainApiClient/BffApiClient apuntaba al host equivocado (2026-08-02):**
+  Reporte: "Páginas" (y por extensión Menús/Tipos de bloque/Redirecciones/Colecciones/Entradas/
+  Categorías/Tags/Formularios y todos los módulos de Catalog/Event domain) mostraba
+  "Tu sesión expiró" con sesión recién iniciada; el panel DEV exponía el 401 real:
+  `Authorization header missing`. Causa raíz: `ApiClient::attemptTokenRefresh()` hace
+  `POST {baseUrl}/auth/refresh` contra **su propio** `$this->config->baseUrl` — correcto para
+  el Hub, pero `DomainApiClient` (CMS/Catalog/Event, puertos 8190/8191/8193) y `BffApiClient`
+  heredaban ese método sin overridearlo, así que el refresh pegaba contra esos hosts, que no
+  tienen `/auth/refresh` (por diseño: delegan toda la auth al Hub). El intento fallido disparaba
+  `clearSessionAuth()`, borrando `access_token`/`refresh_token`/`user` de la sesión — sesión que
+  es compartida por todos los clientes vía `session()` — y el request se reintentaba sin header.
+  Fix: nueva clase base `App\Libraries\SecondaryApiClient` (abstracta, extiende `ApiClient`)
+  que recibe un `ApiClientInterface` del Hub por constructor y overridea
+  `attemptTokenRefresh()` para delegar siempre ahí. `DomainApiClient` y `BffApiClient` ahora
+  extienden `SecondaryApiClient` en vez de `ApiClient` directamente; sus constructores reciben
+  el hub client (default `service('apiClient')`). `ApiClientInterface` ahora declara
+  `attemptTokenRefresh(): bool` explícitamente (ya era público en la implementación, faltaba en
+  el contrato). Las 4 factories de `Services.php` (`domainApiClient`, `eventDomainApiClient`,
+  `catalogDomainApiClient`, `bffApiClient`) inyectan `static::apiClient()` explícitamente.
+  Sin parches ni casos especiales: el Hub sigue siendo la única fuente de refresh para
+  cualquier cliente secundario, de forma genérica y reutilizable para futuros domain apps.
+  Cobertura nueva: `tests/unit/Libraries/SecondaryApiClientTest.php` (6 tests, verifica
+  delegación + que ningún cliente secundario intente refrescar contra su propio host).
+  Verificado: `composer analyse` ✅ · `composer format:check` ✅ · 736/736 tests ✅ (730 previos + 6 nuevos, 1 skip preexistente sin relación).
+
 - **GALLERY-001 — Picker múltiple para gallery_file_ids en Events y Museum (2026-07-30):**
   `gallery_file_ids` existía en ambos domains (catalog/event) y en `CollectionItemStoreRequest`,
   pero no había ningún campo de formulario que lo llenara, y `EventStoreRequest` ni siquiera lo

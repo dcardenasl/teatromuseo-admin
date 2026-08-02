@@ -118,7 +118,7 @@ class Services extends BaseService
             return static::getSharedInstance('domainApiClient');
         }
 
-        return new DomainApiClient(config('DomainApiClient'));
+        return new DomainApiClient(config('DomainApiClient'), static::apiClient());
     }
 
     public static function eventDomainApiClient(bool $getShared = true): DomainApiClientInterface
@@ -128,7 +128,7 @@ class Services extends BaseService
             return static::getSharedInstance('eventDomainApiClient');
         }
 
-        return new DomainApiClient(config(EventDomainApiClient::class));
+        return new DomainApiClient(config(EventDomainApiClient::class), static::apiClient());
     }
 
     public static function catalogDomainApiClient(bool $getShared = true): DomainApiClientInterface
@@ -138,7 +138,7 @@ class Services extends BaseService
             return static::getSharedInstance('catalogDomainApiClient');
         }
 
-        return new DomainApiClient(config(CatalogDomainApiClient::class));
+        return new DomainApiClient(config(CatalogDomainApiClient::class), static::apiClient());
     }
 
     public static function bffApiClient(bool $getShared = true): BffApiClientInterface
@@ -148,7 +148,7 @@ class Services extends BaseService
             return static::getSharedInstance('bffApiClient');
         }
 
-        return new BffApiClient(config('BffApiClient'));
+        return new BffApiClient(config('BffApiClient'), static::apiClient());
     }
 
     public static function authApiService(bool $getShared = true): AuthApiService
