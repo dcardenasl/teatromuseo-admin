@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CMS "Bloques de Contenido" load time** — `BlockTypeOptionsResolver` now memoizes collection/form lookups and exposes a lightweight `rawIndexed()` catalog for the read-only block-type list views (`BlockInstanceController::index()`/`children()`), cutting page load from ~3-8s to ~1s.
+- **Domain client token refresh** — `DomainApiClient` and `BffApiClient` now delegate `attemptTokenRefresh()` to the hub via the new `SecondaryApiClient` base class, instead of retrying `/auth/refresh` against their own (nonexistent) endpoint and clearing the session on every request.
 - **`PUBLIC_SITE_URL` port** — corrected the public website's default/example port (8186 → 8184) in `.env`/`.env.example`/`phpunit.xml.dist` so preview links and cache invalidation hit `teatromuseo-web` instead of the totem app's port.
 - **`OccurrenceStoreRequest::venue_id`** — now reads as a nullable int, so an occurrence can be submitted without a venue instead of coercing a missing value to `0`.
 - **Validation fallback matching** — `BaseWebController`, `BaseFormRequest`, and CMS translation helpers now resolve the current locale consistently when falling back to generic labels and error messages.
