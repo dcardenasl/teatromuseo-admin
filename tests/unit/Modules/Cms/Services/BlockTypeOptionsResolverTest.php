@@ -189,6 +189,34 @@ final class BlockTypeOptionsResolverTest extends CIUnitTestCase
         $this->assertSame(['noticias' => 7], $map);
     }
 
+    public function testResolveUsesTheCachedHydratedCatalogWhenAvailable(): void
+    {
+        cache()->delete('cms_block_types_resolved_catalog');
+        cache()->save('cms_block_types_resolved_catalog', [
+            9 => [
+                'id' => 9,
+                'name' => 'Cached block type',
+                'block_key' => 'cached_block',
+            ],
+        ], 120);
+
+        $catalog = $this->createMock(BlockCatalogServiceInterface::class);
+        $catalog->expects($this->never())->method('indexed');
+
+        $resolver = $this->makeResolver(
+            $catalog,
+            $this->createMock(ApiClientInterface::class),
+            $this->createMock(ApiClientInterface::class),
+            $this->createMock(ApiClientInterface::class),
+            $this->createMock(ApiClientInterface::class),
+        );
+
+        $resolved = $resolver->resolve();
+
+        $this->assertSame('Cached block type', $resolved[9]['name']);
+        cache()->delete('cms_block_types_resolved_catalog');
+    }
+
     private function makeResolver(
         BlockCatalogServiceInterface $catalog,
         ApiClientInterface $formApiClient,

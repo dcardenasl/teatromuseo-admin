@@ -141,6 +141,45 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('blockInstanceBuilder(', (string) $result->getBody());
     }
 
+    public function testCreateUsesCachedOwnerAndResolvedCatalogWhenAvailable(): void
+    {
+        cache()->save('cms_block_owner_page_1', [
+            'id' => 1,
+            'title' => 'Cached Page',
+        ], 120);
+        cache()->save('cms_block_types_resolved_catalog', [], 120);
+        cache()->save('cms_active_languages', [
+            [
+                'id' => 1,
+                'code' => 'es',
+                'is_default' => 1,
+            ],
+        ], 3600);
+
+        $pageMock = $this->createMock(PageApiService::class);
+        $pageMock->expects($this->never())->method('get');
+        Services::injectMock('pageApiService', $pageMock);
+
+        $typeMock = $this->createMock(BlockTypeApiService::class);
+        $typeMock->expects($this->never())->method('list');
+        Services::injectMock('blockTypeApiService', $typeMock);
+
+        $langMock = $this->createMock(LanguageApiService::class);
+        $langMock->expects($this->never())->method('list');
+        Services::injectMock('languageApiService', $langMock);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['cms.pages.write', 'cms.pages.read']],
+        ])->get('/admin/cms/pages/1/blocks/create');
+
+        $result->assertStatus(200);
+
+        cache()->delete('cms_block_owner_page_1');
+        cache()->delete('cms_block_types_resolved_catalog');
+        cache()->delete('cms_active_languages');
+    }
+
     public function testEntryCreateRendersForAdmin(): void
     {
         $entryMock = $this->createMock(EntryApiService::class);

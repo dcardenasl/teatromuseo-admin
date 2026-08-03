@@ -17,6 +17,8 @@ use Psr\Log\LoggerInterface;
 
 class BlockInstanceController extends BaseWebController
 {
+    private const OWNER_CACHE_TTL = 120;
+
     protected BlockInstanceApiService $blockInstanceService;
     protected BlockTypeOptionsResolver $blockTypeOptions;
     protected TranslationAuditApiService $translationAuditService;
@@ -54,11 +56,22 @@ class BlockInstanceController extends BaseWebController
      */
     private function fetchOwner(string $ownerType, string $ownerId): array
     {
+        $cacheKey = 'cms_block_owner_' . $ownerType . '_' . $ownerId;
+        $cachedOwner = cache()->get($cacheKey);
+        if (is_array($cachedOwner)) {
+            return $cachedOwner;
+        }
+
         $response = $ownerType === self::OWNER_ENTRY
             ? $this->safeApiCall(fn () => service('entryApiService')->get($ownerId))
             : $this->safeApiCall(fn () => service('pageApiService')->get($ownerId));
 
-        return $response['ok'] ? $this->extractData($response) : [];
+        $owner = $response['ok'] ? $this->extractData($response) : [];
+        if ($owner !== []) {
+            cache()->save($cacheKey, $owner, self::OWNER_CACHE_TTL);
+        }
+
+        return $owner;
     }
 
     /**

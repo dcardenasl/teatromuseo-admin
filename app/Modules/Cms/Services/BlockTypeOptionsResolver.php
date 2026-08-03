@@ -17,6 +17,13 @@ namespace App\Modules\Cms\Services;
  */
 final class BlockTypeOptionsResolver
 {
+    private const RESOLVED_CACHE_KEY = 'cms_block_types_resolved_catalog';
+
+    // Keep this aligned with BlockCatalogService's short TTL. The resolved
+    // catalog is only used by the block create/edit screens, and the admin has
+    // a manual refresh path for block-type schema edits.
+    private const CACHE_TTL = 120;
+
     /** @var array<int, array{value: string, label: string}>|null */
     private ?array $pagesForIdsCache = null;
 
@@ -61,6 +68,11 @@ final class BlockTypeOptionsResolver
      */
     public function resolve(): array
     {
+        $cachedItems = cache()->get(self::RESOLVED_CACHE_KEY);
+        if (is_array($cachedItems)) {
+            return $cachedItems;
+        }
+
         $indexed = [];
         foreach ($this->blockCatalogService->indexed() as $id => $blockType) {
             if (! is_array($blockType)) {
@@ -70,6 +82,8 @@ final class BlockTypeOptionsResolver
             $this->injectDynamicFormOptions($blockType);
             $indexed[(int) $id] = $blockType;
         }
+
+        cache()->save(self::RESOLVED_CACHE_KEY, $indexed, self::CACHE_TTL);
 
         return $indexed;
     }

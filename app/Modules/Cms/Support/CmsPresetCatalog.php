@@ -203,7 +203,7 @@ final class CmsPresetCatalog
         return [
             self::pagePreset('home', [
                 ['block_key' => 'hero_slider', 'label' => 'Hero principal', 'help_text' => 'Bloque de bienvenida', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) []],
-                ['block_key' => 'collection_grid', 'label' => 'Últimas entradas', 'help_text' => 'Grilla de una colección', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['collection_key' => '', 'items_limit' => 3, 'order_by' => 'published_at', 'order_direction' => 'desc', 'layout_variant' => 'cards', 'css_class' => '']],
+                ['block_key' => 'collection_grid', 'label' => 'Últimas entradas', 'help_text' => 'Grilla de una colección', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['collection_key' => '', 'items_limit' => 3, 'order_by' => 'published_at', 'order_direction' => 'desc', 'layout_variant' => 'cards', 'image_aspect_ratio' => '1/1', 'css_class' => '']],
                 ['block_key' => 'cta', 'label' => 'Llamado a la acción', 'help_text' => 'Invitación final', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['variant' => 'blue', 'css_class' => '']],
             ]),
             self::pagePreset('generic', [

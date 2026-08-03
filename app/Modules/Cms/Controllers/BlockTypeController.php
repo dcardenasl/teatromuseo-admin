@@ -197,6 +197,7 @@ class BlockTypeController extends BaseWebController
     {
         cache()->delete('cms_block_types_active_catalog');
         cache()->delete('cms_block_types_template_catalog');
+        cache()->delete('cms_block_types_resolved_catalog');
     }
 
     /**
