@@ -62,6 +62,27 @@ final class FileApiServiceTest extends CIUnitTestCase
         $this->assertCount(2, $result['data']['data']);
     }
 
+    public function testPickerManifestUsesSingleDedicatedEndpoint(): void
+    {
+        $expected = [
+            'ok' => true,
+            'status' => 200,
+            'data' => [
+                'items' => [['id' => 1, 'preview_url' => '/uploads/one_thumb.webp']],
+                'total' => 1,
+            ],
+        ];
+        $mock = $this->createMock(ApiClientInterface::class);
+        $mock->expects($this->once())
+            ->method('get')
+            ->with('/files/picker-manifest')
+            ->willReturn($expected);
+
+        $service = new FileApiService($mock, $this->createMockDomainClient($expected));
+
+        $this->assertSame($expected, $service->pickerManifest());
+    }
+
     public function testGetReturnsFileById(): void
     {
         $expected = [

@@ -18,9 +18,7 @@ export const filePickerField = (config = {}) => ({
         if (!id) return;
         this.loading = true;
         const panel = document.getElementById('file-picker-panel');
-        const baseUrl = panel?.dataset?.dataUrl
-            ? String(panel.dataset.dataUrl).replace('/picker-data', '')
-            : '/files';
+        const baseUrl = String(panel?.dataset?.baseUrl || '/files');
         try {
             const resp = await fetch(`${baseUrl}/${encodeURIComponent(String(id))}/picker-info`, {
                 credentials: 'include',

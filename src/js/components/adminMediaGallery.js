@@ -63,9 +63,7 @@ export const adminMediaGallery = (config = {}) => ({
 
     async loadFileInfo(row) {
         const panel = document.getElementById('file-picker-panel');
-        const baseUrl = panel?.dataset?.dataUrl
-            ? String(panel.dataset.dataUrl).replace('/picker-data', '')
-            : '/files';
+        const baseUrl = String(panel?.dataset?.baseUrl || '/files');
         try {
             const resp = await fetch(`${baseUrl}/${encodeURIComponent(String(row.hub_file_id))}/picker-info`, {
                 credentials: 'include',

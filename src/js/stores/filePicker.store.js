@@ -1,16 +1,15 @@
 import { devError } from '../utils/dev.js';
-import { isObject } from '../utils/url.js';
 import { uiLabels, localePrefix } from '../utils/labels.js';
 
 export const filePickerStore = {
     open: false,
     activeTab: 'library',
     files: [],
+    allFiles: [],
     loading: false,
     error: false,
     errorMessage: '',
     search: '',
-    _searchDebounce: null,
     filterType: '',
     showFilterTabs: true,
     thumbSize: 120,
@@ -26,6 +25,7 @@ export const filePickerStore = {
     inputAccept: '',
     _onSelect: null,
     _onSelectMulti: null,
+    _manifestPromise: null,
 
     show(options = {}) {
         this.open        = true;
@@ -44,7 +44,9 @@ export const filePickerStore = {
         this.uploadProgress = 0;
         this._uploadFile    = null;
         this.files = [];
-        this.loadFiles(1);
+        this.allFiles = [];
+        this.pagination = { current_page: 1, last_page: 1, total_items: 0, per_page: 24 };
+        void this.loadFiles();
         requestAnimationFrame(() => {
             const panel = document.getElementById('file-picker-panel');
             if (panel instanceof HTMLElement) panel.focus();
@@ -59,63 +61,79 @@ export const filePickerStore = {
 
     switchTab(tab) {
         this.activeTab = tab;
-        if (tab === 'library' && this.files.length === 0) this.loadFiles(1);
+        if (tab === 'library' && this.allFiles.length === 0) void this.loadFiles();
     },
 
     setSearch(value) {
         this.search = String(value || '');
-        clearTimeout(this._searchDebounce);
-        this._searchDebounce = setTimeout(() => { this.loadFiles(1); }, 350);
+        this.applyLocalFilters(1);
     },
 
     setFilterType(type) {
         this.filterType = String(type || '');
-        this.loadFiles(1);
+        this.applyLocalFilters(1);
     },
 
     changePage(page) {
         const bounded = Math.max(1, Math.min(this.pagination.last_page || 1, page));
-        if (bounded !== this.pagination.current_page) this.loadFiles(bounded);
+        if (bounded !== this.pagination.current_page) this.applyLocalFilters(bounded);
     },
 
     _panel() { return document.getElementById('file-picker-panel'); },
 
-    async loadFiles(page = 1) {
+    async loadFiles(force = false) {
+        if (this._manifestPromise && !force) return this._manifestPromise;
         this.loading = true;
         this.error = false;
         this.errorMessage = '';
         const panel = this._panel();
-        const dataUrl = String(panel?.dataset?.dataUrl || '/files/picker-data');
-        const params = new URLSearchParams({ page: String(page), per_page: String(this.pagination.per_page || 24) });
-        if (this.search.trim() !== '') params.set('search', this.search.trim());
-        if (this.filterType !== '') params.set('category', this.filterType);
+        const manifestUrl = String(panel?.dataset?.manifestUrl || '/files/picker-manifest');
 
-        try {
-            const resp = await fetch(`${dataUrl}?${params.toString()}`, {
+        this._manifestPromise = (async () => {
+          try {
+            const resp = await fetch(manifestUrl, {
                 credentials: 'include',
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const payload = await resp.json();
-            const apiWrapper = isObject(payload?.data?.data) ? payload.data.data
-                : isObject(payload?.data) ? payload.data : {};
-            const files = Array.isArray(apiWrapper?.data) ? apiWrapper.data : [];
-            const meta = isObject(apiWrapper?.meta) ? apiWrapper.meta : {};
-            this.files = files;
-            this.pagination = {
-                current_page: Number(meta.current_page ?? page),
-                last_page: Math.max(1, Number(meta.last_page ?? 1)),
-                total_items: Number(meta.total_items ?? meta.total ?? files.length),
-                per_page: Number(meta.per_page ?? meta.limit ?? 24),
-            };
-        } catch (err) {
+            const root = payload?.data && typeof payload.data === 'object' ? payload.data : payload;
+            this.allFiles = Array.isArray(root?.items) ? root.items : [];
+            this.applyLocalFilters(1);
+          } catch (err) {
             devError('[filePicker] loadFiles error:', err);
             this.error = true;
             this.errorMessage = (uiLabels[localePrefix()] || uiLabels.es).loadRetry;
             this.files = [];
-        } finally {
+            this.allFiles = [];
+          } finally {
             this.loading = false;
-        }
+            this._manifestPromise = null;
+          }
+        })();
+
+        return this._manifestPromise;
+    },
+
+    applyLocalFilters(page = 1) {
+        const search = this.search.trim().toLowerCase();
+        const filtered = this.allFiles.filter((file) => {
+            const matchesSearch = search === ''
+                || String(file.original_name || '').toLowerCase().includes(search);
+            const matchesCategory = this.filterType === '' || String(file.category || '') === this.filterType;
+            return matchesSearch && matchesCategory;
+        });
+        const perPage = this.pagination.per_page || 24;
+        const lastPage = Math.max(1, Math.ceil(filtered.length / perPage));
+        const currentPage = Math.max(1, Math.min(lastPage, page));
+        const start = (currentPage - 1) * perPage;
+        this.files = filtered.slice(start, start + perPage);
+        this.pagination = {
+            current_page: currentPage,
+            last_page: lastPage,
+            total_items: filtered.length,
+            per_page: perPage,
+        };
     },
 
     isSelected(file) { return this.selected.some((f) => String(f.id) === String(file.id)); },
@@ -202,7 +220,7 @@ export const filePickerStore = {
             this._uploadFile = null;
             this.uploadFileName = '';
             this.switchTab('library');
-            this.loadFiles(1);
+            await this.loadFiles(true);
         } catch (err) {
             devError('[filePicker] submitUpload error:', err);
             this.uploadError = err instanceof Error ? err.message : 'Upload failed.';

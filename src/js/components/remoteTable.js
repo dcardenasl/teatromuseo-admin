@@ -5,6 +5,7 @@ import { statusLabel, auditActionLabel, auditResultLabel, auditSeverityLabel } f
 import { formatDate } from '../utils/date.js';
 import { bootLucideIcons } from '../utils/lucide.js';
 import { devError } from '../utils/dev.js';
+import { extractListItems, extractListSummary, extractListPagination } from '../utils/listResponse.js';
 
 export const remoteTableFactory = (config = {}) => {
     const text = uiLabels[localePrefix()] || uiLabels.es;
@@ -218,9 +219,9 @@ export const remoteTableFactory = (config = {}) => {
         },
 
         extractRows(root) {
-            if (Array.isArray(root.data)) return root.data;
-            if (isObject(root.data) && Array.isArray(root.data.data)) return root.data.data;
-            if (Array.isArray(root.items)) return root.items;
+            const items = extractListItems(root);
+            if (items.length > 0) return items;
+
             const commonKeys = ['users', 'files', 'audit', 'api_keys', 'keys', 'logs', 'entries'];
             for (const key of commonKeys) {
                 if (Array.isArray(root[key])) return root[key];
@@ -230,41 +231,16 @@ export const remoteTableFactory = (config = {}) => {
         },
 
         extractSummary(root) {
-            if (isObject(root.summary)) return root.summary;
-            if (isObject(root.data) && isObject(root.data.summary)) return root.data.summary;
-            return {};
+            return extractListSummary(root);
         },
 
         extractPagination(root, visibleCount) {
-            const meta = isObject(root.meta) ? root.meta : {};
-            const next_cursor = String(meta.next_cursor ?? root.next_cursor ?? '');
-            const prev_cursor = String(meta.prev_cursor ?? root.prev_cursor ?? '');
-            const hasCursor = next_cursor !== '' || prev_cursor !== '' || String(this.query.cursor || '') !== '';
-            const limit = Number(meta.per_page ?? meta.limit ?? root.per_page ?? root.limit ?? this.query.limit ?? this.query.per_page ?? 25) || 25;
-            const safeLimit = Math.max(1, limit);
-            const total = Number(meta.total_items ?? meta.total ?? root.total_items ?? root.total ?? visibleCount) || visibleCount;
-            const current_page = Number(meta.current_page ?? meta.page ?? root.current_page ?? root.page ?? this.query.page ?? 1) || 1;
-            const derivedLastPage = Math.max(1, Math.ceil(Math.max(0, total) / safeLimit));
-            const last_page = Number(meta.last_page ?? root.last_page ?? derivedLastPage) || derivedLastPage;
-            const normalizedCurrentPage = Math.max(1, Math.min(current_page, Math.max(1, last_page)));
-            const from = total <= 0 ? 0 : ((normalizedCurrentPage - 1) * safeLimit) + 1;
-            let to = 0;
-            if (total > 0) {
-                to = visibleCount > 0
-                    ? Math.min(total, from + visibleCount - 1)
-                    : Math.min(total, normalizedCurrentPage * safeLimit);
-            }
-            return {
-                mode: hasCursor ? 'cursor' : 'page',
-                current_page: normalizedCurrentPage,
-                last_page: Math.max(1, last_page),
-                total_items: Math.max(0, total),
-                limit: safeLimit,
-                from: Math.max(0, from),
-                to: Math.max(0, to),
-                next_cursor,
-                prev_cursor
-            };
+            return extractListPagination(root, {
+                currentPage: Number(this.query.page || 1) || 1,
+                perPage: Number(this.query.limit ?? this.query.per_page ?? 25) || 25,
+                visibleCount,
+                cursor: this.query.cursor || '',
+            });
         },
 
         resolveErrorMessage(payload, status) {

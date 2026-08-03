@@ -48,6 +48,23 @@ final class FileUploadFlowTest extends CIUnitTestCase
         $result->assertRedirectTo(site_url('login'));
     }
 
+    public function testPickerManifestIsLoadedAsOneRequest(): void
+    {
+        $mock = $this->createMock(FileApiService::class);
+        $mock->expects($this->once())
+            ->method('pickerManifest')
+            ->willReturn($this->apiOkResponse([
+                'items' => [['id' => 1, 'preview_url' => '/uploads/one_thumb.webp']],
+                'total' => 1,
+            ]));
+        Services::injectMock('fileApiService', $mock);
+
+        $result = $this->withSession($this->authSession)->get('/files/picker-manifest');
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString('one_thumb.webp', $result->getBody());
+    }
+
     // ─── Download ─────────────────────────────────────────────────
 
     public function testDownloadSuccessReturnsBinaryResponse(): void

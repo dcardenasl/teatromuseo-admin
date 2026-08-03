@@ -15,7 +15,8 @@
 
     <div
         id="file-picker-panel"
-        data-data-url="<?= site_url('files/picker-data') ?>"
+        data-base-url="<?= site_url('files') ?>"
+        data-manifest-url="<?= site_url('files/picker-manifest') ?>"
         data-upload-url="<?= site_url('files/upload') ?>"
         data-csrf-name="<?= esc(csrf_token()) ?>"
         data-csrf-hash="<?= esc(csrf_hash()) ?>"
@@ -147,8 +148,10 @@
 
                                 <div class="relative w-full overflow-hidden rounded-lg border border-gray-100" style="aspect-ratio:1/1">
                                     <template x-if="file.is_image">
-                                        <img :src="'<?= site_url('files') ?>/' + file.id + '/view'"
+                                        <img :src="file.preview_url || ''"
                                              :alt="file.original_name"
+                                             loading="lazy"
+                                             decoding="async"
                                              class="w-full h-full object-cover">
                                     </template>
                                     <template x-if="!file.is_image">

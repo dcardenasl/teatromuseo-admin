@@ -298,28 +298,9 @@ class FileController extends BaseWebController
         return redirect()->to($back)->with('success', $message);
     }
 
-    public function pickerData(): ResponseInterface
+    public function pickerManifest(): ResponseInterface
     {
-        $rawPage     = $this->request->getGet('page');
-        $rawPerPage  = $this->request->getGet('per_page');
-        $rawSearch   = $this->request->getGet('search');
-        $rawCategory = $this->request->getGet('category');
-        $filters     = [
-            'page'     => max(1, is_scalar($rawPage) ? (int) $rawPage : 1),
-            'per_page' => min(50, max(12, is_scalar($rawPerPage) ? (int) $rawPerPage : 24)),
-            'sort'     => '-id',
-        ];
-        $search = is_scalar($rawSearch) ? (string) $rawSearch : '';
-        if ($search !== '') {
-            $filters['search'] = $search;
-        }
-        $category = is_scalar($rawCategory) ? (string) $rawCategory : '';
-        if ($category !== '') {
-            $filters['category'] = $category;
-        }
-        $filters = $this->mapCategoryToMimeFilter($filters);
-
-        $response = $this->safeApiCall(fn () => $this->fileService->listForPicker($filters));
+        $response = $this->safeApiCall(fn () => $this->fileService->pickerManifest());
 
         return $this->response->setJSON($response);
     }

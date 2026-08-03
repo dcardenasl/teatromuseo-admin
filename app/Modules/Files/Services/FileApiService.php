@@ -47,13 +47,10 @@ class FileApiService extends ResourceApiService
         ], $fields);
     }
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function listForPicker(array $filters = []): array
+    /** @return ApiResponse */
+    public function pickerManifest(): array
     {
-        return $this->apiClient->get('/files', $filters);
+        return $this->apiClient->get('/files/picker-manifest');
     }
 
     /** @return ApiResponse */
