@@ -26,9 +26,18 @@ foreach ($translations as $translation) {
         }
     }
 }
+$defaultLanguageId = 0;
+foreach ($languages as $l) {
+    if (is_array($l) && ! empty($l['is_default'])) {
+        $defaultLanguageId = (int) ($l['id'] ?? 0);
+        break;
+    }
+}
+$defaultLanguageTranslation = $translationByLanguage[$defaultLanguageId] ?? null;
+
 foreach ($languages as $language) {
     $language['_source'] = $sourceFields;
-    $languageStates[(int) ($language['id'] ?? 0)] = TranslationStatus::evaluate($language, $translations, $requiredFields, $sourceUpdatedAt);
+    $languageStates[(int) ($language['id'] ?? 0)] = TranslationStatus::evaluate($language, $translations, $requiredFields, $sourceUpdatedAt, $defaultLanguageTranslation);
 }
 $actionableLanguages = array_values(array_filter($languages, static fn (array $language): bool => ($languageStates[(int) ($language['id'] ?? 0)]['status'] ?? 'missing') !== 'complete'));
 ?>

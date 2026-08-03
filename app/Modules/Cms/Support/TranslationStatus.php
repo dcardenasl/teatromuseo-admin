@@ -21,9 +21,24 @@ namespace App\Modules\Cms\Support;
 final class TranslationStatus
 {
     /**
+     * Structural fields that may legitimately be identical across languages
+     * by design — this site intentionally reuses the same slug across
+     * locales for some pages, and a setting's value can coincidentally be
+     * the same everywhere (a phone number, an email address). Never
+     * flagged as "copied from the source language" even when present in
+     * $requiredFields.
+     */
+    private const NEVER_COMPARE_TO_SOURCE = ['slug', 'setting_value'];
+
+    /**
      * @param array<string, mixed> $language
      * @param array<int, array<string, mixed>> $translations
      * @param list<string> $requiredFields
+     * @param array<string, mixed>|null $defaultLanguageTranslation The
+     *   default (source) language's own translation row, for detecting
+     *   text that was never actually translated — just copy-pasted from
+     *   the source language. Pass null to skip that check (e.g. no default
+     *   language configured).
      * @return array{status: string, completed_fields: list<string>, missing_fields: list<string>}
      */
     public static function evaluate(
@@ -31,6 +46,7 @@ final class TranslationStatus
         array $translations,
         array $requiredFields,
         mixed $sourceUpdatedAt = null,
+        ?array $defaultLanguageTranslation = null,
     ): array {
         $isDefault = ! empty($language['is_default']);
         $languageId = (int) ($language['id'] ?? 0);
@@ -78,6 +94,24 @@ final class TranslationStatus
         }
         if ($result['status'] !== 'complete') {
             return $result;
+        }
+
+        if (! $isDefault && $defaultLanguageTranslation !== null) {
+            $untranslated = [];
+            foreach (array_diff($requiredFields, self::NEVER_COMPARE_TO_SOURCE) as $field) {
+                $currentValue = trim((string) ($values[$field] ?? ''));
+                $sourceValue = trim((string) ($defaultLanguageTranslation[$field] ?? ''));
+                if ($currentValue !== '' && $sourceValue !== '' && $currentValue === $sourceValue) {
+                    $untranslated[] = $field;
+                }
+            }
+            if ($untranslated !== []) {
+                return [
+                    'status' => 'untranslated',
+                    'completed_fields' => $result['completed_fields'],
+                    'missing_fields' => $untranslated,
+                ];
+            }
         }
 
         $sourceTimestamp = strtotime((string) $sourceUpdatedAt);
@@ -129,6 +163,7 @@ final class TranslationStatus
             return match ($status) {
                 'missing' => 'border-red-200 bg-red-50 text-red-800',
                 'outdated' => 'border-orange-200 bg-orange-50 text-orange-800',
+                'untranslated' => 'border-purple-200 bg-purple-50 text-purple-800',
                 default => 'border-amber-200 bg-amber-50 text-amber-800',
             };
         }
@@ -138,6 +173,7 @@ final class TranslationStatus
                 'missing' => 'bg-red-500',
                 'outdated' => 'bg-orange-500',
                 'incomplete' => 'bg-amber-500',
+                'untranslated' => 'bg-purple-500',
                 default => 'bg-green-500',
             };
         }
@@ -146,6 +182,7 @@ final class TranslationStatus
             'missing' => 'bg-red-100 text-red-700',
             'outdated' => 'bg-orange-100 text-orange-700',
             'incomplete' => 'bg-amber-100 text-amber-700',
+            'untranslated' => 'bg-purple-100 text-purple-700',
             default => 'bg-green-100 text-green-700',
         };
     }

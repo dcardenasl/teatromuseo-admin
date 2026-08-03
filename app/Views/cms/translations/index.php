@@ -87,12 +87,14 @@
                     'missing' => lang('Translations.status_missing'),
                     'incomplete' => lang('Translations.status_incomplete'),
                     'mismatch' => lang('Translations.status_mismatch'),
+                    'untranslated' => lang('Translations.status_untranslated'),
                     'outdated' => lang('Translations.status_outdated'),
                 ],
                 'details' => [
                     'missing_all' => lang('Translations.detail_missing_all'),
                     'missing_required_fields' => lang('Translations.detail_missing_required_fields'),
                     'inconsistent_fields' => lang('Translations.detail_inconsistent_fields'),
+                    'same_as_source_fields' => lang('Translations.detail_same_as_source_fields'),
                 ],
                 'fields' => [
                     'title' => lang('Translations.field_title'),
@@ -134,6 +136,9 @@
                     if (row.status === 'mismatch') {
                         return this.dict.details.inconsistent_fields.replace('{fields}', fields);
                     }
+                    if (row.status === 'untranslated') {
+                        return this.dict.details.same_as_source_fields.replace('{fields}', fields);
+                    }
                     return this.dict.details.missing_required_fields.replace('{fields}', fields);
                 }
                 return row.detail;
@@ -147,7 +152,7 @@
                 return window.resolveCmsTranslationEditUrl(this.translationRoutes, row, returnTo);
             },
             nextPendingUrl() {
-                const row = this.rows.find((candidate) => ['missing', 'incomplete', 'mismatch'].includes(candidate.status));
+                const row = this.rows.find((candidate) => ['missing', 'incomplete', 'mismatch', 'untranslated'].includes(candidate.status));
                 return row ? this.editUrl(row) : '#';
             }
         }" x-init="init()">
@@ -181,7 +186,7 @@
                 </select>
                 <select name="status" class="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 lg:col-span-2">
                     <option value=""><?= esc(lang('Translations.all_statuses')) ?></option>
-                    <?php foreach (['missing', 'incomplete', 'mismatch'] as $status): ?>
+                    <?php foreach (['missing', 'incomplete', 'mismatch', 'untranslated'] as $status): ?>
                         <option value="<?= esc($status) ?>"><?= esc(lang('Translations.status_' . $status)) ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -232,7 +237,7 @@
                                         <span class="font-bold text-xs uppercase bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200" x-text="row.language_code"></span>
                                     </td>
                                     <td class="<?= esc(table_td_class()) ?>">
-                                        <span :class="row.status === 'missing' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800' : row.status === 'mismatch' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : row.status === 'outdated' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800'" x-text="translateStatus(row.status)"></span>
+                                        <span :class="row.status === 'missing' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800' : row.status === 'mismatch' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : row.status === 'outdated' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : row.status === 'untranslated' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800' : 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800'" x-text="translateStatus(row.status)"></span>
                                     </td>
                                     <td class="<?= esc(table_td_class('muted')) ?>" x-text="translateDetail(row)"></td>
                                     <td class="<?= esc(table_td_class()) ?>">

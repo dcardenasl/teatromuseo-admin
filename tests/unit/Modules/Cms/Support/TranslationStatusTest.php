@@ -58,6 +58,62 @@ final class TranslationStatusTest extends CIUnitTestCase
         $this->assertSame('complete', TranslationStatus::evaluate($language, [['language_id' => 2, 'title' => 'Translated']], ['title'])['status']);
     }
 
+    /**
+     * Root cause of the 2026-08-02 report: the legacy migration seeded every
+     * non-Spanish translation row with the Spanish text as a placeholder,
+     * and this evaluator never checked for that — it only checked
+     * blank/non-blank, so a copy-pasted Spanish title reported "complete".
+     */
+    public function testSecondaryLanguageTextIdenticalToDefaultLanguageIsUntranslated(): void
+    {
+        $language = ['id' => 2, 'is_default' => false];
+        $translations = [['language_id' => 2, 'title' => 'Inicio', 'excerpt' => 'Resumen']];
+        $defaultLanguageTranslation = ['title' => 'Inicio', 'excerpt' => 'Resumen'];
+
+        $result = TranslationStatus::evaluate($language, $translations, ['title', 'excerpt'], null, $defaultLanguageTranslation);
+
+        $this->assertSame('untranslated', $result['status']);
+        $this->assertSame(['title', 'excerpt'], $result['missing_fields']);
+    }
+
+    public function testSecondaryLanguageWithGenuinelyDifferentTextIsComplete(): void
+    {
+        $language = ['id' => 2, 'is_default' => false];
+        $translations = [['language_id' => 2, 'title' => 'Home']];
+        $defaultLanguageTranslation = ['title' => 'Inicio'];
+
+        $result = TranslationStatus::evaluate($language, $translations, ['title'], null, $defaultLanguageTranslation);
+
+        $this->assertSame('complete', $result['status']);
+    }
+
+    /**
+     * `slug` is deliberately excluded from the identical-to-source check —
+     * this site intentionally reuses the same slug across locales for some
+     * pages, so it must never be flagged even when passed in $requiredFields.
+     */
+    public function testIdenticalSlugIsNeverFlaggedAsUntranslated(): void
+    {
+        $language = ['id' => 2, 'is_default' => false];
+        $translations = [['language_id' => 2, 'title' => 'Home', 'slug' => 'home']];
+        $defaultLanguageTranslation = ['title' => 'Inicio', 'slug' => 'home'];
+
+        $result = TranslationStatus::evaluate($language, $translations, ['title', 'slug'], null, $defaultLanguageTranslation);
+
+        $this->assertSame('complete', $result['status']);
+    }
+
+    public function testDefaultLanguageItselfIsNeverFlaggedAsUntranslated(): void
+    {
+        $language = ['id' => 1, 'is_default' => true, '_source' => []];
+        $translations = [['language_id' => 1, 'title' => 'Inicio']];
+        $defaultLanguageTranslation = ['title' => 'Inicio'];
+
+        $result = TranslationStatus::evaluate($language, $translations, ['title'], null, $defaultLanguageTranslation);
+
+        $this->assertSame('complete', $result['status']);
+    }
+
     public function testOlderCompleteTranslationIsOutdated(): void
     {
         $result = TranslationStatus::evaluate(
@@ -75,6 +131,9 @@ final class TranslationStatusTest extends CIUnitTestCase
         $this->assertSame('bg-red-100 text-red-700', TranslationStatus::badgeClasses('missing'));
         $this->assertSame('bg-orange-100 text-orange-700', TranslationStatus::badgeClasses('outdated'));
         $this->assertSame('bg-amber-100 text-amber-700', TranslationStatus::badgeClasses('incomplete'));
+        // Must render its own distinct color, never the 'complete' green
+        // default a match() fallthrough would otherwise give it.
+        $this->assertSame('bg-purple-100 text-purple-700', TranslationStatus::badgeClasses('untranslated'));
         $this->assertSame('bg-green-100 text-green-700', TranslationStatus::badgeClasses('complete'));
     }
 
@@ -83,6 +142,7 @@ final class TranslationStatusTest extends CIUnitTestCase
         $this->assertSame('border-red-200 bg-red-50 text-red-800', TranslationStatus::badgeClasses('missing', 'action'));
         $this->assertSame('border-orange-200 bg-orange-50 text-orange-800', TranslationStatus::badgeClasses('outdated', 'action'));
         $this->assertSame('border-amber-200 bg-amber-50 text-amber-800', TranslationStatus::badgeClasses('incomplete', 'action'));
+        $this->assertSame('border-purple-200 bg-purple-50 text-purple-800', TranslationStatus::badgeClasses('untranslated', 'action'));
     }
 
     public function testEditUrlAppendsFocusLangHonoringExistingQueryString(): void
