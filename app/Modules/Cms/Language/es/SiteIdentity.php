@@ -18,6 +18,10 @@ return [
     'update_success' => 'Identidad del sitio actualizada correctamente.',
     'update_failed'  => 'No se pudo actualizar la identidad del sitio.',
     'cache_note'     => 'Los cambios se reflejan en el sitio público después de ~1 hora (caché). Para ver los cambios de inmediato, ejecuta <code>php spark cache:clear</code> en ci4-website-builder-web.',
+    'social_section' => 'Redes sociales',
+    'social_section_intro' => 'Configura los enlaces a los perfiles de redes sociales de la organización. Se mostrarán automáticamente en el pie de página.',
+    'footer_section' => 'Personalización del Footer',
+    'footer_section_intro' => 'Configura el diseño y los colores de fondo, texto y bordes del pie de página.',
 
     // Etiquetas genéricas para campos de archivo metadata-driven
     'select_file'  => 'Seleccionar archivo',

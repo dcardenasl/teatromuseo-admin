@@ -59,36 +59,42 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
                 <?php if ($hasContent): ?>
             <div class="<?= $hasAssets ? 'lg:col-span-2' : '' ?> space-y-6">
 
-                <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                            <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700"><?= lang('SiteIdentity.core_section') ?></h3>
-                            <p class="mt-1 text-xs text-gray-500"><?= lang('SiteIdentity.base_section_intro') ?></p>
-                        </div>
-                        <span class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-600">
-                            <?= esc(lang('SiteIdentity.base_badge')) ?>
-                        </span>
-                    </div>
-                    <div class="divide-y divide-gray-100">
+                <?php
+                $coreSettings = [];
+                    $footerSettings = [];
+                    $socialSettings = [];
 
-                    <?php foreach ($contentSettings as $idx => $setting):
+                    foreach ($contentSettings as $setting) {
                         if (cms_setting_is_translatable($setting)) {
                             continue;
                         }
-                        $key         = (string) ($setting['setting_key'] ?? '');
-                        $inputType   = (string) ($setting['input_type'] ?? 'text');
-                        $currentVal  = (string) ($setting['setting_value'] ?? '');
-                        if ($key === 'footer_menu_layout' && !in_array($currentVal, ['horizontal', 'vertical'], true)) {
-                            $currentVal = 'vertical';
-                        } elseif ($key === 'footer_legal_menu_layout' && !in_array($currentVal, ['horizontal', 'vertical'], true)) {
-                            $currentVal = 'horizontal';
+
+                        $group = (string) ($setting['setting_group'] ?? 'identity');
+                        $key   = (string) ($setting['setting_key'] ?? '');
+
+                        if ($group === 'social') {
+                            $socialSettings[] = $setting;
+                        } elseif (str_starts_with($key, 'footer_')) {
+                            $footerSettings[] = $setting;
+                        } else {
+                            $coreSettings[] = $setting;
                         }
-                        $isTrans     = cms_setting_is_translatable($setting);
-                        $isReadonly  = !empty($setting['is_readonly']);
-                        $label       = cms_setting_resolve_label($setting);
-                        $placeholder = cms_setting_resolve_placeholder($setting);
-                        $helpText    = cms_setting_resolve_help($setting);
-                        ?>
+                    }
+
+        $renderSettingField = function (array $setting, ?array $errors = []): void {
+            $key         = (string) ($setting['setting_key'] ?? '');
+            $inputType   = (string) ($setting['input_type'] ?? 'text');
+            $currentVal  = (string) ($setting['setting_value'] ?? '');
+            if ($key === 'footer_menu_layout' && !in_array($currentVal, ['horizontal', 'vertical'], true)) {
+                $currentVal = 'vertical';
+            } elseif ($key === 'footer_legal_menu_layout' && !in_array($currentVal, ['horizontal', 'vertical'], true)) {
+                $currentVal = 'horizontal';
+            }
+            $isReadonly  = !empty($setting['is_readonly']);
+            $label       = cms_setting_resolve_label($setting);
+            $placeholder = cms_setting_resolve_placeholder($setting);
+            $helpText    = cms_setting_resolve_help($setting);
+            ?>
                     <div class="px-5 py-4">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <label class="block text-sm font-medium text-gray-700">
@@ -97,23 +103,18 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
                                     <span class="text-red-400 ml-0.5" aria-hidden="true">*</span>
                                 <?php endif; ?>
                             </label>
-                            <?php if ($isTrans && !empty($translationPanel['translationLanguages'])): ?>
-                                    <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">
-                                        <?= esc(lang('SiteIdentity.translatable_badge')) ?>
-                                    </span>
-                            <?php endif; ?>
                         </div>
 
                         <?php if ($inputType === 'boolean'): ?>
                             <?= view('components/form/boolean', [
-                                    'name'      => "{$key}_value",
-                                    'label'     => '',
-                                    'value'     => filter_var($currentVal, FILTER_VALIDATE_BOOLEAN),
-                                    'on_label'  => 'App.yes',
-                                    'off_label' => 'App.no',
-                                    'readonly'  => $isReadonly,
-                                    'errors'    => $errors ?? [],
-                                ]) ?>
+                            'name'      => "{$key}_value",
+                            'label'     => '',
+                            'value'     => filter_var($currentVal, FILTER_VALIDATE_BOOLEAN),
+                            'on_label'  => 'App.yes',
+                            'off_label' => 'App.no',
+                            'readonly'  => $isReadonly,
+                            'errors'    => $errors ?? [],
+                        ]) ?>
 
                         <?php elseif ($inputType === 'textarea' || $inputType === 'richtext'): ?>
                             <textarea name="<?= esc($key) ?>_value"
@@ -179,10 +180,63 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
                             <p class="mt-1 text-xs text-gray-400"><?= esc($helpText) ?></p>
                         <?php endif; ?>
                     </div>
-                    <?php endforeach; ?>
+                    <?php
+        };
+?>
 
+                <!-- Core Identity Section -->
+                <?php if ($coreSettings !== []): ?>
+                <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700"><?= lang('SiteIdentity.core_section') ?></h3>
+                            <p class="mt-1 text-xs text-gray-500"><?= lang('SiteIdentity.base_section_intro') ?></p>
+                        </div>
+                        <span class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-600">
+                            <?= esc(lang('SiteIdentity.base_badge')) ?>
+                        </span>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        <?php foreach ($coreSettings as $setting) {
+                            $renderSettingField($setting, $errors ?? []);
+                        } ?>
                     </div>
                 </section>
+                <?php endif; ?>
+
+                <!-- Footer Customization Section -->
+                <?php if ($footerSettings !== []): ?>
+                <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700"><?= lang('SiteIdentity.footer_section') ?></h3>
+                            <p class="mt-1 text-xs text-gray-500"><?= lang('SiteIdentity.footer_section_intro') ?></p>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        <?php foreach ($footerSettings as $setting) {
+                            $renderSettingField($setting, $errors ?? []);
+                        } ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- Social Media Section -->
+                <?php if ($socialSettings !== []): ?>
+                <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700"><?= lang('SiteIdentity.social_section') ?></h3>
+                            <p class="mt-1 text-xs text-gray-500"><?= lang('SiteIdentity.social_section_intro') ?></p>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        <?php foreach ($socialSettings as $setting) {
+                            $renderSettingField($setting, $errors ?? []);
+                        } ?>
+                    </div>
+                </section>
+                <?php endif; ?>
 
                 <?php if (!empty($translationPanel['translationLanguages'])): ?>
                     <?= view('components/form/translatable_settings_panel', [

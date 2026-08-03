@@ -38,16 +38,29 @@ class SiteIdentityController extends BaseWebController
         }
         helper('cms_settings');
 
-        $response = $this->safeApiCall(fn () => $this->settingService->getByGroup('identity'));
-        if (! ($response['ok'] ?? false)) {
+        $identityResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('identity'));
+        if (! ($identityResponse['ok'] ?? false)) {
             return $this->failApi(
-                $response,
+                $identityResponse,
                 lang('SiteIdentity.update_failed'),
                 route_to('admin.cms.site_identity'),
                 false
             );
         }
-        $items    = $this->extractItems($response);
+        $identityItems = $this->extractItems($identityResponse);
+
+        $socialResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('social'));
+        if (! ($socialResponse['ok'] ?? false)) {
+            return $this->failApi(
+                $socialResponse,
+                lang('SiteIdentity.update_failed'),
+                route_to('admin.cms.site_identity'),
+                false
+            );
+        }
+        $socialItems = $this->extractItems($socialResponse);
+
+        $items = array_merge($identityItems, $socialItems);
 
         $langsRes       = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
         $languages      = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
@@ -73,7 +86,12 @@ class SiteIdentityController extends BaseWebController
         }
 
         $identityResponse = $this->settingService->getByGroup('identity');
-        $items            = $this->extractItems($identityResponse);
+        $identityItems    = $this->extractItems($identityResponse);
+
+        $socialResponse   = $this->settingService->getByGroup('social');
+        $socialItems      = $this->extractItems($socialResponse);
+
+        $items            = array_merge($identityItems, $socialItems);
 
         $langsRes       = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
         $languages      = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
