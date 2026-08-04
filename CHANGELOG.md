@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Configurable CMS listing projections** — collection blocks can now expose a generated field
+  catalog and configure card title, summary, image, date, extra metadata, ordering, and public
+  filters for CMS and external event/catalog sources.
 - **Public-site cache maintenance** — added a permission-gated maintenance screen to inspect
   invalidation status and trigger a manual cleanup across public cache scopes.
 - **Translation audit workbench pagination** — the audit screen now consumes paginated reports,
@@ -52,6 +55,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Nested file-picker manifests** — the file picker now unwraps both admin and API response
+  envelopes instead of treating a valid cached manifest as empty.
+- **Legacy repeater values** — scalar values from older one-field repeater payloads remain
+  editable after the block schema is upgraded to structured repeater items.
+
 - **Cache invalidation diagnostics** — manual invalidation now returns remote operation details
   and records its source for the public-site status view.
 
@@ -82,6 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Editorial and block editor terminology** — publication labels now use Editorial consistently,
+  listing field guidance is clearer, and block/media previews use more suitable compact layouts.
 - **CMS metadata and site identity configuration** — resolved CMS metadata is reused across
   admin views, while site identity settings are organized behind the centralized configuration
   flow.
