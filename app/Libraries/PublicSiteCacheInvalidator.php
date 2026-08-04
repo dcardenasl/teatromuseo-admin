@@ -28,9 +28,26 @@ class PublicSiteCacheInvalidator
      */
     public function invalidate(array $scopes): bool
     {
+        return $this->invalidateWithResult($scopes, 'admin_content_write')['ok'];
+    }
+
+    /**
+     * Invalidate public-site cache and return the remote operation details.
+     *
+     * @param list<string> $scopes
+     * @return array{ok: bool, status: int, invalidated: list<string>, deleted: int, message: string|null}
+     */
+    public function invalidateWithResult(array $scopes, string $source = 'admin_manual'): array
+    {
         $normalizedScopes = $this->normalizeScopes($scopes);
         if ($normalizedScopes === []) {
-            return true;
+            return [
+                'ok' => true,
+                'status' => 200,
+                'invalidated' => [],
+                'deleted' => 0,
+                'message' => null,
+            ];
         }
 
         if (trim($this->baseUrl) === '' || trim($this->invalidateKey) === '') {
@@ -40,7 +57,13 @@ class PublicSiteCacheInvalidator
                 . 'Skipping cache invalidation for scopes: ' . implode(', ', $normalizedScopes)
             );
 
-            return false;
+            return [
+                'ok' => false,
+                'status' => 0,
+                'invalidated' => [],
+                'deleted' => 0,
+                'message' => 'Cache invalidation is not configured.',
+            ];
         }
 
         try {
@@ -63,6 +86,7 @@ class PublicSiteCacheInvalidator
                     'Accept'           => 'application/json',
                     'Content-Type'     => 'application/json',
                     'X-Invalidate-Key' => $this->invalidateKey,
+                    'X-Cache-Invalidation-Source' => trim($source) !== '' ? trim($source) : 'admin_manual',
                 ],
                 'json' => ['scopes' => $normalizedScopes],
             ]);
@@ -72,7 +96,13 @@ class PublicSiteCacheInvalidator
                 '[PublicSiteCacheInvalidator] Cache invalidation request failed: ' . $e->getMessage()
             );
 
-            return false;
+            return [
+                'ok' => false,
+                'status' => 0,
+                'invalidated' => [],
+                'deleted' => 0,
+                'message' => $e->getMessage(),
+            ];
         }
 
         $status = $response->getStatusCode();
@@ -85,7 +115,13 @@ class PublicSiteCacheInvalidator
                 . ($body !== '' ? '. Body: ' . $this->compactBody($body) : '')
             );
 
-            return false;
+            return [
+                'ok' => false,
+                'status' => $status,
+                'invalidated' => [],
+                'deleted' => 0,
+                'message' => $body !== '' ? $this->compactBody($body) : 'Public cache invalidation failed.',
+            ];
         }
 
         log_message(
@@ -93,7 +129,71 @@ class PublicSiteCacheInvalidator
             '[PublicSiteCacheInvalidator] Invalidated scopes: ' . implode(', ', $normalizedScopes)
         );
 
-        return true;
+        $decoded = json_decode((string) $response->getBody(), true);
+        $decoded = is_array($decoded) ? $decoded : [];
+
+        return [
+            'ok' => true,
+            'status' => $status,
+            'invalidated' => $this->stringList($decoded['invalidated'] ?? $normalizedScopes),
+            'deleted' => max(0, (int) ($decoded['deleted'] ?? 0)),
+            'message' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function status(): array
+    {
+        if (trim($this->baseUrl) === '' || trim($this->invalidateKey) === '') {
+            return [
+                'ok' => false,
+                'status' => 0,
+                'data' => [],
+                'message' => 'Public site cache invalidation is not configured.',
+            ];
+        }
+
+        try {
+            $appConfig = config(AppConfig::class);
+            $baseUrl   = rtrim($this->baseUrl, '/');
+            $client    = new CURLRequest(
+                $appConfig,
+                new URI($baseUrl),
+                new Response($appConfig),
+                [
+                    'baseURI'         => $baseUrl,
+                    'timeout'         => max(1, $this->timeout),
+                    'connect_timeout' => max(1, $this->timeout),
+                    'http_errors'     => false,
+                ]
+            );
+            $response = $client->request('GET', '/cache/status', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'X-Invalidate-Key' => $this->invalidateKey,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return [
+                'ok' => false,
+                'status' => 0,
+                'data' => [],
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        $status = $response->getStatusCode();
+        $decoded = json_decode((string) $response->getBody(), true);
+        $decoded = is_array($decoded) ? $decoded : [];
+
+        return [
+            'ok' => $status >= 200 && $status < 300,
+            'status' => $status,
+            'data' => is_array($decoded['data'] ?? null) ? $decoded['data'] : [],
+            'message' => $status >= 200 && $status < 300 ? null : 'Could not read public-site cache status.',
+        ];
     }
 
     /**
@@ -123,5 +223,20 @@ class PublicSiteCacheInvalidator
         }
 
         return substr($body, 0, 500) . '...';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function stringList(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(static fn (mixed $item): string => trim((string) $item), $value),
+            static fn (string $item): bool => $item !== '',
+        ));
     }
 }

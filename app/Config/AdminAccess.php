@@ -35,6 +35,7 @@ class AdminAccess extends BaseConfig
         'audit.read',
         'apikeys.read',
         'metrics.read',
+        'system.public-cache.read',
         'iam.admin-access',
         'cms.languages.read',
         'cms.settings.read',

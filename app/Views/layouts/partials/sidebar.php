@@ -70,6 +70,14 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
             <?php endif; ?>
         <?php endif; ?>
 
+        <?php if (has_permission('system.public-cache.read')): ?>
+            <div class="<?= $navSectionLabelClass ?> mt-2 border-t border-gray-800 pt-4"><?= lang('System.maintenance') ?></div>
+            <a href="<?= route_to('admin.system.cache') ?>" class="<?= $navItemClass ?> <?= active_nav('admin/system/cache*', $navItemActiveClass) ?> <?= url_is('admin/system/cache*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navItemIdleClass ?>">
+                <?= ui_icon('refresh-cw') ?>
+                <span><?= lang('System.cache_title') ?></span>
+            </a>
+        <?php endif; ?>
+
         <?php if (has_permission('iam.superadmin-access')): ?>
             <div class="<?= $navSectionLabelClass ?> mt-2 border-t border-gray-800 pt-4"><?= lang('App.identity_access') ?></div>
             <a href="<?= route_to('admin.iam.roles') ?>" class="<?= $navItemClass ?> <?= active_nav('admin/iam/roles*', $navItemActiveClass) ?> <?= url_is('admin/iam/roles*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navItemIdleClass ?>">

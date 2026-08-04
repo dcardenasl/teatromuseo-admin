@@ -15,6 +15,7 @@ return [
     'files'           => 'Archivos',
     'api_keys'        => 'API Keys',
     'metrics'         => 'Métricas',
+    'maintenance'     => 'Mantenimiento',
     'identity_access' => 'Identidad y Accesos',
     'roles'           => 'Roles',
     'permissions'     => 'Permisos',
