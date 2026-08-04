@@ -97,7 +97,16 @@ export const filePickerStore = {
             });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const payload = await resp.json();
-            const root = payload?.data && typeof payload.data === 'object' ? payload.data : payload;
+            // The admin endpoint wraps the API response once more. Accept both
+            // {data: {items: [...]}} and {data: {data: {items: [...]}}}
+            // so the picker does not turn a valid manifest into an empty one.
+            let root = payload;
+            for (let depth = 0; depth < 3; depth += 1) {
+                if (!root || typeof root !== 'object' || Array.isArray(root)) break;
+                if (Array.isArray(root.items)) break;
+                if (!root.data || typeof root.data !== 'object') break;
+                root = root.data;
+            }
             this.allFiles = Array.isArray(root?.items) ? root.items : [];
             this.applyLocalFilters(1);
           } catch (err) {
