@@ -23,7 +23,7 @@ $required = (bool) ($required ?? false);
 $accept = (string) ($accept ?? 'image');
 $fieldKey = trim((string) ($fieldKey ?? ''));
 $copyEnabled = (bool) ($copyEnabled ?? false);
-$previewClass = (string) ($previewClass ?? 'h-36 w-full rounded-xl border border-gray-200 object-cover');
+$previewClass = (string) ($previewClass ?? 'h-32 w-full rounded-xl border border-gray-200 object-contain bg-slate-50');
 $payload = normalize_media_reference_value(is_array($value ?? null) ? $value : []);
 ?>
 
