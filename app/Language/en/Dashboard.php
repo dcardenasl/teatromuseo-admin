@@ -16,7 +16,7 @@ return [
     'view_all'         => 'View all',
     'total_users'      => 'Total users',
     'total_files'      => 'Total files',
-    'api_uptime'       => 'API Uptime',
+    'api_uptime'       => 'API Availability',
     'api_available'    => 'API available',
     'api_unavailable'  => 'API unavailable',
     'status_up'        => 'Up',

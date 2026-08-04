@@ -16,7 +16,7 @@ return [
     'view_all'         => 'Ver todo',
     'total_users'      => 'Usuarios totales',
     'total_files'      => 'Archivos totales',
-    'api_uptime'       => 'Tiempo de actividad API',
+    'api_uptime'       => 'Disponibilidad API',
     'api_available'    => 'API disponible',
     'api_unavailable'  => 'API no disponible',
     'status_up'        => 'En línea',

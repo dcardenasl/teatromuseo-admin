@@ -53,7 +53,7 @@ return [
     'collection_type_festivales' => 'Festivales',
     'collection_type_exposiciones' => 'Exposiciones',
     'collection_type_cursos' => 'Cursos',
-    'collection_type_publicaciones' => 'Publicaciones',
+    'collection_type_publicaciones' => 'Editorial',
     'collection_type_other' => 'Otro',
     'wizard_steps_builder_tab' => 'Pasos del asistente',
     'wizard_steps_builder_title' => 'Pasos nativos del asistente',

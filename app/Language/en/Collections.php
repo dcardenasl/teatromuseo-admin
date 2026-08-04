@@ -53,7 +53,7 @@ return [
     'collection_type_festivales' => 'Festivals',
     'collection_type_exposiciones' => 'Exhibitions',
     'collection_type_cursos' => 'Courses',
-    'collection_type_publicaciones' => 'Publications',
+    'collection_type_publicaciones' => 'Editorial',
     'collection_type_other' => 'Other',
     'wizard_steps_builder_tab' => 'Wizard steps',
     'wizard_steps_builder_title' => 'Wizard native steps',

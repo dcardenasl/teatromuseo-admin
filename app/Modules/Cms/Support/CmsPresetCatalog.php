@@ -135,7 +135,7 @@ final class CmsPresetCatalog
             ['type' => 'festivales', 'block' => 'festival_ficha', 'label' => 'Festivales', 'help' => 'Festival, edición y programación.'],
             ['type' => 'exposiciones', 'block' => 'exposicion_ficha', 'label' => 'Exposiciones', 'help' => 'Fechas, autoría y media.'],
             ['type' => 'cursos', 'block' => 'curso_ficha', 'label' => 'Cursos', 'help' => 'Modalidad, fechas e inscripción.'],
-            ['type' => 'publicaciones', 'block' => 'publicacion_metadata', 'label' => 'Publicaciones', 'help' => 'Metadatos y documentos.'],
+            ['type' => 'publicaciones', 'block' => 'publicacion_metadata', 'label' => 'Editorial', 'help' => 'Metadatos y documentos.'],
         ];
     }
 
