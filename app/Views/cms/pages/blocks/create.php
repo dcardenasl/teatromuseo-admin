@@ -178,7 +178,7 @@ $isImageAccept = static function (string $accept): bool {
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <template x-for="(field, key) in configFields" :key="key">
-                        <div x-show="key !== 'navigation_target_type' && key !== 'page_id' && key !== 'collection_id' && key !== 'external_target' || (navigationMode === 'internal' && (key === 'navigation_target_type' || key === 'page_id' || key === 'collection_id')) || (navigationMode === 'external' && key === 'external_target')" x-cloak>
+                        <div x-show="(!['collection_grid', 'collection_listing'].includes(selectedBlockType?.block_key) || !['date_field', 'order_by', 'order_direction'].includes(key)) && (key !== 'navigation_target_type' && key !== 'page_id' && key !== 'collection_id' && key !== 'external_target' || (navigationMode === 'internal' && (key === 'navigation_target_type' || key === 'page_id' || key === 'collection_id')) || (navigationMode === 'external' && key === 'external_target'))" x-cloak>
                             <template x-if="field.type !== 'media_reference'">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">
                                     <span x-text="field.label || key"></span>
@@ -194,7 +194,7 @@ $isImageAccept = static function (string $accept): bool {
                                                 class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                             <option value="">— Seleccionar —</option>
                                             <template x-for="opt in (field.options || [])" :key="typeof opt === 'object' ? opt.value : opt">
-                                                <option :value="typeof opt === 'object' ? opt.value : opt" x-text="typeof opt === 'object' ? opt.label : opt"></option>
+                                                <option :value="typeof opt === 'object' ? opt.value : opt" x-text="typeof opt === 'object' ? opt.label : (key === 'date_field' ? dateFieldLabel(opt) : opt)"></option>
                                             </template>
                                         </select>
                                     </template>
@@ -213,16 +213,31 @@ $isImageAccept = static function (string $accept): bool {
                                             <p x-show="entryOptionsError" class="text-[11px] text-red-500" x-text="entryOptionsError"></p>
                                         </div>
                                     </template>
-                                    <template x-if="key !== 'collection_id' && key !== 'entry_id'">
+                                    <template x-if="key === 'collection_key'">
                                         <select :name="`block_config[${key}]`"
-                                                x-model="key === 'navigation_mode' ? navigationMode : (key === 'navigation_target_type' ? navigationTargetType : (field.default || ''))"
+                                                x-model="collectionKey"
+                                                @change="onCollectionKeyChange($event.target.value)"
+                                                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                            <option value="">— Seleccionar colección —</option>
+                                            <template x-for="opt in (field.options || [])" :key="typeof opt === 'object' ? opt.value : opt">
+                                                <option :value="typeof opt === 'object' ? opt.value : opt" x-text="typeof opt === 'object' ? opt.label : opt"></option>
+                                            </template>
+                                        </select>
+                                    </template>
+                                    <template x-if="key !== 'collection_id' && key !== 'entry_id' && key !== 'collection_key'">
+                                        <select :name="`block_config[${key}]`"
+                                                x-model="key === 'navigation_mode' ? navigationMode : (key === 'navigation_target_type' ? navigationTargetType : (key === 'source_type' ? sourceType : (field.default || '')))"
+                                                @change="key === 'source_type' ? (onSourceTypeChange($event.target.value), $dispatch('listing-source-changed', {source: $event.target.value})) : null"
                                                 class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                             <template x-for="opt in (field.options || [])" :key="typeof opt === 'object' ? opt.value : opt">
-                                                <option :value="typeof opt === 'object' ? opt.value : opt" :selected="(typeof opt === 'object' ? opt.value : opt) == (field.default || '')" x-text="typeof opt === 'object' ? opt.label : opt"></option>
+                                                <option :value="typeof opt === 'object' ? opt.value : opt" :selected="(typeof opt === 'object' ? opt.value : opt) == (field.default || '')" x-text="typeof opt === 'object' ? opt.label : (key === 'date_field' ? dateFieldLabel(opt) : opt)"></option>
                                             </template>
                                         </select>
                                     </template>
                                 </div>
+                            </template>
+                            <template x-if="field.description">
+                                <p class="mt-1 text-[11px] leading-relaxed text-gray-500" x-text="field.description"></p>
                             </template>
                             <template x-if="field.type === 'color'">
                                 <div x-data="{ 
@@ -420,6 +435,13 @@ $isImageAccept = static function (string $accept): bool {
                             <p x-show="field.description" class="text-[11px] text-gray-400 mt-0.5" x-text="field.description"></p>
                         </div>
                     </template>
+                </div>
+                <div x-show="selectedBlockType?.block_key === 'collection_grid' || selectedBlockType?.block_key === 'collection_listing'" x-cloak>
+                    <?= view('cms/pages/blocks/_listing_projection', [
+                        'listingFieldCatalog' => $listingFieldCatalog ?? [],
+                        'submittedBlockConfig' => [],
+                        'blockConfig' => [],
+                    ]) ?>
                 </div>
             </div>
 
@@ -1022,6 +1044,16 @@ function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', trans
 
         // Picked file metadata keyed by `${langId}_${fieldKey}` (top-level file fields)
         pickedFilesMap: {},
+
+        dateFieldLabel(value) {
+            const labels = {
+                auto: 'Automática', published_at: 'Fecha de publicación', created_at: 'Fecha de creación',
+                'listing.publication_date': 'Fecha editorial', 'listing.start_date': 'Fecha de inicio', 'listing.end_date': 'Fecha de término',
+                'listing.opening_date': 'Fecha de inauguración', 'listing.closing_date': 'Fecha de cierre', 'listing.premiere_date': 'Fecha de estreno',
+                'listing.performance_date': 'Fecha de función', 'listing.recorded_at': 'Fecha de registro',
+            };
+            return labels[String(value)] || value;
+        },
 
         init() {
             const def = this.languages.find(l => l.is_default == 1);

@@ -134,6 +134,169 @@ final class BlockTypeOptionsResolver
     }
 
     /**
+     * Return the fields that a collection listing may safely project.
+     *
+     * The catalog is derived from the collection block template and the
+     * canonical block schemas. It deliberately returns field references
+     * instead of hardcoded listing options so new collections and block fields
+     * become available to editors without another admin change.
+     *
+     * @return array<int|string, list<array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool}>>
+     */
+    public function listingFieldCatalog(): array
+    {
+        $catalog = [];
+        $blockTypes = $this->blockCatalogService->indexed();
+
+        // External sources do not have a CMS collection/template from which
+        // to discover fields. They expose the same projection contract.
+        $catalog['event_items'] = $this->eventListingFields();
+        $catalog['catalog_items'] = $this->catalogListingFields();
+
+        foreach ($this->activeCollections() as $collection) {
+            $collectionId = (int) ($collection['id'] ?? 0);
+            if ($collectionId <= 0) {
+                continue;
+            }
+
+            $fields = [
+                $this->listingField('entry.title', 'Título', 'Datos de la entrada', 'text', true, true),
+                $this->listingField('entry.excerpt', 'Resumen', 'Datos de la entrada', 'text', false, true),
+                $this->listingField('entry.slug', 'Slug', 'Datos de la entrada', 'text', true, true),
+                $this->listingField('entry.featured_image', 'Imagen destacada', 'Datos de la entrada', 'media_reference', false, false),
+                $this->listingField('entry.published_at', 'Fecha de publicación', 'Datos de la entrada', 'date', true, true),
+                $this->listingField('entry.created_at', 'Fecha de creación', 'Datos de la entrada', 'date', true, true),
+                $this->listingField('entry.sort_order', 'Orden editorial', 'Datos de la entrada', 'number', true, false),
+                $this->listingField('taxonomy.categories', 'Categorías', 'Taxonomía', 'taxonomy', false, true),
+                $this->listingField('taxonomy.tags', 'Etiquetas', 'Taxonomía', 'taxonomy', false, true),
+            ];
+
+            $template = $collection['block_template'] ?? [];
+            if (is_string($template)) {
+                $template = json_decode($template, true);
+            }
+            $templateBlocks = is_array($template) && is_array($template['blocks'] ?? null)
+                ? $template['blocks']
+                : [];
+
+            foreach ($templateBlocks as $templateBlock) {
+                if (! is_array($templateBlock)) {
+                    continue;
+                }
+                $blockKey = trim((string) ($templateBlock['block_key'] ?? ''));
+                $blockType = $this->findBlockType($blockTypes, $blockKey);
+                if ($blockKey === '' || $blockType === null) {
+                    continue;
+                }
+                $schema = $blockType['schema_definition'] ?? [];
+                if (is_string($schema)) {
+                    $schema = json_decode($schema, true);
+                }
+                $schemaFields = is_array($schema) && is_array($schema['fields'] ?? null)
+                    ? $schema['fields']
+                    : [];
+                $blockLabel = (string) ($templateBlock['label'] ?? $blockType['name'] ?? $blockKey);
+
+                foreach ($schemaFields as $fieldKey => $definition) {
+                    if (! is_array($definition) || ! $this->isListingFieldType((string) ($definition['type'] ?? ''))) {
+                        continue;
+                    }
+                    $fieldKey = trim((string) $fieldKey);
+                    if ($fieldKey === '') {
+                        continue;
+                    }
+                    $fieldType = (string) ($definition['type'] ?? 'string');
+                    $fields[] = $this->listingField(
+                        'block.' . $blockKey . '.' . $fieldKey,
+                        $blockLabel . ' · ' . (string) ($definition['label'] ?? $fieldKey),
+                        'Campos de bloques',
+                        $fieldType,
+                        in_array($fieldType, ['date', 'datetime', 'number', 'integer', 'string', 'text'], true),
+                        in_array($fieldType, ['date', 'datetime', 'number', 'integer', 'string', 'text', 'select'], true),
+                    );
+                }
+            }
+
+            $catalog[$collectionId] = $fields;
+            $collectionKey = trim((string) ($collection['collection_key'] ?? ''));
+            if ($collectionKey !== '') {
+                $catalog[$collectionKey] = $fields;
+            }
+        }
+
+        return $catalog;
+    }
+
+    /**
+     * Canonical projection fields exposed by the programming/event source.
+     * The public source adapter translates these `entry.*` references to its
+     * API query fields, keeping collection_list and collection_grid uniform.
+     *
+     * @return list<array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool}>
+     */
+    private function eventListingFields(): array
+    {
+        return [
+            $this->listingField('entry.title', 'Título', 'Datos del evento', 'text', true, true),
+            $this->listingField('entry.excerpt', 'Descripción', 'Datos del evento', 'text', false, true),
+            $this->listingField('entry.slug', 'Slug', 'Datos del evento', 'text', true, true),
+            $this->listingField('entry.event_type', 'Tipo de actividad', 'Datos del evento', 'select', true, true),
+            $this->listingField('entry.start_time', 'Fecha y hora de inicio', 'Datos del evento', 'datetime', true, true),
+            $this->listingField('entry.end_time', 'Fecha y hora de término', 'Datos del evento', 'datetime', true, true),
+            $this->listingField('entry.venue', 'Lugar', 'Datos del evento', 'text', true, true),
+            $this->listingField('entry.featured_image', 'Imagen de portada', 'Datos del evento', 'media_reference', false, false),
+        ];
+    }
+
+    /** @return list<array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool}> */
+    private function catalogListingFields(): array
+    {
+        return [
+            $this->listingField('entry.title', 'Nombre', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.excerpt', 'Resumen', 'Datos de la pieza', 'text', false, true),
+            $this->listingField('entry.slug', 'Slug', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.inventory_code', 'Código de inventario', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.origin', 'Origen', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.period', 'Período', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.creator', 'Autoría / creador', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.ubicacion', 'Ubicación', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.materials', 'Materiales', 'Datos de la pieza', 'text', false, true),
+            $this->listingField('entry.collection_number', 'Número de colección', 'Clasificación', 'text', true, true),
+            $this->listingField('entry.collection_group', 'Grupo de colección', 'Clasificación', 'text', true, true),
+            $this->listingField('taxonomy.categories', 'Categoría', 'Clasificación', 'taxonomy', false, true),
+            $this->listingField('entry.created_at', 'Fecha de registro', 'Metadatos', 'date', true, true),
+            $this->listingField('entry.updated_at', 'Última actualización', 'Metadatos', 'date', true, true),
+            $this->listingField('entry.featured_image', 'Imagen de portada', 'Visual', 'media_reference', false, false),
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $blockTypes
+     * @return array<string, mixed>|null
+     */
+    private function findBlockType(array $blockTypes, string $blockKey): ?array
+    {
+        foreach ($blockTypes as $blockType) {
+            if (is_array($blockType) && (string) ($blockType['block_key'] ?? '') === $blockKey) {
+                return $blockType;
+            }
+        }
+
+        return null;
+    }
+
+    private function isListingFieldType(string $type): bool
+    {
+        return in_array($type, ['string', 'text', 'textarea', 'richtext', 'date', 'datetime', 'number', 'integer', 'select', 'boolean', 'media_reference'], true);
+    }
+
+    /** @return array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool} */
+    private function listingField(string $value, string $label, string $group, string $type, bool $sortable, bool $filterable): array
+    {
+        return compact('value', 'label', 'group', 'type', 'sortable', 'filterable');
+    }
+
+    /**
      * @return array<int, array{value: string, label: string}>
      */
     public function entriesForCollection(int $collectionId): array

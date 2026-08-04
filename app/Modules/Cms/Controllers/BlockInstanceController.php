@@ -236,6 +236,10 @@ class BlockInstanceController extends BaseWebController
             'blockTypes'        => $types,
             'languages'         => $languages,
             'entryOptionsUrl'   => route_to('admin.cms.blocks.entries'),
+            // A cached empty block catalog is a valid degraded state. Do not
+            // fan out to the collections API just to render an empty create
+            // form; the next uncached request will hydrate the dynamic catalog.
+            'listingFieldCatalog' => $types !== [] ? $this->blockTypeOptions->listingFieldCatalog() : [],
             'translateUrl'      => route_to('admin.cms.translate'),
             'defaultLangCode'   => $languageContext['defaultLangCode'],
             'defaultLangId'     => $languageContext['defaultLangId'],
@@ -439,6 +443,7 @@ class BlockInstanceController extends BaseWebController
             'blockType'    => $blockType,
             'languages'    => $languages,
             'entryOptionsUrl' => route_to('admin.cms.blocks.entries'),
+            'listingFieldCatalog' => $this->blockTypeOptions->listingFieldCatalog(),
             'defaultLangId' => $languageContext['defaultLangId'],
             'defaultLangCode' => $languageContext['defaultLangCode'],
             'defaultLangIndex' => $languageContext['defaultLangIndex'],

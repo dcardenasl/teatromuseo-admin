@@ -1,6 +1,8 @@
 export const blockInstanceConfig = (entryOptionsUrl = '', initialConfig = {}) => ({
     entryOptionsUrl: String(entryOptionsUrl || ''),
+    sourceType: String(initialConfig.source_type ?? ''),
     collectionId: String(initialConfig.collection_id ?? ''),
+    collectionKey: String(initialConfig.collection_key ?? ''),
     entryId: String(initialConfig.entry_id ?? ''),
     navigationMode: String(initialConfig.navigation_mode ?? 'none'),
     navigationTargetType: String(initialConfig.navigation_target_type ?? 'event_listing'),
@@ -15,7 +17,9 @@ export const blockInstanceConfig = (entryOptionsUrl = '', initialConfig = {}) =>
     },
 
     setInitialConfig(config = {}) {
+        this.sourceType = String(config.source_type ?? '');
         this.collectionId = String(config.collection_id ?? '');
+        this.collectionKey = String(config.collection_key ?? '');
         this.entryId = String(config.entry_id ?? '');
         this.navigationMode = String(config.navigation_mode ?? 'none');
         this.navigationTargetType = String(config.navigation_target_type ?? 'event_listing');
@@ -32,7 +36,9 @@ export const blockInstanceConfig = (entryOptionsUrl = '', initialConfig = {}) =>
         const collectionField = configFields.collection_id || {};
         const entryField = configFields.entry_id || {};
 
+        this.sourceType = String((configFields.source_type || {}).default ?? '');
         this.collectionId = String(collectionField.default ?? '');
+        this.collectionKey = String((configFields.collection_key || {}).default ?? '');
         this.entryId = String(entryField.default ?? '');
         this.navigationMode = String(configFields.navigation_mode?.default ?? 'none');
         this.navigationTargetType = String(configFields.navigation_target_type?.default ?? 'event_listing');
@@ -103,5 +109,13 @@ export const blockInstanceConfig = (entryOptionsUrl = '', initialConfig = {}) =>
         this.collectionId = String(value ?? '');
         this.entryId = '';
         await this.refreshEntryOptions(false);
+    },
+
+    onCollectionKeyChange(value) {
+        this.collectionKey = String(value ?? '');
+    },
+
+    onSourceTypeChange(value) {
+        this.sourceType = String(value ?? '');
     },
 });
