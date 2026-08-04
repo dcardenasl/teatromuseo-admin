@@ -720,6 +720,23 @@ class BlockInstanceController extends BaseWebController
         $typesIndexed = $this->blockTypeOptions->rawIndexed();
 
         $parentType = $typesIndexed[$parentBlock['block_id']] ?? [];
+        $schema = is_array($parentType['schema_definition'] ?? null)
+            ? $parentType['schema_definition']
+            : json_decode((string) ($parentType['schema_definition'] ?? '{}'), true);
+        $allowedChildren = is_array($parentType['allowed_children'] ?? null)
+            ? $parentType['allowed_children']
+            : (is_array($schema) && is_array($schema['allowed_children'] ?? null) ? $schema['allowed_children'] : []);
+        $childType = [];
+        foreach ($typesIndexed as $type) {
+            if (is_array($type) && in_array((string) ($type['block_key'] ?? ''), $allowedChildren, true)) {
+                $childType = $type;
+                break;
+            }
+        }
+        $childLabel = (string) ($childType['name'] ?? BlockOwnerRouting::childLabel($ownerType));
+        $childLabelPlural = (string) ($childType['block_key'] ?? '') === 'team_member'
+            ? 'Miembros del equipo'
+            : $childLabel . 's';
 
         return $this->render('cms/pages/blocks/children/index', [
             'title'                => BlockOwnerRouting::childLabel($ownerType) . ': ' . ($parentType['name'] ?? BlockOwnerRouting::label($ownerType)),
@@ -740,7 +757,8 @@ class BlockInstanceController extends BaseWebController
             'ownerUpdateRoute'     => BlockOwnerRouting::routes($ownerType)['update'],
             'ownerDeleteRoute'     => BlockOwnerRouting::routes($ownerType)['delete'],
             'ownerChildrenReorderRoute' => BlockOwnerRouting::routes($ownerType)['childrenReorder'],
-            'childLabel'           => BlockOwnerRouting::childLabel($ownerType),
+            'childLabel'           => $childLabel,
+            'childLabelPlural'     => $childLabelPlural,
         ]);
     }
 }

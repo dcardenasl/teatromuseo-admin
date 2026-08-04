@@ -10,6 +10,7 @@ $ownerBlocksRoute = $ownerBlocksRoute ?? 'admin.cms.pages.blocks';
 $ownerCreateRoute = $ownerCreateRoute ?? 'admin.cms.pages.blocks.create';
 $ownerChildrenReorderRoute = $ownerChildrenReorderRoute ?? 'admin.cms.pages.blocks.children.reorder';
 $childLabel  = $childLabel  ?? 'Diapositiva';
+$childLabelPlural = $childLabelPlural ?? (($childLabel === 'Miembro del Equipo') ? 'Miembros del equipo' : ($childLabel . 's'));
 $languages   = $languages   ?? [];
 $blockTranslationStatus = $blockTranslationStatus ?? [];
 
@@ -17,7 +18,6 @@ $pageId     = (string) ($page['id'] ?? '');
 $instanceId = (string) ($parentBlock['id'] ?? '');
 $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
 
-$childLabelPlural = lang('Pages.' . ($ownerType === 'entry' ? 'child_label_subblock_plural' : 'child_label_slide_plural'));
 ?>
 <div class="mb-4 flex items-center justify-between">
     <a href="<?= route_to($ownerBlocksRoute, $pageId) ?>" class="text-sm text-brand-600 hover:text-brand-700">
@@ -80,13 +80,15 @@ $childLabelPlural = lang('Pages.' . ($ownerType === 'entry' ? 'child_label_subbl
                 $isActive  = (bool) ($child['is_active'] ?? true);
                 $childId   = (string) $child['id'];
 
-                // Get first translation's heading for preview
+                // Use the first meaningful field across block types.
                 $previewText = '';
                 foreach ($child['translations'] ?? [] as $t) {
                     $bd = is_array($t['block_data'] ?? null) ? $t['block_data'] : [];
-                    if (!empty($bd['heading'])) {
-                        $previewText = $bd['heading'];
-                        break;
+                    foreach (['name', 'title', 'heading', 'label'] as $field) {
+                        if (!empty($bd[$field])) {
+                            $previewText = (string) $bd[$field];
+                            break 2;
+                        }
                     }
                 }
                 ?>
@@ -113,6 +115,9 @@ $childLabelPlural = lang('Pages.' . ($ownerType === 'entry' ? 'child_label_subbl
                     }
                 }
                 $blockConfig = is_array($child['block_config'] ?? null) ? $child['block_config'] : [];
+                if ($previewImg === '' && is_array($blockConfig['photo'] ?? null)) {
+                    $previewImg = (string) ($blockConfig['photo']['url'] ?? '');
+                }
                 $collectionKey = $blockConfig['collection_key'] ?? null;
                 $matchedCollectionId = ($collectionKey !== null && isset($collectionsMap[(string) $collectionKey]))
                     ? $collectionsMap[(string) $collectionKey]
