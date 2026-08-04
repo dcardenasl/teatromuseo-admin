@@ -40,6 +40,8 @@ use App\Modules\EventReferences\Services\EventReferenceApiService;
 use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
 use App\Modules\Events\Services\EventApiService;
 use App\Modules\Events\Services\EventApiServiceInterface;
+use App\Modules\Events\Services\EventTypeApiService;
+use App\Modules\Events\Services\EventTypeApiServiceInterface;
 use App\Modules\Files\Services\FileApiService;
 use App\Modules\Iam\Services\ApplicationApiService;
 use App\Modules\Iam\Services\PermissionApiService;
@@ -400,6 +402,7 @@ class Services extends BaseService
             static::collectionApiService(),
             static::pageApiService(),
             static::entryApiService(),
+            static::categoryApiService(),
         );
     }
 
@@ -492,6 +495,16 @@ class Services extends BaseService
             return static::getSharedInstance('eventApiService');
         }
         return new EventApiService(static::eventDomainApiClient());
+    }
+
+    public static function eventTypeApiService(bool $getShared = true): EventTypeApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var EventTypeApiServiceInterface */
+            return static::getSharedInstance('eventTypeApiService');
+        }
+
+        return new EventTypeApiService(static::eventDomainApiClient());
     }
     public static function ticketTypeApiService(bool $getShared = true): TicketTypeApiServiceInterface
     {

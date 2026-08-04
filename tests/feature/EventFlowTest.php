@@ -120,7 +120,7 @@ final class EventFlowTest extends CIUnitTestCase
         $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
         $cacheMock->expects($this->once())
             ->method('invalidate')
-            ->with(['events'])
+            ->with(['events', 'event_types'])
             ->willReturn(true);
         Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
 
@@ -156,7 +156,7 @@ final class EventFlowTest extends CIUnitTestCase
         $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
         $cacheMock->expects($this->once())
             ->method('invalidate')
-            ->with(['events'])
+            ->with(['events', 'event_types'])
             ->willReturn(true);
         Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
 
@@ -186,7 +186,7 @@ final class EventFlowTest extends CIUnitTestCase
         $cacheMock = $this->createMock(\App\Libraries\PublicSiteCacheInvalidator::class);
         $cacheMock->expects($this->once())
             ->method('invalidate')
-            ->with(['events'])
+            ->with(['events', 'event_types'])
             ->willReturn(true);
         Services::injectMock('publicSiteCacheInvalidator', $cacheMock);
 

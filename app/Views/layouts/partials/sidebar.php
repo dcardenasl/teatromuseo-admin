@@ -296,9 +296,9 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
             <?php endif; ?>
         <?php endif; ?>
         <!-- START Events -->
-        <?php if (has_permission('event.events.read')): ?>
+        <?php if (has_permission('event.events.read') || has_permission('event.event-types.read')): ?>
             <div class="pt-3 mt-3 border-t border-gray-800 text-xs uppercase text-gray-500"><?= lang('Events.sidebar_label') ?></div>
-            <?php $sidebarActive_events_scheduling = url_is('admin/events/events*') || url_is('admin/venues/venues*') || url_is('admin/occurrences/occurrences*') || url_is('admin/eventreferences/event-references*'); ?>
+            <?php $sidebarActive_events_scheduling = url_is('admin/events/events*') || url_is('admin/events/event-types*') || url_is('admin/venues/venues*') || url_is('admin/occurrences/occurrences*') || url_is('admin/eventreferences/event-references*'); ?>
             <div x-data="{ open: <?= $sidebarActive_events_scheduling ? 'true' : "localStorage.getItem('events-g-scheduling') !== 'false'" ?> }" class="space-y-1">
                 <button type="button"
                         @click="open = !open; localStorage.setItem('events-g-scheduling', open)"
@@ -314,6 +314,12 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
                         <?= ui_icon('calendar') ?>
                         <span><?= lang('Events.events_title') ?></span>
                     </a>
+                    <?php if (has_permission('event.event-types.read')): ?>
+                        <a href="<?= route_to('admin.events.event_types') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/events/event-types*', $navSubItemActiveClass) ?> <?= url_is('admin/events/event-types*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('tag') ?>
+                            <span><?= lang('Events.event_types_title') ?></span>
+                        </a>
+                    <?php endif; ?>
                     <a href="<?= route_to('admin.venues.venues') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/venues/venues*', $navSubItemActiveClass) ?> <?= url_is('admin/venues/venues*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
                         <?= ui_icon('calendar') ?>
                         <span><?= lang('Venues.venues_title') ?></span>

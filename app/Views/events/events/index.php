@@ -1,12 +1,6 @@
 <?php
 /** @var array $limitOptions */
-$eventTypeLabels = [
-    'function' => lang('Events.option_event_type_function'),
-    'festival' => lang('Events.option_event_type_festival'),
-    'course' => lang('Events.option_event_type_course'),
-    'workshop' => lang('Events.option_event_type_workshop'),
-    'other' => lang('Events.option_event_type_other'),
-];
+$eventTypeLabels = is_array($eventTypeLabels ?? null) ? $eventTypeLabels : [];
 $eventStatusLabels = [
     'draft' => lang('Events.option_status_draft'),
     'published' => lang('Events.option_status_published'),

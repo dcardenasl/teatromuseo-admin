@@ -19,13 +19,7 @@
             'required' => true,
             'placeholder' => 'Events.field_event_type_placeholder',
             'help' => 'Events.field_event_type_help',
-            'options' => [
-                'function' => lang('Events.option_event_type_function'),
-                'festival' => lang('Events.option_event_type_festival'),
-                'course' => lang('Events.option_event_type_course'),
-                'workshop' => lang('Events.option_event_type_workshop'),
-                'other' => lang('Events.option_event_type_other'),
-            ],
+            'options' => $eventTypeOptions ?? [],
             'value' => $item['event_type'] ?? '',
             'errors' => $errors ?? []
         ]) ?>

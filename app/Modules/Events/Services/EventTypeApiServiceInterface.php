@@ -7,7 +7,7 @@ namespace App\Modules\Events\Services;
 /**
  * @phpstan-import-type ApiResponse from \App\Libraries\ApiClientInterface
  */
-interface EventApiServiceInterface
+interface EventTypeApiServiceInterface
 {
     /**
      * @param array<string, mixed> $filters
@@ -33,9 +33,6 @@ interface EventApiServiceInterface
     /** @return ApiResponse */
     public function delete(int|string $id): array;
 
-    /** @return ApiResponse */
-    public function listTypes(): array;
-
-
-
+    /** @return array<string, mixed> */
+    public function checkSlug(string $slug, string $locale, string $currentId = ''): array;
 }

@@ -28,6 +28,7 @@ class EventController extends BaseWebController
         return $this->render('events/events/index', [
             'title'        => lang('Events.events_title'),
             'limitOptions' => [10, 25, 50, 100],
+            'eventTypeLabels' => $this->eventTypeLabels(),
 
         ]);
     }
@@ -49,6 +50,7 @@ class EventController extends BaseWebController
             return $this->render('events/events/show', [
                 'title' => lang('Events.events_details'),
                 'event' => [],
+                'eventTypeLabels' => $this->eventTypeLabels(),
                 'error' => $this->firstMessage($response, lang('Events.events_not_found')),
 
             ]);
@@ -57,6 +59,7 @@ class EventController extends BaseWebController
         return $this->render('events/events/show', [
             'title' => lang('Events.events_details'),
             'event' => $this->extractData($response),
+            'eventTypeLabels' => $this->eventTypeLabels(),
 
         ]);
     }
@@ -67,6 +70,7 @@ class EventController extends BaseWebController
 
         return $this->render('events/events/create', [
             'title' => lang('Events.events_create'),
+            'eventTypeOptions' => $this->eventTypeLabels(),
             ...$languageContext,
 
         ]);
@@ -87,7 +91,7 @@ class EventController extends BaseWebController
             return $this->failApi($response, lang('Events.events_create_failed'));
         }
 
-        $this->invalidatePublicSiteCache('events');
+        $this->invalidatePublicSiteCache(['events', 'event_types']);
 
         return redirect()->to(route_to('admin.events.events'))->with('success', lang('Events.events_create_success'));
     }
@@ -102,6 +106,7 @@ class EventController extends BaseWebController
         return $this->render('events/events/edit', [
             'title' => lang('Events.events_edit'),
             'item'  => $this->extractData($response),
+            'eventTypeOptions' => $this->eventTypeLabels(),
             ...$this->contentLanguageContext($this->extractData($response)),
 
         ]);
@@ -122,7 +127,7 @@ class EventController extends BaseWebController
             return $this->failApi($response, lang('Events.events_update_failed'));
         }
 
-        $this->invalidatePublicSiteCache('events');
+        $this->invalidatePublicSiteCache(['events', 'event_types']);
 
         return redirect()->to(route_to('admin.events.events'))->with('success', lang('Events.events_update_success'));
     }
@@ -135,7 +140,7 @@ class EventController extends BaseWebController
             return $this->failApi($response, lang('Events.events_delete_failed'), route_to('admin.events.events'), false);
         }
 
-        $this->invalidatePublicSiteCache('events');
+        $this->invalidatePublicSiteCache(['events', 'event_types']);
 
         return redirect()->to(route_to('admin.events.events'))->with('success', lang('Events.events_delete_success'));
     }
@@ -213,6 +218,29 @@ class EventController extends BaseWebController
             'defaultLangIndex' => $defaultIndex,
             'translations' => $translationValues,
         ];
+    }
+
+    /** @return array<string, string> */
+    private function eventTypeLabels(): array
+    {
+        $response = $this->safeApiCall(fn () => $this->eventService->listTypes());
+        $labels = [];
+
+        foreach ($this->extractItems($response) as $type) {
+            if (! is_array($type)) {
+                continue;
+            }
+
+            $slug = trim((string) ($type['slug'] ?? ''));
+            if ($slug === '') {
+                continue;
+            }
+
+            $localized = is_array($type['localized'] ?? null) ? $type['localized'] : [];
+            $labels[$slug] = (string) ($localized['name'] ?? $type['name'] ?? $slug);
+        }
+
+        return $labels;
     }
 
 

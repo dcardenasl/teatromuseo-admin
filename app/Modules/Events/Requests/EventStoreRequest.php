@@ -17,7 +17,7 @@ class EventStoreRequest extends BaseFormRequest
     {
         return [
             'title' => 'required|min_length[2]|max_length[255]',
-            'event_type' => 'required|in_list[function,festival,course,workshop,other]',
+            'event_type' => 'required|string|max_length[80]',
             'description' => 'required|string',
             'cover_file_id' => 'permit_empty',
             'gallery_file_ids' => 'permit_empty|string',
