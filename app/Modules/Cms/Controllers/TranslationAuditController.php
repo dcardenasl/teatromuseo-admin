@@ -75,12 +75,19 @@ class TranslationAuditController extends BaseWebController
         if (is_scalar($langId) && $langId !== '') {
             $filters['language_id'] = (int) $langId;
         }
-        foreach (['resource', 'status', 'search'] as $filter) {
+        foreach (['resource', 'status', 'search', 'scope'] as $filter) {
             $value = $this->request->getGet($filter);
             if (is_string($value) && trim($value) !== '') {
                 $filters[$filter] = trim($value);
             }
         }
+
+        $pageRaw = $this->request->getGet('page');
+        $limitRaw = $this->request->getGet('limit');
+        $page = max(1, is_scalar($pageRaw) ? (int) $pageRaw : 1);
+        $limit = min(100, max(10, is_scalar($limitRaw) ? (int) $limitRaw : 25));
+        $filters['page'] = $page;
+        $filters['limit'] = $limit;
 
         $response = $this->safeApiCall(fn () => $this->auditService->getReport($filters));
 
@@ -100,12 +107,15 @@ class TranslationAuditController extends BaseWebController
         }
 
         $data = $this->extractData($response);
+        $payload = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $meta = is_array($payload['meta'] ?? null) ? $payload['meta'] : [];
 
         return $this->response->setJSON([
             'draw' => $draw,
-            'recordsTotal' => count($data),
-            'recordsFiltered' => count($data),
+            'recordsTotal' => (int) ($meta['total_items'] ?? count($data)),
+            'recordsFiltered' => (int) ($meta['total_items'] ?? count($data)),
             'data' => $data,
+            'meta' => $meta,
         ]);
     }
 }

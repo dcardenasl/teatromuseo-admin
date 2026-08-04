@@ -95,6 +95,7 @@
                     'missing_required_fields' => lang('Translations.detail_missing_required_fields'),
                     'inconsistent_fields' => lang('Translations.detail_inconsistent_fields'),
                     'same_as_source_fields' => lang('Translations.detail_same_as_source_fields'),
+                    'outdated' => lang('Translations.detail_outdated'),
                 ],
                 'fields' => [
                     'title' => lang('Translations.field_title'),
@@ -141,6 +142,9 @@
                     }
                     return this.dict.details.missing_required_fields.replace('{fields}', fields);
                 }
+                if (row.status === 'outdated') {
+                    return this.dict.details.outdated;
+                }
                 return row.detail;
             },
             editUrl(row) {
@@ -152,7 +156,7 @@
                 return window.resolveCmsTranslationEditUrl(this.translationRoutes, row, returnTo);
             },
             nextPendingUrl() {
-                const row = this.rows.find((candidate) => ['missing', 'incomplete', 'mismatch', 'untranslated'].includes(candidate.status));
+                const row = this.rows.find((candidate) => ['missing', 'incomplete', 'mismatch'].includes(candidate.status));
                 return row ? this.editUrl(row) : '#';
             }
         }" x-init="init()">
@@ -160,7 +164,7 @@
         <div class="pb-5 border-b border-gray-200 space-y-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900"><?= esc(lang('Translations.missing_incomplete')) ?></h2>
+            <h2 class="text-lg font-bold text-gray-900"><?= esc(lang('Translations.missing_incomplete')) ?></h2>
                     <p class="text-xs text-gray-500 mt-0.5"><?= esc(lang('Translations.missing_incomplete_desc')) ?></p>
                 </div>
                 <a :href="nextPendingUrl()" :aria-disabled="rows.length === 0" :class="rows.length === 0 ? 'pointer-events-none opacity-50' : ''" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700">
@@ -171,6 +175,7 @@
 
             <!-- Filters -->
             <form data-table-filter-form="1" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+                <input type="hidden" name="scope" value="actionable">
                 <input type="search" name="search" placeholder="<?= esc(lang('Translations.search_issues')) ?>" class="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 lg:col-span-4" data-table-debounce="300">
                 <select name="language_id" class="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 lg:col-span-2">
                     <option value=""><?= esc(lang('Translations.all_active_languages')) ?></option>
@@ -186,7 +191,7 @@
                 </select>
                 <select name="status" class="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 lg:col-span-2">
                     <option value=""><?= esc(lang('Translations.all_statuses')) ?></option>
-                    <?php foreach (['missing', 'incomplete', 'mismatch', 'untranslated'] as $status): ?>
+                    <?php foreach (['missing', 'incomplete', 'mismatch', 'untranslated', 'outdated'] as $status): ?>
                         <option value="<?= esc($status) ?>"><?= esc(lang('Translations.status_' . $status)) ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -252,5 +257,9 @@
                 </div>
             </div>
         </template>
+
+        <div x-show="!loading && !error && rows.length > 0" class="mt-5">
+            <?= view('layouts/partials/remote_pagination') ?>
+        </div>
     </section>
 </div>
