@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CMS translation audits and navigation metadata** — the admin now detects untranslated CMS
+  content and preserves semantic block navigation definitions while editing blocks.
+- **Event type management** — added administrative CRUD support for event types.
+- **File picker manifest consumption** — CMS and file-related screens consume the cached file
+  manifest to reduce repeated metadata requests.
+- **Semantic slide navigation fields** — slide blocks now expose internal page, event listing,
+  catalog listing, collection, and external URL destination controls in create/edit forms.
+
 - **Public site cache invalidation** — `PublicSiteCacheInvalidator` calls the public website's cache webhook after category, technique, collection item, and event writes, so admin edits reflect on the public site without waiting for TTL expiry.
 - **Event and collection item detail views** — event show pages now display the public slug and a status badge in the header, and collection item screens clarify `field_status` as publication status (draft/published/archived) instead of the previous conservation-state wording.
 - **Language-aware Museum forms and translation status** — category, technique, and collection item screens now use localized slug helpers, translated input labels, and translation status panels on detail pages.
@@ -36,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Scheduling"/"Ticketing".
 
 ### Fixed
+
+- **Duplicate form submissions** — UI forms now prevent repeated submissions while the original
+  request is being processed.
 
 - **CMS "Bloques de Contenido" load time** — `BlockTypeOptionsResolver` now memoizes collection/form lookups and exposes a lightweight `rawIndexed()` catalog for the read-only block-type list views (`BlockInstanceController::index()`/`children()`), cutting page load from ~3-8s to ~1s.
 - **Domain client token refresh** — `DomainApiClient` and `BffApiClient` now delegate `attemptTokenRefresh()` to the hub via the new `SecondaryApiClient` base class, instead of retrying `/auth/refresh` against their own (nonexistent) endpoint and clearing the session on every request.
