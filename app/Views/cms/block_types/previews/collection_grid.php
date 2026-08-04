@@ -3,7 +3,8 @@
 /** @var array<string, mixed> $data */
 $sectionTitle  = $data['section_title'] ?? 'Contenido destacado';
 $viewAllLabel  = $data['view_all_label'] ?? 'Ver todo';
-$viewAllUrl    = $data['view_all_url'] ?? '#';
+$navigation    = is_array($data['navigation'] ?? null) ? $data['navigation'] : [];
+$viewAllUrl   = (string) ($navigation['url'] ?? '');
 $collectionKey = $config['collection_key'] ?? '';
 $itemsLimit    = (int) ($config['items_limit'] ?? 3);
 $orderBy       = $config['order_by'] ?? 'published_at';
@@ -23,7 +24,7 @@ $items = [
             <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Grilla de Colección</div>
             <div class="text-sm font-bold text-slate-900"><?= esc((string) $sectionTitle) ?></div>
         </div>
-        <?php if ($viewAllLabel !== ''): ?>
+        <?php if ($viewAllLabel !== '' && $viewAllUrl !== ''): ?>
             <a href="<?= esc((string) $viewAllUrl) ?>" class="text-xs font-medium text-blue-600"><?= esc((string) $viewAllLabel) ?></a>
         <?php endif; ?>
     </div>

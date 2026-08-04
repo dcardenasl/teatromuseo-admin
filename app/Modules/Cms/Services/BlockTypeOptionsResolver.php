@@ -56,6 +56,7 @@ final class BlockTypeOptionsResolver
         private readonly CollectionApiService $collectionApiService,
         private readonly PageApiService $pageApiService,
         private readonly EntryApiService $entryApiService,
+        private readonly ?CategoryApiService $categoryApiService = null,
     ) {
     }
 
@@ -191,6 +192,7 @@ final class BlockTypeOptionsResolver
         $hasFormEmbed     = ($blockType['block_key'] ?? '') === 'form_embed';
         $hasCollectionKey = isset($schema['config_fields']['collection_key']) || isset($blockType['config_fields']['collection_key']);
         $hasCollectionId  = isset($schema['config_fields']['collection_id'])  || isset($blockType['config_fields']['collection_id']);
+        $hasCategoryId    = isset($schema['config_fields']['category_id']) || isset($blockType['config_fields']['category_id']);
         $hasPageId        = isset($schema['config_fields']['page_id']) || isset($blockType['config_fields']['page_id']);
         $hasEntryId       = isset($schema['config_fields']['entry_id']) || isset($blockType['config_fields']['entry_id']);
         $hasEntryReferences = false;
@@ -207,7 +209,7 @@ final class BlockTypeOptionsResolver
         }
         $blockType['fields'] = $schemaFields;
 
-        if (! $hasFormEmbed && ! $hasCollectionKey && ! $hasCollectionId && ! $hasPageId && ! $hasEntryId && ! $hasEntryReferences) {
+        if (! $hasFormEmbed && ! $hasCollectionKey && ! $hasCollectionId && ! $hasCategoryId && ! $hasPageId && ! $hasEntryId && ! $hasEntryReferences) {
             return;
         }
 
@@ -265,6 +267,18 @@ final class BlockTypeOptionsResolver
                     $blockType['config_fields']['collection_id']['type']    = 'select';
                     $blockType['config_fields']['collection_id']['options'] = $collectionsForIds;
                 }
+            }
+        }
+
+        if ($hasCategoryId) {
+            $categoryOptions = $this->categoriesForIds();
+            if (isset($schema['config_fields']['category_id'])) {
+                $schema['config_fields']['category_id']['type'] = 'select';
+                $schema['config_fields']['category_id']['options'] = $categoryOptions;
+            }
+            if (isset($blockType['config_fields']['category_id'])) {
+                $blockType['config_fields']['category_id']['type'] = 'select';
+                $blockType['config_fields']['category_id']['options'] = $categoryOptions;
             }
         }
 
@@ -390,6 +404,48 @@ final class BlockTypeOptionsResolver
         }
 
         return $this->entriesForIdsCache = $entries;
+    }
+
+    /**
+     * Category IDs are stable across locales, unlike translated category slugs.
+     * Labels include the owning collection so an editor cannot accidentally
+     * configure a category from a different collection without noticing it.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function categoriesForIds(): array
+    {
+        $categories = [];
+        try {
+            if ($this->categoryApiService === null) {
+                return [];
+            }
+            $response = $this->safeApiCall(fn () => $this->categoryApiService->categories(['limit' => 500]));
+            if ($response['ok']) {
+                $collectionNames = [];
+                foreach ($this->activeCollections() as $collection) {
+                    $id = (int) ($collection['id'] ?? 0);
+                    if ($id > 0) {
+                        $collectionNames[$id] = (string) ($collection['name'] ?? $collection['collection_key'] ?? $id);
+                    }
+                }
+
+                foreach ($this->extractItems($response) as $item) {
+                    $id = (int) ($item['id'] ?? 0);
+                    if ($id <= 0) {
+                        continue;
+                    }
+                    $name = (string) ($item['name'] ?? $item['title'] ?? $item['slug'] ?? $id);
+                    $collectionId = (int) ($item['collection_id'] ?? 0);
+                    $collectionLabel = $collectionNames[$collectionId] ?? (string) ($item['collection_key'] ?? 'Colección');
+                    $categories[] = ['value' => (string) $id, 'label' => $collectionLabel . ' · ' . $name];
+                }
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch category options: ' . $e->getMessage());
+        }
+
+        return $categories;
     }
 
     /**

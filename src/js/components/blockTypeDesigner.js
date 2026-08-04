@@ -18,6 +18,7 @@ export const blockTypeDesigner = (templates = [], sourceKinds = DEFAULT_SOURCES,
     schemaFields: [],
     configFields: [],
     schemaJson: '{}',
+    navigationDefinition: null,
     isContainer: false,
     allowedChildren: [],
 
@@ -73,6 +74,7 @@ export const blockTypeDesigner = (templates = [], sourceKinds = DEFAULT_SOURCES,
         this.configFields = this._schemaToRows(schema.config_fields || {});
         this.isContainer = (template.content_source?.type || template.content_source_type || '') === 'container' || schema.allowed_children !== undefined;
         this.allowedChildren = schema.allowed_children || [];
+        this.navigationDefinition = schema.navigation || null;
         this.rebuildJson();
     },
 
@@ -92,6 +94,7 @@ export const blockTypeDesigner = (templates = [], sourceKinds = DEFAULT_SOURCES,
         this.configFields = this._schemaToRows(schema.config_fields || {});
         this.isContainer = schema.content_source?.type === 'container' || !!schema.allowed_children;
         this.allowedChildren = schema.allowed_children || [];
+        this.navigationDefinition = schema.navigation || null;
         this.rebuildJson();
     },
 
@@ -102,6 +105,7 @@ export const blockTypeDesigner = (templates = [], sourceKinds = DEFAULT_SOURCES,
         this.configFields = this._schemaToRows(preset.config_fields || {});
         this.isContainer = sourceKey === 'container';
         this.allowedChildren = preset.allowed_children || [];
+        this.navigationDefinition = preset.navigation || null;
     },
 
     _schemaPreset(sourceKey) {
@@ -213,6 +217,9 @@ export const blockTypeDesigner = (templates = [], sourceKinds = DEFAULT_SOURCES,
                 description: this.selectedSource?.description || '',
             },
         };
+        if (this.navigationDefinition && typeof this.navigationDefinition === 'object') {
+            schema.navigation = this.navigationDefinition;
+        }
         if (this.isContainer) schema.allowed_children = this.allowedChildren || [];
         this.schemaJson = JSON.stringify(schema, null, 2);
     },

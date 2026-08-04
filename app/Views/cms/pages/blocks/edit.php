@@ -125,6 +125,11 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                  x-data="blockInstanceConfig(<?= esc($entryOptionsUrlJs, 'attr') ?>, <?= esc($configJs, 'attr') ?>)">
                 <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Pages.block_config_section')) ?></h4>
                 <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Pages.block_config_desc')) ?></p>
+                <?php if (in_array($blockKey, ['collection_grid', 'collection_listing', 'collection_timeline'], true)): ?>
+                    <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                        <?= esc(lang('Pages.block_navigation_auto_help')) ?>
+                    </div>
+                <?php endif; ?>
                 <div class="space-y-4">
                     <?php foreach ($configFields as $cfKey => $cf):
                         $cfType    = $cf['type']     ?? 'string';

@@ -172,6 +172,10 @@ $isImageAccept = static function (string $accept): bool {
 
             <div x-show="configFields && Object.keys(configFields).length > 0" x-cloak>
                 <h4 class="text-sm font-semibold text-gray-800 mb-3">Configuración del Diseño</h4>
+                <div x-show="selectedBlockType?.block_key === 'collection_grid' || selectedBlockType?.block_key === 'collection_listing'"
+                     class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                    <?= esc(lang('Pages.block_navigation_auto_help')) ?>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <template x-for="(field, key) in configFields" :key="key">
                         <div>
@@ -1029,7 +1033,9 @@ function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', trans
         selectBlockType(bt) {
             this.selectedBlockType = bt;
             const schema = bt.schema_definition || {};
-            this.contentFields = schema.fields       || {};
+            this.contentFields = Object.fromEntries(
+                Object.entries(schema.fields || {})
+            );
             this.configFields  = schema.config_fields || {};
             this.repeaterItems = {};
             this.pickedFilesMap = {};
