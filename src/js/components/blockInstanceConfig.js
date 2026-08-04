@@ -2,6 +2,8 @@ export const blockInstanceConfig = (entryOptionsUrl = '', initialConfig = {}) =>
     entryOptionsUrl: String(entryOptionsUrl || ''),
     collectionId: String(initialConfig.collection_id ?? ''),
     entryId: String(initialConfig.entry_id ?? ''),
+    navigationMode: String(initialConfig.navigation_mode ?? 'none'),
+    navigationTargetType: String(initialConfig.navigation_target_type ?? 'event_listing'),
     entryOptions: [],
     entryOptionsLoading: false,
     entryOptionsError: '',
@@ -15,6 +17,8 @@ export const blockInstanceConfig = (entryOptionsUrl = '', initialConfig = {}) =>
     setInitialConfig(config = {}) {
         this.collectionId = String(config.collection_id ?? '');
         this.entryId = String(config.entry_id ?? '');
+        this.navigationMode = String(config.navigation_mode ?? 'none');
+        this.navigationTargetType = String(config.navigation_target_type ?? 'event_listing');
         if (this.collectionId !== '') {
             void this.refreshEntryOptions(true);
         } else {
@@ -30,6 +34,8 @@ export const blockInstanceConfig = (entryOptionsUrl = '', initialConfig = {}) =>
 
         this.collectionId = String(collectionField.default ?? '');
         this.entryId = String(entryField.default ?? '');
+        this.navigationMode = String(configFields.navigation_mode?.default ?? 'none');
+        this.navigationTargetType = String(configFields.navigation_target_type?.default ?? 'event_listing');
 
         if (this.collectionId !== '') {
             void this.refreshEntryOptions(true);

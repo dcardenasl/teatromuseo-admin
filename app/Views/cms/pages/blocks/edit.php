@@ -140,7 +140,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                         $cfReq     = ! empty($cf['required']);
                         $cfFieldName = "block_config[{$cfKey}]";
                         ?>
-                    <div class="space-y-1">
+                    <div class="space-y-1" <?php if ($cfKey === 'navigation_target_type' || $cfKey === 'page_id' || $cfKey === 'collection_id'): ?>x-show="navigationMode === 'internal'"<?php elseif ($cfKey === 'external_target'): ?>x-show="navigationMode === 'external'"<?php endif; ?>>
                         <?php if ($cfType !== 'media_reference'): ?>
                             <label class="block text-xs font-semibold text-gray-700">
                                 <?= esc($cfLabel) ?>
@@ -156,6 +156,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                             </label>
                         <?php elseif ($cfType === 'select' && $cfKey === 'collection_id'): ?>
                             <select name="<?= esc($cfFieldName, 'attr') ?>"
+                                    <?php if ($cfKey === 'navigation_mode'): ?>x-model="navigationMode"<?php elseif ($cfKey === 'navigation_target_type'): ?>x-model="navigationTargetType"<?php endif; ?>
                                     x-model="collectionId"
                                     @change="onCollectionChange($event.target.value)"
                                     class="<?= esc(input_class($cfFieldName)) ?>"
@@ -198,6 +199,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                             }
                             ?>
                             <select name="<?= esc($cfFieldName, 'attr') ?>"
+                                    <?php if ($cfKey === 'navigation_mode'): ?>x-model="navigationMode"<?php elseif ($cfKey === 'navigation_target_type'): ?>x-model="navigationTargetType"<?php endif; ?>
                                     class="<?= esc(input_class($cfFieldName)) ?>"
                                     <?= $cfReq ? 'required' : '' ?>>
                                 <option value="">— Seleccionar —</option>
@@ -325,7 +327,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                         $foptions = isset($field['options']) ? (array) $field['options'] : [];
                         $fieldName = "translations[{$idx}][block_data][{$fieldKey}]";
                         ?>
-                    <div class="space-y-1">
+                    <div class="space-y-1" <?php if ($fieldKey === 'external_url'): ?>x-show="navigationMode === 'external'" x-cloak<?php endif; ?>>
                         <?php if ($ft !== 'file' && $ft !== 'repeater' && $ft !== 'media_reference'): ?>
                         <label class="block text-xs font-semibold text-gray-700">
                             <?= esc($flabel) ?>

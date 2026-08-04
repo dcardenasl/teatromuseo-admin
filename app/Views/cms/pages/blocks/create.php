@@ -178,7 +178,7 @@ $isImageAccept = static function (string $accept): bool {
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <template x-for="(field, key) in configFields" :key="key">
-                        <div>
+                        <div x-show="key !== 'navigation_target_type' && key !== 'page_id' && key !== 'collection_id' && key !== 'external_target' || (navigationMode === 'internal' && (key === 'navigation_target_type' || key === 'page_id' || key === 'collection_id')) || (navigationMode === 'external' && key === 'external_target')" x-cloak>
                             <template x-if="field.type !== 'media_reference'">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">
                                     <span x-text="field.label || key"></span>
@@ -215,6 +215,7 @@ $isImageAccept = static function (string $accept): bool {
                                     </template>
                                     <template x-if="key !== 'collection_id' && key !== 'entry_id'">
                                         <select :name="`block_config[${key}]`"
+                                                x-model="key === 'navigation_mode' ? navigationMode : (key === 'navigation_target_type' ? navigationTargetType : (field.default || ''))"
                                                 class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                             <template x-for="opt in (field.options || [])" :key="typeof opt === 'object' ? opt.value : opt">
                                                 <option :value="typeof opt === 'object' ? opt.value : opt" :selected="(typeof opt === 'object' ? opt.value : opt) == (field.default || '')" x-text="typeof opt === 'object' ? opt.label : opt"></option>
@@ -465,7 +466,7 @@ $isImageAccept = static function (string $accept): bool {
                         <input type="hidden" :name="`translations[${langIndex}][is_published]`" value="1">
 
                         <template x-for="(field, fieldKey) in contentFields" :key="fieldKey">
-                            <div class="space-y-1">
+                            <div class="space-y-1" x-show="fieldKey !== 'external_url' || navigationMode === 'external'" x-cloak>
                                 <label class="block text-xs font-semibold text-gray-700">
                                     <span x-text="field.label || fieldKey"></span>
                                     <span x-show="field.required && lang.is_default == 1" class="text-red-500 ml-0.5">*</span>
