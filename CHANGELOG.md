@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public-site cache maintenance** — added a permission-gated maintenance screen to inspect
+  invalidation status and trigger a manual cleanup across public cache scopes.
+- **Translation audit workbench pagination** — the audit screen now consumes paginated reports,
+  separates actionable translations from review warnings, and exposes `outdated` details.
+- **Editorial team-member editing** — child-block screens now derive labels and previews from
+  the configured child type, including team-member names and photos.
+
 - **CMS translation audits and navigation metadata** — the admin now detects untranslated CMS
   content and preserves semantic block navigation definitions while editing blocks.
 - **Event type management** — added administrative CRUD support for event types.
@@ -45,6 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cache invalidation diagnostics** — manual invalidation now returns remote operation details
+  and records its source for the public-site status view.
+
 - **Duplicate form submissions** — UI forms now prevent repeated submissions while the original
   request is being processed.
 
@@ -69,3 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   contract instead of booleans.
 - **Museum sort-order save** — category/technique reorder success messages now use a real
   `Museum.sort_order_saved` key instead of an unrelated `Files.*` one.
+
+### Changed
+
+- **CMS metadata and site identity configuration** — resolved CMS metadata is reused across
+  admin views, while site identity settings are organized behind the centralized configuration
+  flow.
