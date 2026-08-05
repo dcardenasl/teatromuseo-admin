@@ -21,6 +21,14 @@ export const formFieldBuilderFactory = (config = {}) => {
     const languages = Array.isArray(config.languages) ? config.languages : readJsonList(config.languagesElementId);
     const initialFields = Array.isArray(config.initialFields) ? config.initialFields : readJsonList(config.initialFieldsElementId);
     const toBoolean = (value) => value === true || value === 1 || value === '1';
+    const normalizeFieldName = (name) => String(name || '')
+        .replace(/\[([^\]]*)\]/g, '.$1')
+        .replace(/\.+/g, '.')
+        .replace(/^\.|\.$/g, '');
+    const firstError = (errors = {}) => {
+        const entry = Object.entries(errors).find(([, message]) => String(message || '') !== '');
+        return entry ? String(entry[1]) : '';
+    };
 
     const normalizeField = (field) => ({
         ...field,
@@ -74,6 +82,7 @@ export const formFieldBuilderFactory = (config = {}) => {
         editingField: null,
         activeFieldLang: String(languages[0]?.code || 'es'),
         fieldError: '',
+        fieldErrors: {},
         translatingFieldAll: false,
         fieldForm: { field_key: '', field_type: 'text', is_required: false, is_active: true, options: [], translations: defaultTranslations() },
 
@@ -99,6 +108,26 @@ export const formFieldBuilderFactory = (config = {}) => {
 
         defaultFieldForm() {
             return { field_key: '', field_type: 'text', is_required: false, is_active: true, options: [], translations: defaultTranslations() };
+        },
+
+        fieldErrorFor(field) {
+            const target = normalizeFieldName(field);
+            const entry = Object.entries(this.fieldErrors || {}).find(([key, message]) => (
+                normalizeFieldName(key) === target && String(message || '') !== ''
+            ));
+            return entry ? String(entry[1]) : '';
+        },
+
+        fieldHasError(field) {
+            return this.fieldErrorFor(field) !== '';
+        },
+
+        clearFieldError(field) {
+            const target = normalizeFieldName(field);
+            Object.keys(this.fieldErrors || {}).forEach((key) => {
+                if (normalizeFieldName(key) === target) delete this.fieldErrors[key];
+            });
+            this.fieldError = firstError(this.fieldErrors);
         },
 
         isChoiceType() {
@@ -147,6 +176,8 @@ export const formFieldBuilderFactory = (config = {}) => {
         openCreate() {
             this.editingField = null;
             this.fieldForm = this.defaultFieldForm();
+            this.fieldErrors = {};
+            this.fieldError = '';
             this.activeFieldLang = String(languages[0]?.code || 'es');
             this.showModal = true;
         },
@@ -166,6 +197,8 @@ export const formFieldBuilderFactory = (config = {}) => {
                 options: normalizeOptions(field.options, field.translations),
                 translations,
             };
+            this.fieldErrors = {};
+            this.fieldError = '';
             this.activeFieldLang = String(languages[0]?.code || 'es');
             this.showModal = true;
             // Existing options render immediately with raw <i data-lucide> markup —
@@ -251,6 +284,7 @@ export const formFieldBuilderFactory = (config = {}) => {
 
         async saveField() {
             this.fieldError = '';
+            this.fieldErrors = {};
             const fieldKey = String(this.fieldForm.field_key || '').trim();
             if (fieldKey === '') { this.fieldError = config.fieldKeyRequiredMessage || 'The field key is required.'; return; }
 
@@ -286,7 +320,11 @@ export const formFieldBuilderFactory = (config = {}) => {
                     this.closeModal();
                     bootLucideIcons();
                 } else {
-                    this.fieldError = (data.messages && data.messages[0]) || config.saveFieldFailedMessage || 'Could not save the field.';
+                    this.fieldErrors = data.fieldErrors && typeof data.fieldErrors === 'object' ? data.fieldErrors : {};
+                    this.fieldError = firstError(this.fieldErrors)
+                        || (data.messages && data.messages[0])
+                        || config.saveFieldFailedMessage
+                        || 'Could not save the field.';
                 }
             } catch (error) {
                 this.fieldError = error.message || config.saveFieldFailedMessage || 'Could not save the field.';

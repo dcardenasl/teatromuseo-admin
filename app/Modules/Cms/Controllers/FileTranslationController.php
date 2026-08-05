@@ -7,6 +7,7 @@ namespace App\Modules\Cms\Controllers;
 use App\Controllers\BaseWebController;
 use App\Modules\Cms\Services\FileTranslationApiService;
 use App\Modules\Cms\Services\LanguageApiService;
+use App\Support\FieldErrorNormalizer;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -71,9 +72,7 @@ class FileTranslationController extends BaseWebController
             return redirect()->to(route_to('admin.cms.file_translations.edit', $fileId))->with('error', lang('App.invalid_request'));
         }
 
-        $failed = false;
-
-        foreach ($submitted as $row) {
+        foreach ($submitted as $index => $row) {
             if (! is_array($row)) {
                 continue;
             }
@@ -96,20 +95,50 @@ class FileTranslationController extends BaseWebController
             $existingId = isset($row['existing_id']) && $row['existing_id'] !== '' ? (int) $row['existing_id'] : null;
 
             if ($existingId !== null) {
-                $result = $this->fileTranslationService->updateForFile($numericFileId, $existingId, $payload);
+                $result = $this->safeApiCall(fn () => $this->fileTranslationService->updateForFile($numericFileId, $existingId, $payload));
             } else {
-                $result = $this->fileTranslationService->createForFile($numericFileId, $payload);
+                $result = $this->safeApiCall(fn () => $this->fileTranslationService->createForFile($numericFileId, $payload));
             }
 
             if (! ($result['ok'] ?? false)) {
-                $failed = true;
+                return $this->failApi(
+                    $this->mapRowFieldErrors($result, (int) $index),
+                    lang('FileTranslations.update_failed'),
+                    route_to('admin.cms.file_translations.edit', $fileId),
+                );
             }
         }
 
-        if ($failed) {
-            return redirect()->to(route_to('admin.cms.file_translations.edit', $fileId))->with('error', lang('FileTranslations.update_failed'));
+        return redirect()->to(route_to('admin.cms.file_translations.edit', $fileId))->with('success', lang('FileTranslations.update_success'));
+    }
+
+    /**
+     * The API receives one translation row per request, while the browser form
+     * posts all rows together. Prefix API field keys with the submitted row so
+     * the shared form helpers can highlight the correct language tab.
+     *
+     * @param array<string, mixed> $response
+     * @return array<string, mixed>
+     */
+    private function mapRowFieldErrors(array $response, int $rowIndex): array
+    {
+        $mapped = [];
+
+        foreach (['fieldErrors', 'errors'] as $source) {
+            foreach (FieldErrorNormalizer::normalize($response[$source] ?? []) as $key => $message) {
+                if ($key === 'general') {
+                    continue;
+                }
+
+                $fieldKey = preg_replace('/^translations(?:\.\d+)?\./', '', $key) ?? $key;
+                $mapped['translations.' . $rowIndex . '.' . $fieldKey] = $message;
+            }
         }
 
-        return redirect()->to(route_to('admin.cms.file_translations.edit', $fileId))->with('success', lang('FileTranslations.update_success'));
+        if ($mapped !== []) {
+            $response['fieldErrors'] = $mapped;
+        }
+
+        return $response;
     }
 }

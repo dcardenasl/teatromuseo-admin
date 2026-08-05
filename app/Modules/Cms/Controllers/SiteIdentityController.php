@@ -141,9 +141,11 @@ class SiteIdentityController extends BaseWebController
             ? ['ok' => true]
             : $this->safeApiCall(fn () => $this->settingService->batchUpdate($batchUpdates));
         if (! ($result['ok'] ?? false)) {
-            $this->maybeFlashDevError($result);
-            return redirect()->to(route_to('admin.cms.site_identity') . '?saved=error')
-                ->with('error', $this->firstMessage($result, lang('SiteIdentity.update_failed')));
+            return $this->failApi(
+                $result,
+                lang('SiteIdentity.update_failed'),
+                route_to('admin.cms.site_identity'),
+            );
         }
 
         return redirect()->to(route_to('admin.cms.site_identity') . '?saved=success')

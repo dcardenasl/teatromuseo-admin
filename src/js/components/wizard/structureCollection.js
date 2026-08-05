@@ -213,6 +213,7 @@ export const structureCollection = {
         this.collectionCompleted = null;
         this.message = '';
         this.errorMsg = '';
+        this.fieldErrors = {};
         this.collectionErrors = { step1: '', slug_base: '' };
         this.collectionSlugAvailability = '';
         this.collectionTranslating = false;
@@ -364,13 +365,30 @@ export const structureCollection = {
             const res = await adminFetch(this.routes.createCollection, { method: 'POST', body: JSON.stringify(payload) }, this.csrf);
             const json = await res.json();
             if (!json.ok) {
+                const rawFieldErrors = json.fieldErrors && Object.keys(json.fieldErrors).length > 0 ? json.fieldErrors : json.errors;
+                const aliases = {
+                    collection_key: 'collection_slug_base',
+                    'translations.0.name': 'collection_name',
+                    'translations.0.slug': 'collection_slug_base',
+                };
+                this.collectionTranslationLanguages.forEach((language, index) => {
+                    const payloadIndex = index + 1;
+                    aliases[`translations.${payloadIndex}.name`] = `collection_translation_name_${index}`;
+                    aliases[`translations.${payloadIndex}.slug`] = `collection_translation_slug_${index}`;
+                });
+                this.setFieldErrors(rawFieldErrors, aliases);
+                this.collectionTranslations.forEach((row, index) => {
+                    row.error = this.fieldErrorFor(`collection_translation_name_${index}`)
+                        || this.fieldErrorFor(`collection_translation_slug_${index}`);
+                });
                 const fieldErrors = json.fieldErrors && typeof json.fieldErrors === 'object' ? Object.values(json.fieldErrors).filter(Boolean) : [];
                 const detail = typeof json.detail === 'string' ? json.detail : '';
                 const errors = json.errors && typeof json.errors === 'object' ? Object.values(json.errors).filter(Boolean) : [];
                 const generalError = json.errors && typeof json.errors === 'object' && typeof json.errors.general === 'string' ? json.errors.general : '';
-                const message = fieldErrors.length > 0
-                    ? String(fieldErrors[0])
-                    : (json.message || detail || (errors.length > 0 ? String(errors[0]) : '') || generalError || this.strings.wizard_structure_error_collection);
+                const message = this.firstFieldError()
+                    || (fieldErrors.length > 0
+                        ? String(fieldErrors[0])
+                        : (json.message || detail || (errors.length > 0 ? String(errors[0]) : '') || generalError || this.strings.wizard_structure_error_collection));
                 if (message) {
                     this.collectionErrors.step1 = '';
                     this.collectionErrors.slug_base = message;

@@ -89,10 +89,26 @@ class StructureWizardController extends BaseWebController
                 PagePresetApplier::fromServices()->apply($pageId, (string) ($payload['page_type'] ?? 'generic'), $payload);
             }
         }
-        return $this->response->setStatusCode($statusCode)->setJSON([
+        $response = [
             'ok' => $statusCode >= 200 && $statusCode < 300,
             'data' => $statusCode >= 200 && $statusCode < 300 ? $this->extractData($result) : ($result['data'] ?? []),
-        ]);
+        ];
+
+        if ($response['ok'] === false) {
+            $fieldErrors = $this->getFieldErrors($result);
+            if ($fieldErrors !== []) {
+                $response['fieldErrors'] = $fieldErrors;
+            }
+            if (isset($result['errors']) && is_array($result['errors'])) {
+                $response['errors'] = $result['errors'];
+            }
+            $message = $this->firstMessage($result, lang('Wizard.wizard_structure_error_page'));
+            if ($message !== '') {
+                $response['message'] = $message;
+            }
+        }
+
+        return $this->response->setStatusCode($statusCode)->setJSON($response);
     }
 
     public function createMenu(): ResponseInterface
@@ -104,10 +120,26 @@ class StructureWizardController extends BaseWebController
         $payload = $this->jsonRequestPayload();
         $result = $this->safeApiCall(fn () => $this->menuService->create($payload));
         $statusCode = $this->normalizeUpstreamStatus($result);
-        return $this->response->setStatusCode($statusCode)->setJSON([
+        $response = [
             'ok' => $statusCode >= 200 && $statusCode < 300,
             'data' => $statusCode >= 200 && $statusCode < 300 ? $this->extractData($result) : ($result['data'] ?? []),
-        ]);
+        ];
+
+        if ($response['ok'] === false) {
+            $fieldErrors = $this->getFieldErrors($result);
+            if ($fieldErrors !== []) {
+                $response['fieldErrors'] = $fieldErrors;
+            }
+            if (isset($result['errors']) && is_array($result['errors'])) {
+                $response['errors'] = $result['errors'];
+            }
+            $message = $this->firstMessage($result, lang('Wizard.wizard_structure_error_menu'));
+            if ($message !== '') {
+                $response['message'] = $message;
+            }
+        }
+
+        return $this->response->setStatusCode($statusCode)->setJSON($response);
     }
 
     public function createCollection(): ResponseInterface
