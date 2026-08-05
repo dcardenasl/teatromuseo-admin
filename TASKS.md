@@ -1,4 +1,4 @@
-# TASKS — ci4-website-builder-admin
+# TASKS — teatromuseo-admin
 
 > Fuente de verdad para trabajo abierto en este repositorio.
 > Los entregables cerrados están en [`TASKS_ARCHIVE.md`](TASKS_ARCHIVE.md).
@@ -10,6 +10,103 @@
 *(vacío)*
 
 ## 🟡 Próximo
+
+> Saneamiento arquitectónico — auditoría del 2026-08-05.
+> **Contexto, evidencia y rutas exactas:** [`../docs/plan/2026-08-05-saneamiento-arquitectonico.md`](../docs/plan/2026-08-05-saneamiento-arquitectonico.md)
+> Orden y dependencias cross-repo: [`../TASKS.md`](../TASKS.md)
+
+### Fase 1 — Seguridad
+
+- [ ] **SEC-04 — Eliminar el módulo `Universal`.** `app/Modules/Universal/Config/Routes.php:10`
+  protege el grupo solo con `['filter' => 'auth']`, mientras todos los demás módulos exigen `admin`,
+  `superadmin` o `permission:`. Expone un CRUD genérico sobre cms-domain a **cualquier usuario
+  autenticado**. Es además el único módulo sin capa de servicio (agarra `service('domainApiClient')`
+  directo), sin archivos de idioma (textos en inglés incrustados en
+  `app/Views/admin/universal/index.php:32,90`), sin registro PSR-4 propio, y con las vistas en
+  `app/Views/admin/` en vez de `app/Views/{módulo}/`.
+  Borrar: `app/Modules/Universal/`, `app/Views/admin/universal/`, y el registro PSR-4 muerto
+  `'App\Modules\Catalog'` de `app/Config/Autoload.php:55` (apunta a un directorio inexistente).
+- [ ] **SEC-07 — El CI clona el repositorio equivocado.**
+  `.github/workflows/ci.yml:29` clona `ci4-website-builder-domain` en `../ci4-website-builder-domain`,
+  pero `composer.json:71` mapea `"App\\Libraries\\Cms\\": "../teatromuseo-cms-domain/app/Libraries/Cms/"`.
+  La ruta nunca se puebla, y **no es un mapeo muerto**:
+  `app/Modules/Cms/Requests/MenuItemStoreRequest.php:7` y
+  `app/Modules/Cms/Controllers/BlockInstanceController.php:8` hacen `use App\Libraries\Cms\CmsEnums;`.
+  Además el `Dockerfile` solo hace `COPY . .` → **la imagen Docker del admin no contiene
+  `App\Libraries\Cms`**. Fix inmediato: corregir la ruta del clone. Fix estructural: `CORE-04`.
+
+### Fase 2 — Configuración y CI
+
+- [ ] **CFG-01 — Puertos incorrectos.** `.env.example`: `app.baseURL` en 8082 (debe ser **8182**) y
+  `apiClient.baseUrl` en 8080 (debe ser **8180**). `docker-compose.yml:26` bindea `8082:80`.
+- [ ] **CFG-02 — El `.env.example` documenta 9 variables y el código lee 90.** Es esencialmente
+  ficción. Reconstruirlo desde las claves reales: `API_BASE_URL`, `DOMAIN_API_BASE_URL`,
+  `PUBLIC_SITE_URL`, `CMS_PREVIEW_SECRET`, `API_APP_KEY`, `BFF_API_APP_KEY`,
+  `CATALOG_DOMAIN_API_KEY`, `EVENT_DOMAIN_API_KEY`, todos los `*ApiClient.*`, `MAINTENANCE_MODE`,
+  `SESSION_DRIVER`. Nota: los 3 valores correctos viven hoy en un archivo `env` **no rastreado**.
+- [ ] **CFG-05 — `composer quality` no ejecuta tests** (los deja en un script `ci` aparte),
+  contradiciendo el `CLAUDE.md` raíz. Alinear con la política única de la flota.
+  `phpunit.xml.dist` es además el más permisivo: `failOnWarning="false"` y
+  `failOnDeprecation="false"`.
+- [ ] **CFG-06 — El `pre-push` está instalado pero muerto.** `core.hooksPath = .husky/_` hace que
+  git ignore `.git/hooks/pre-push`, y existe `.husky/_/pre-push` como shim **sin `.husky/pre-push`
+  detrás**. Solo hay `.husky/pre-commit`.
+- [ ] **CFG-08 — php-cs-fixer declara `^3.47.1`** mientras el resto de la flota declara `^3.95`.
+
+### Fase 3 — Extracción a `ci4-api-core`
+
+- [ ] **CORE-04 — Romper el acoplamiento PSR-4 hacia un repositorio hermano.** `composer.json:71`
+  mapea `App\Libraries\Cms\` al `app/` de `teatromuseo-cms-domain`, obligando a cada clone, job de
+  CI y build de Docker a reproducir el layout exacto del monorepo — y ya rompe los dos últimos
+  (`SEC-07`). Extraer `CmsEnums` y lo que arrastre a `ci4-api-core` o a un paquete de contratos, y
+  eliminar el mapeo relativo. Retirar también `composer.json:127`
+  (`"sync-swagger": "cp ../ci4-website-builder-api/..."`, directorio inexistente).
+
+### Fase 6 — Frontend y docs
+
+- [ ] **FRONT-01a — Tres mecanismos HTTP se saltan `ApiClient`.**
+  `app/Modules/Cms/Controllers/TranslateController.php:35-48` usa `curl_init` crudo contra un
+  endpoint no oficial de Google **con user-agent de Chrome falsificado**, sin reintentos ni logging;
+  `app/Modules/Cms/Controllers/BlockPreviewController.php:32` usa `curlrequest()` con conocimiento
+  incrustado de la ruta de la web; `app/Libraries/PublicSiteCacheInvalidator.php:72` y `:161`
+  construyen un `CURLRequest` con 25 líneas **copiadas dos veces dentro de la misma clase**.
+- [ ] **FRONT-01b — Seis namespaces de idioma definidos dos veces** (global + módulo) con claves
+  solapadas: `Pages` (57 vs 216 líneas, **12 claves colisionando**), `Collections`, `Forms`,
+  `FormSubmissions`, `Profile`, `Auth`. Los valores coinciden hoy, así que es deriva latente, no un
+  fallo activo. Definir qué archivo posee qué clave.
+- [ ] **FRONT-01c — 172 cadenas incrustadas** fuera de los archivos de idioma, concentradas en
+  `app/Views/cms/block_types/previews/` (27 archivos). Viola el contrato de consistencia del propio
+  `CLAUDE.md` de este repo.
+- [ ] **FRONT-01d — ~1.100 líneas de `<script>` en línea** con lógica de negocio
+  (`cms/collections/partials/block_template_editor.php` ~424, `cms/pages/blocks/create.php` ~330,
+  `layouts/partials/head.php` ~138, `cms/pages/blocks/_listing_projection.php` ~94), ninguna cubierta
+  por el build de esbuild que la app ya tiene.
+- [ ] **FRONT-01e — Cinco modismos de autorización distintos** entre módulos: grupo `['auth','admin']`
+  solo · grupo + `permission:` por ruta · `['auth']` + `permission:` · `['auth','superadmin']` ·
+  `['auth']` a secas (Universal, se elimina en SEC-04). Unificar.
+- [ ] **FRONT-01f — Convención de rutas de vista partida.** Los módulos antiguos son planos
+  (`Views/users/index.php`), los generados anidan dos veces con un solo hijo
+  (`Views/venues/venues/index.php`), y ahí mismo deriva el nombrado
+  (`eventreferences/event_references/`, `tickettypes/ticket_types/`).
+  Consolidar además los 31 `partials/filters.php` y 26 `partials/toolbar_actions.php` con el mismo
+  esqueleto en un componente declarativo.
+- [ ] **FRONT-02 — Invalidación de caché sin validar y con un hueco real.**
+  `app/Libraries/PublicSiteCacheInvalidator.php:203` (`normalizeScopes()`) solo recorta y deduplica:
+  **no valida**. Una errata produce un no-op silencioso (la web registra "Unknown scope requested" y
+  devuelve `ok` igual). Peor: hay dos estrategias sin documentar — CMS empuja desde el dominio
+  (`CacheInvalidationJob`), por eso 19 de 20 controladores CMS no invalidan y eso es intencional;
+  pero event-domain y catalog-domain **no tienen job equivalente**, y `Occurrences`, `Venues`,
+  `Tickets`, `TicketTypes`, `Bookings` y `EventReferences` — todos con datos que salen en la
+  cartelera pública — tienen **cero** llamadas de invalidación.
+- [ ] **DEAD-02 — Archivos rastreados que no sirven a nada:** `default.php` (16 KB, es una **página
+  de aparcamiento de Hostinger**), `swagger_contract.json` (232 KB del contrato del hub, no lo lee
+  nadie), dos plantillas de entorno divergentes (`env` declara 16 claves `database.*` en una app
+  **sin base de datos**), 9 componentes de vista sin usar
+  (`components/table/{image,text,badge,date,number}_cell.php`, `table/toolbar.php`, `form/radio.php`,
+  `form/translatable_image.php`, `display/confirm_modal.php`), y el directorio `components/forms/`
+  (con "s") que duplica `components/form/` con un único archivo — una errata que se quedó.
+- [ ] **DOC-01 — Deriva documental:** 7 menciones a `ci4-website-builder*` y 2 a `ci4-*-starter` en
+  `CLAUDE.md`, más el puerto 8090 (donde no corre nada). Crear el `AGENTS.md` que falta.
 
 ### TRN-006 — Estados editoriales, permisos y controles de publicación
 
