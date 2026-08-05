@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Shared server-side field errors** — added a reusable form component for rendering API validation
+  messages next to their fields, including nested translation rows and accessible invalid-state
+  attributes.
 - **Configurable CMS listing projections** — collection blocks can now expose a generated field
   catalog and configure card title, summary, image, date, extra metadata, ordering, and public
   filters for CMS and external event/catalog sources.
@@ -55,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Nested API validation feedback** — `ApiClient` and `BaseWebController` now flatten nested
+  `fieldErrors`/`errors` payloads into the dot-notated keys consumed by forms, so authentication,
+  CMS, and shared CRUD failures retain actionable field-level messages instead of falling back to
+  a generic error.
 - **Nested file-picker manifests** — the file picker now unwraps both admin and API response
   envelopes instead of treating a valid cached manifest as empty.
 - **Legacy repeater values** — scalar values from older one-field repeater payloads remain
@@ -90,6 +97,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CMS validation and editor feedback** — request rules now match domain field limits and nested
+  translation contracts, while editors, file translations, site identity, and the structure wizard
+  preserve submitted values and map server errors back to the correct field or language row.
 - **Editorial and block editor terminology** — publication labels now use Editorial consistently,
   listing field guidance is clearer, and block/media previews use more suitable compact layouts.
 - **CMS metadata and site identity configuration** — resolved CMS metadata is reused across
