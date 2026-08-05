@@ -42,6 +42,7 @@
             'value' => $item['holder_name'] ?? '',
             'placeholder' => 'Tickets.field_holder_name_placeholder',
             'help' => 'Tickets.field_holder_name_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -52,6 +53,7 @@
             'value' => $item['holder_email'] ?? '',
             'placeholder' => 'Tickets.field_holder_email_placeholder',
             'help' => 'Tickets.field_holder_email_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 

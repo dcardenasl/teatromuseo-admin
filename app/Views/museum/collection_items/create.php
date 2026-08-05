@@ -21,6 +21,7 @@
                     'value' => old('inventory_code', ''),
                     'placeholder' => 'Museum.field_inventory_code_placeholder',
                     'help' => 'Museum.field_inventory_code_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
 
@@ -57,6 +58,7 @@
                     'value' => old('collection_number', ''),
                     'placeholder' => 'Museum.field_collection_number_placeholder',
                     'help' => 'Museum.field_collection_number_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
@@ -69,6 +71,7 @@
                     'value' => old('origin', ''),
                     'placeholder' => 'Museum.field_origin_placeholder',
                     'help' => 'Museum.field_origin_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
 
@@ -79,6 +82,7 @@
                     'value' => old('period', ''),
                     'placeholder' => 'Museum.field_period_placeholder',
                     'help' => 'Museum.field_period_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
@@ -91,6 +95,7 @@
                     'value' => old('creator', ''),
                     'placeholder' => 'Museum.field_creator_placeholder',
                     'help' => 'Museum.field_creator_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
 
@@ -101,6 +106,7 @@
                     'value' => old('dimensions', ''),
                     'placeholder' => 'Museum.field_dimensions_placeholder',
                     'help' => 'Museum.field_dimensions_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
@@ -253,7 +259,8 @@
                     'required' => false,
                     'value' => old('collection_group', ''),
                     'placeholder' => 'Museum.field_collection_group_placeholder',
-                    'help' => 'Museum.field_collection_group_help',
+                                'help' => 'Museum.field_collection_group_help',
+                                'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
@@ -276,6 +283,7 @@
                     'value' => old('ingress_type', ''),
                     'placeholder' => 'Museum.field_ingress_type_placeholder',
                     'help' => 'Museum.field_ingress_type_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
 
@@ -286,6 +294,7 @@
                     'value' => old('donated_by', ''),
                     'placeholder' => 'Museum.field_donated_by_placeholder',
                     'help' => 'Museum.field_donated_by_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>

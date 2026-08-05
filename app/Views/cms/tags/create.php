@@ -67,6 +67,7 @@
                                 'placeholder' => 'Tags.translation_name_placeholder',
                                 'help' => 'Tags.translation_name_help',
                                 'value' => old("translations.{$index}.name", ''),
+                                'maxlength' => 100,
                                 'errors' => $errors ?? []
                             ]) ?>
 
@@ -77,6 +78,7 @@
                                 'placeholder' => 'Tags.translation_slug_placeholder',
                                 'help' => 'Tags.translation_slug_help',
                                 'value' => old("translations.{$index}.slug", ''),
+                                'maxlength' => 100,
                                 'errors' => $errors ?? []
                             ]) ?>
                         </div>

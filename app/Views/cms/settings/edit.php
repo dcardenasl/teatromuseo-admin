@@ -121,19 +121,23 @@ $isTranslatable = (bool) old('is_translatable', $item['is_translatable'] ?? fals
                                     <span class="text-xs font-bold text-gray-700"><?= $langName ?></span>
                                 </div>
                                 <div x-show="settingType === 'string' || settingType === 'file_id'">
-                                    <input type="text" name="translations[<?= $langId ?>]" value="<?= esc($transValue) ?>" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm" :disabled="!isTranslatable || !(settingType === 'string' || settingType === 'file_id')" placeholder="<?= esc(lang('Settings.field_setting_value_placeholder')) ?> (<?= strtolower($langName) ?>)">
+                                    <input type="text" name="translations[<?= $langId ?>]" value="<?= esc(old("translations[$langId]", $transValue)) ?>" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm" :disabled="!isTranslatable || !(settingType === 'string' || settingType === 'file_id')" placeholder="<?= esc(lang('Settings.field_setting_value_placeholder')) ?> (<?= strtolower($langName) ?>)" <?= field_aria_attrs("translations[$langId]") ?>>
+                                    <?= render_field_error("translations[$langId]") ?>
                                 </div>
                                 <div x-show="settingType === 'int'" x-cloak>
-                                    <input type="number" name="translations[<?= $langId ?>]" value="<?= esc($transValue) ?>" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm" :disabled="!isTranslatable || settingType !== 'int'" placeholder="0">
+                                    <input type="number" name="translations[<?= $langId ?>]" value="<?= esc(old("translations[$langId]", $transValue)) ?>" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm" :disabled="!isTranslatable || settingType !== 'int'" placeholder="0" <?= field_aria_attrs("translations[$langId]") ?>>
+                                    <?= render_field_error("translations[$langId]") ?>
                                 </div>
                                 <div x-show="settingType === 'bool'" x-cloak>
-                                    <select name="translations[<?= $langId ?>]" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm" :disabled="!isTranslatable || settingType !== 'bool'">
+                                    <select name="translations[<?= $langId ?>]" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm" :disabled="!isTranslatable || settingType !== 'bool'" <?= field_aria_attrs("translations[$langId]") ?>>
                                         <option value="1" <?= $transValue === '1' || $transValue === 'true' || $transValue === true ? 'selected' : '' ?>><?= lang('App.yes') ?></option>
                                         <option value="0" <?= $transValue === '0' || $transValue === 'false' || $transValue === false || $transValue === '' || $transValue === null ? 'selected' : '' ?>><?= lang('App.no') ?></option>
                                     </select>
+                                    <?= render_field_error("translations[$langId]") ?>
                                 </div>
                                 <div x-show="settingType === 'json'" x-cloak>
-                                    <textarea name="translations[<?= $langId ?>]" rows="5" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm font-mono bg-white" :disabled="!isTranslatable || settingType !== 'json'" placeholder="{}"><?= esc($transValue) ?></textarea>
+                                    <textarea name="translations[<?= $langId ?>]" rows="5" class="<?= input_class("translations[$langId]") ?> !mt-0 text-sm font-mono bg-white" :disabled="!isTranslatable || settingType !== 'json'" placeholder="{}" <?= field_aria_attrs("translations[$langId]") ?>><?= esc(old("translations[$langId]", $transValue)) ?></textarea>
+                                    <?= render_field_error("translations[$langId]") ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -176,6 +180,7 @@ $isTranslatable = (bool) old('is_translatable', $item['is_translatable'] ?? fals
                 'label' => 'Settings.field_setting_key',
                 'required' => true,
                 'value' => $item['setting_key'] ?? '',
+                'maxlength' => 100,
                 'placeholder' => 'Settings.field_setting_key_placeholder',
                 'help' => 'Settings.field_setting_key_help',
                 'errors' => $errors ?? []
@@ -213,6 +218,7 @@ $isTranslatable = (bool) old('is_translatable', $item['is_translatable'] ?? fals
                 'label' => 'Settings.field_setting_group',
                 'required' => false,
                 'value' => $item['setting_group'] ?? '',
+                'maxlength' => 50,
                 'placeholder' => 'Settings.field_setting_group_placeholder',
                 'help' => 'Settings.field_setting_group_help',
                 'errors' => $errors ?? []
@@ -224,6 +230,7 @@ $isTranslatable = (bool) old('is_translatable', $item['is_translatable'] ?? fals
                 'value' => $item['description'] ?? '',
                 'placeholder' => 'Settings.field_description_placeholder',
                 'help' => 'Settings.field_description_help',
+                'maxlength' => 255,
                 'errors' => $errors ?? []
             ]) ?>
             <?php $propertiesContent = ob_get_clean(); ?>

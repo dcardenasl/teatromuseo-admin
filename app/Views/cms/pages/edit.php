@@ -298,6 +298,7 @@ if (!empty($languages)) {
                                     'checkUrl' => route_to('admin.cms.pages.check_slug') . '?language_id=' . (int)$lang['id'],
                                     'currentId' => $item['id'] ?? '',
                                     'value' => old("translations.{$index}.slug", $transValue['slug'] ?? ''),
+                                    'maxlength' => 150,
                                     'help' => 'Pages.translation_slug_help',
                                     'errors' => $errors ?? []
                                 ]) ?>
@@ -349,6 +350,7 @@ if (!empty($languages)) {
                                             'fieldKey' => 'og_image',
                                             'copyEnabled' => true,
                                             'accept' => 'image',
+                                            'maxlength' => 2048,
                                         ]) ?>
                                     </div>
                                 </details>

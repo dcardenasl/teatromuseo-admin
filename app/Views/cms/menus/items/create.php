@@ -34,6 +34,13 @@ if (!$defaultLang && !empty($languages)) {
     $defaultLang = reset($languages);
 }
 $defaultLangId = $defaultLang ? (int) $defaultLang['id'] : 0;
+$defaultLangIndex = 0;
+foreach ($languages as $languageIndex => $language) {
+    if ((int) ($language['id'] ?? 0) === $defaultLangId) {
+        $defaultLangIndex = (int) $languageIndex;
+        break;
+    }
+}
 $defaultLangCode = $defaultLang ? (string) $defaultLang['code'] : '';
 $translateUrl = route_to('admin.cms.translate');
 
@@ -162,6 +169,7 @@ $suggestedSortOrder = count($items);
                             <?php
                             $lang = is_array($lang) ? $lang : [];
                             $langId = isset($lang['id']) ? (int) $lang['id'] : (is_numeric($key) ? (int) $key : 0);
+                            $fieldIndex = (int) $key;
                             if ($langId <= 0) {
                                 continue;
                             }
@@ -169,17 +177,18 @@ $suggestedSortOrder = count($items);
                             $langCode  = strtoupper($lang['code'] ?? '');
                             $langName = (string) ($lang['name'] ?? $lang['label'] ?? $langId);
                             $translation = $resolveItemTranslation($lang);
-                            $labelVal = old("translations.{$langId}.label", $translation['label'] ?? '');
-                            $urlVal = old("translations.{$langId}.custom_url", $translation['custom_url'] ?? '');
+                            $labelVal = old("translations.{$fieldIndex}.label", $translation['label'] ?? '');
+                            $urlVal = old("translations.{$fieldIndex}.custom_url", $translation['custom_url'] ?? '');
 
                             $fields = [
                                 [
-                                    'from' => 'input[name="translations[' . $defaultLangId . '][label]"]',
-                                    'to' => 'input[name="translations[' . $langId . '][label]"]'
+                                    'from' => 'input[name="translations[' . $defaultLangIndex . '][label]"]',
+                                    'to' => 'input[name="translations[' . $fieldIndex . '][label]"]'
                                 ]
                             ];
                             ?>
                             <div x-show="isActive(<?= $langId ?>)" class="p-4 space-y-3" x-cloak>
+                                <input type="hidden" name="translations[<?= $fieldIndex ?>][language_id]" value="<?= $langId ?>">
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="inline-flex items-center rounded-md bg-brand-50 text-brand-700 border border-brand-100 px-2 py-0.5 text-xs font-semibold font-mono"><?= esc($langName) ?></span>
                                     <?php if (!$isDefault): ?>
@@ -197,19 +206,21 @@ $suggestedSortOrder = count($items);
                                     <label class="block text-xs font-semibold text-gray-700 mb-1">
                                         <?= esc(lang('Menus.items_label_label')) ?> <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="text" name="translations[<?= esc($langId) ?>][label]" value="<?= esc($labelVal) ?>" required
-                                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                                        placeholder="<?= esc(lang('Menus.items_label_placeholder')) ?>">
+                                    <input type="text" name="translations[<?= $fieldIndex ?>][label]" value="<?= esc($labelVal) ?>" required maxlength="150"
+                                        class="<?= esc(input_class('translations.' . $fieldIndex . '.label')) ?> text-sm"
+                                        placeholder="<?= esc(lang('Menus.items_label_placeholder')) ?>" <?= field_aria_attrs('translations.' . $fieldIndex . '.label', required: true) ?>>
+                                    <?= render_field_error('translations.' . $fieldIndex . '.label') ?>
                                 </div>
 
                                 <div x-show="linkType === 'custom_url'" x-cloak>
                                     <label class="block text-xs font-semibold text-gray-700 mb-1">
                                         <?= esc(lang('Menus.items_custom_url_label')) ?>
                                     </label>
-                                    <input type="text" name="translations[<?= esc($langId) ?>][custom_url]" value="<?= esc($urlVal) ?>"
+                                    <input type="text" name="translations[<?= $fieldIndex ?>][custom_url]" value="<?= esc($urlVal) ?>" maxlength="500"
                                         x-bind:disabled="linkType !== 'custom_url'"
-                                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                                        placeholder="<?= esc(lang('Menus.items_custom_url_placeholder')) ?>">
+                                        class="<?= esc(input_class('translations.' . $fieldIndex . '.custom_url')) ?> text-sm"
+                                        placeholder="<?= esc(lang('Menus.items_custom_url_placeholder')) ?>" <?= field_aria_attrs('translations.' . $fieldIndex . '.custom_url') ?>>
+                                    <?= render_field_error('translations.' . $fieldIndex . '.custom_url') ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -222,7 +233,7 @@ $suggestedSortOrder = count($items);
             <!-- Link Type -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_link_type_label')) ?></label>
-                <select name="link_type" x-model="linkType" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                <select name="link_type" x-model="linkType" class="<?= esc(input_class('link_type')) ?> text-sm" <?= field_aria_attrs('link_type', required: true) ?>>
                     <option value="page"><?= esc(lang('Menus.items_link_type_page')) ?></option>
                     <option value="entry"><?= esc(lang('Menus.items_link_type_entry')) ?></option>
                     <option value="collection_listing"><?= esc(lang('Menus.items_link_type_collection_listing')) ?></option>
@@ -230,48 +241,53 @@ $suggestedSortOrder = count($items);
                     <option value="custom_url"><?= esc(lang('Menus.items_link_type_custom_url')) ?></option>
                     <option value="no_link"><?= esc(lang('Menus.items_link_type_no_link')) ?></option>
                 </select>
+                <?= render_field_error('link_type') ?>
             </div>
 
             <!-- Target selectors (conditional) -->
             <div x-show="linkType === 'page'" x-cloak>
                 <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_target_page_label')) ?> <span class="text-red-500">*</span></label>
-                <select name="page_id" x-bind:disabled="linkType !== 'page'" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                <select name="page_id" x-bind:disabled="linkType !== 'page'" class="<?= esc(input_class('page_id')) ?> text-sm" <?= field_aria_attrs('page_id') ?>>
                     <option value=""><?= esc(lang('Menus.items_target_page_placeholder')) ?></option>
                     <?php foreach ($pages as $id => $title): ?>
                         <option value="<?= esc($id) ?>" <?= (string) $selectedPageId === (string) $id ? 'selected' : '' ?>><?= esc($title) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?= render_field_error('page_id') ?>
             </div>
 
             <div x-show="linkType === 'entry'" x-cloak>
                 <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_target_entry_label')) ?> <span class="text-red-500">*</span></label>
-                <select name="entry_id" x-bind:disabled="linkType !== 'entry'" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                <select name="entry_id" x-bind:disabled="linkType !== 'entry'" class="<?= esc(input_class('entry_id')) ?> text-sm" <?= field_aria_attrs('entry_id') ?>>
                     <option value=""><?= esc(lang('Menus.items_target_entry_placeholder')) ?></option>
                     <?php foreach ($entries as $id => $title): ?>
                         <option value="<?= esc($id) ?>" <?= (string) $selectedEntryId === (string) $id ? 'selected' : '' ?>><?= esc($title) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?= render_field_error('entry_id') ?>
             </div>
 
             <div x-show="linkType === 'collection_listing'" x-cloak>
                 <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_target_collection_label')) ?> <span class="text-red-500">*</span></label>
-                <select name="collection_id" x-bind:disabled="linkType !== 'collection_listing'" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                <select name="collection_id" x-bind:disabled="linkType !== 'collection_listing'" class="<?= esc(input_class('collection_id')) ?> text-sm" <?= field_aria_attrs('collection_id') ?>>
                     <option value=""><?= esc(lang('Menus.items_target_collection_placeholder')) ?></option>
                     <?php foreach ($collections as $id => $title): ?>
                         <option value="<?= esc($id) ?>" <?= (string) $selectedCollectionId === (string) $id ? 'selected' : '' ?>><?= esc($title) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?= render_field_error('collection_id') ?>
             </div>
 
             <!-- Structure: parent -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_parent_label')) ?></label>
-                <select name="parent_id" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                <select name="parent_id" class="<?= esc(input_class('parent_id')) ?> text-sm" <?= field_aria_attrs('parent_id') ?>>
                     <option value=""><?= esc(lang('Menus.items_parent_placeholder')) ?></option>
                     <?php foreach ($parentOptions as $opt): ?>
                         <option value="<?= esc($opt['id']) ?>"><?= esc($opt['label']) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?= render_field_error('parent_id') ?>
                 <p class="mt-1 text-xs text-gray-500"><?= esc(lang('Menus.items_parent_help')) ?></p>
             </div>
             <input type="hidden" name="sort_order" value="<?= esc(old('sort_order', (string) $suggestedSortOrder)) ?>">
@@ -282,24 +298,27 @@ $suggestedSortOrder = count($items);
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_link_target_label')) ?></label>
-                        <select name="link_target" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                        <select name="link_target" class="<?= esc(input_class('link_target')) ?> text-sm" <?= field_aria_attrs('link_target', required: true) ?>>
                             <option value="_self" <?= old('link_target', '_self') === '_self' ? 'selected' : '' ?>><?= esc(lang('Menus.items_link_target_same')) ?></option>
                             <option value="_blank" <?= old('link_target', '_self') === '_blank' ? 'selected' : '' ?>><?= esc(lang('Menus.items_link_target_new')) ?></option>
                         </select>
+                        <?= render_field_error('link_target') ?>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_icon_label')) ?></label>
-                        <input type="text" name="icon" value="<?= esc(old('icon', '')) ?>"
-                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                            placeholder="<?= esc(lang('Menus.items_icon_placeholder')) ?>">
+                        <input type="text" name="icon" value="<?= esc(old('icon', '')) ?>" maxlength="50"
+                            class="<?= esc(input_class('icon')) ?> text-sm"
+                            placeholder="<?= esc(lang('Menus.items_icon_placeholder')) ?>" <?= field_aria_attrs('icon') ?>>
+                        <?= render_field_error('icon') ?>
                         <p class="mt-1 text-xs text-gray-500"><?= esc(lang('Menus.items_icon_help')) ?></p>
                     </div>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1"><?= esc(lang('Menus.items_css_class_label')) ?></label>
-                    <input type="text" name="css_class" value="<?= esc(old('css_class', '')) ?>"
-                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                        placeholder="<?= esc(lang('Menus.items_css_class_placeholder')) ?>">
+                    <input type="text" name="css_class" value="<?= esc(old('css_class', '')) ?>" maxlength="100"
+                        class="<?= esc(input_class('css_class')) ?> text-sm"
+                        placeholder="<?= esc(lang('Menus.items_css_class_placeholder')) ?>" <?= field_aria_attrs('css_class') ?>>
+                    <?= render_field_error('css_class') ?>
                 </div>
             </div>
 
@@ -355,15 +374,16 @@ document.addEventListener('alpine:init', () => {
             const languages = <?= json_encode($languages) ?>;
             Object.values(languages).forEach(lang => {
                 const langId = lang.id;
+                const languageIndex = Object.keys(languages).find(index => Number(languages[index].id) === Number(langId)) ?? langId;
                 const colSlug = this.activeCol.translations[langId]?.slug || this.activeCol.key;
                 const catSlug = this.activeCat.translations[langId]?.slug || '';
                 if (colSlug && catSlug) {
                     const url = `/${colSlug}?category=${catSlug}`;
-                    const urlInput = document.querySelector(`input[name='translations[${langId}][custom_url]']`);
+                    const urlInput = document.querySelector(`input[name='translations[${languageIndex}][custom_url]']`);
                     if (urlInput) {
                         urlInput.value = url;
                     }
-                    const labelInput = document.querySelector(`input[name='translations[${langId}][label]']`);
+                    const labelInput = document.querySelector(`input[name='translations[${languageIndex}][label]']`);
                     if (labelInput) {
                         labelInput.value = this.activeCat.translations[langId]?.name || '';
                     }

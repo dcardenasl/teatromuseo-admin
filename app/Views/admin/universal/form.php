@@ -23,13 +23,16 @@
             $titleAttr = $field['title'] ?? ucfirst($name);
             $required = ($field['required'] ?? false) ? 'required' : '';
             $val = old($name, $record[$name] ?? ($field['default'] ?? ''));
+            $maxLength = $field['max_length'] ?? $field['maxlength'] ?? $field['maxLength'] ?? null;
+            $maxLength = is_numeric($maxLength) && (int) $maxLength > 0 ? (int) $maxLength : null;
             ?>
 
             <div>
                 <?php if ($type === 'boolean'): ?>
-                    <label class="inline-flex items-center gap-3 rounded-lg border border-gray-200 w-full px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                    <label class="inline-flex items-center gap-3 rounded-lg border border-gray-200 w-full px-4 py-3 hover:bg-gray-50 cursor-pointer <?= esc(field_error_class($name, 'border-red-500 bg-red-50/40'), 'attr') ?>">
                         <input type="checkbox" name="<?= esc($name) ?>" value="1" <?= $val ? 'checked' : '' ?>
-                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 <?= esc(field_error_class($name), 'attr') ?>"
+                               <?= field_aria_attrs($name) ?>>
                         <div>
                             <span class="block text-sm font-semibold text-gray-900"><?= esc($titleAttr) ?></span>
                             <?php if (isset($field['description'])): ?>
@@ -40,15 +43,20 @@
                 <?php elseif ($type === 'text'): ?>
                     <label class="block text-sm font-medium text-gray-700" for="<?= esc($name) ?>"><?= esc($titleAttr) ?></label>
                     <textarea id="<?= esc($name) ?>" name="<?= esc($name) ?>" <?= $required ?> rows="4"
-                              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"><?= esc($val) ?></textarea>
+                              class="<?= esc(input_class($name)) ?>"
+                              <?= $maxLength !== null ? 'maxlength="' . $maxLength . '"' : '' ?>
+                              <?= field_aria_attrs($name, $required !== '') ?>><?= esc($val) ?></textarea>
                 <?php elseif ($type === 'integer' || $type === 'number'): ?>
                     <label class="block text-sm font-medium text-gray-700" for="<?= esc($name) ?>"><?= esc($titleAttr) ?></label>
                     <input id="<?= esc($name) ?>" name="<?= esc($name) ?>" type="number" value="<?= esc($val) ?>" <?= $required ?>
-                           class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                           class="<?= esc(input_class($name)) ?>"
+                           <?= field_aria_attrs($name, $required !== '') ?>>
                 <?php else: ?>
                     <label class="block text-sm font-medium text-gray-700" for="<?= esc($name) ?>"><?= esc($titleAttr) ?></label>
                     <input id="<?= esc($name) ?>" name="<?= esc($name) ?>" type="text" value="<?= esc($val) ?>" <?= $required ?>
-                           class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                           class="<?= esc(input_class($name)) ?>"
+                           <?= $maxLength !== null ? 'maxlength="' . $maxLength . '"' : '' ?>
+                           <?= field_aria_attrs($name, $required !== '') ?>>
                 <?php endif; ?>
                 <?= render_field_error($name) ?>
             </div>

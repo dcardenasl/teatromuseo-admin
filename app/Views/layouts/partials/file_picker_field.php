@@ -24,6 +24,7 @@ $fpValue  = (string) ($value  ?? '');
 $fpLabel  = $label      ?? lang('Files.picker_select_file');
 $fpAccept = $accept     ?? '';
 $fpFilter = $filterType ?? '';
+$fpErrorClass = field_error_class($fpName, 'border-red-500 bg-red-50');
 ?>
 <div x-data="filePickerField({
         name: '<?= esc($fpName, 'js') ?>',
@@ -37,7 +38,7 @@ $fpFilter = $filterType ?? '';
 
     <!-- File selected: show preview + change/remove buttons -->
     <div x-show="fileId !== ''" x-cloak
-         class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+         class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 <?= esc($fpErrorClass, 'attr') ?>">
 
         <div class="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-100 bg-white">
             <template x-if="fileInfo.is_image && (fileInfo.previewUrl || fileInfo.url)">
@@ -72,7 +73,9 @@ $fpFilter = $filterType ?? '';
     <button type="button"
             x-show="fileId === ''"
             @click="openPicker()"
-            class="flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-colors hover:border-brand-400 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            class="flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-colors hover:border-brand-400 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500 <?= esc($fpErrorClass, 'attr') ?>"
+            <?= field_aria_attrs($fpName) ?>
+        >
         <div class="flex flex-col items-center gap-2">
             <?= ui_icon('upload', 'h-8 w-8 text-gray-400') ?>
             <p class="text-sm text-gray-500"><?= esc($fpLabel) ?></p>
@@ -87,4 +90,6 @@ $fpFilter = $filterType ?? '';
         </svg>
         <?= esc(lang('App.loading')) ?>
     </div>
+
+    <?= render_field_error($fpName) ?>
 </div>

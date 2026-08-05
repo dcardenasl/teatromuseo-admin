@@ -27,6 +27,7 @@ foreach ($languages ?? [] as $langItem) {
             'value' => $item['code'] ?? '',
             'placeholder' => 'CmsLanguages.field_code_placeholder',
             'help' => 'CmsLanguages.field_code_help',
+            'maxlength' => 10,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -37,16 +38,18 @@ foreach ($languages ?? [] as $langItem) {
             'value' => $item['name'] ?? '',
             'placeholder' => 'CmsLanguages.field_name_placeholder',
             'help' => 'CmsLanguages.field_name_help',
+            'maxlength' => 50,
             'errors' => $errors ?? []
         ]) ?>
 
         <?= view('components/form/text', [
             'name' => 'native_name',
             'label' => 'CmsLanguages.field_native_name',
-            'required' => false,
+            'required' => true,
             'value' => $item['native_name'] ?? '',
             'placeholder' => 'CmsLanguages.field_native_name_placeholder',
             'help' => 'CmsLanguages.field_native_name_help',
+            'maxlength' => 50,
             'errors' => $errors ?? []
         ]) ?>
         <?php $mainFields = ob_get_clean(); ?>

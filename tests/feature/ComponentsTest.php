@@ -78,6 +78,22 @@ final class ComponentsTest extends CIUnitTestCase
         $this->assertStringContainsString('Hello</textarea>', $html);
     }
 
+    public function testTextareaComponentRendersMaxLengthAndErrorAttributes(): void
+    {
+        session()->set('fieldErrors', ['excerpt' => 'The excerpt may not exceed 500 characters.']);
+
+        $html = view('components/form/textarea', [
+            'name' => 'excerpt',
+            'label' => 'App.description',
+            'maxlength' => 500,
+            'value' => 'Hello',
+        ], ['saveData' => false]);
+
+        $this->assertStringContainsString('maxlength="500"', $html);
+        $this->assertStringContainsString('aria-invalid="true"', $html);
+        $this->assertStringContainsString('The excerpt may not exceed 500 characters.', $html);
+    }
+
     public function testSelectComponentIteratesOptions(): void
     {
         $html = view('components/form/select', [

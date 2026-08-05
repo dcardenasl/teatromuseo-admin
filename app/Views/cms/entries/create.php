@@ -142,6 +142,7 @@
                                 'sourceId' => sprintf('[name="translations[%d][title]"]', $index),
                                 'checkUrl' => route_to('admin.cms.entries.check_slug') . '?language_id=' . (int)$lang['id'],
                                 'value' => old("translations.{$index}.slug", ''),
+                                'maxlength' => 150,
                                 'help' => 'Entries.translation_slug_help',
                                 'errors' => $errors ?? []
                             ]) ?>
@@ -165,6 +166,7 @@
                             'fieldKey' => 'featured_image',
                             'copyEnabled' => true,
                             'accept' => 'image',
+                            'maxlength' => 2048,
                         ]) ?>
 
                             <details class="group border border-gray-100 rounded-lg bg-gray-50/30">
@@ -202,6 +204,7 @@
                                     'fieldKey' => 'og_image',
                                     'copyEnabled' => true,
                                     'accept' => 'image',
+                                    'maxlength' => 2048,
                                 ]) ?>
                                 </div>
                             </details>

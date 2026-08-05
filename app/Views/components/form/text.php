@@ -28,8 +28,9 @@ if (is_array($textValue) || is_object($textValue)) {
     $encodedValue = json_encode($textValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $textValue = $encodedValue !== false ? $encodedValue : '';
 }
+$valueLength = function_exists('mb_strlen') ? mb_strlen((string) $textValue) : strlen((string) $textValue);
 ?>
-<div<?= $maxlength !== null ? ' x-data="{ _len: ' . strlen((string) $textValue) . ' }"' : '' ?>>
+<div<?= $maxlength !== null ? ' x-data="{ _len: ' . $valueLength . ' }"' : '' ?>>
     <div class="flex items-center justify-between">
         <label class="block text-sm font-medium text-gray-700" for="<?= esc($name, 'attr') ?>">
             <?= lang($label) ?>
@@ -38,7 +39,7 @@ if (is_array($textValue) || is_object($textValue)) {
             <?php endif; ?>
         </label>
         <?php if ($maxlength !== null): ?>
-            <span class="text-xs text-gray-400" x-text="''+_len+'/<?= $maxlength ?>'"><?= strlen((string) $textValue) ?>/<?= $maxlength ?></span>
+            <span class="text-xs text-gray-400" x-text="''+_len+'/<?= $maxlength ?>'"><?= $valueLength ?>/<?= $maxlength ?></span>
         <?php endif; ?>
     </div>
     <input

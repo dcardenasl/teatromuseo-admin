@@ -20,13 +20,13 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700" for="first_name"><?= lang('Users.first_name') ?></label>
                 <input id="first_name" name="first_name" type="text" value="<?= esc(old('first_name', $editUser['first_name'] ?? '')) ?>" required
-                    class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error('first_name') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+                    maxlength="100" class="<?= input_class('first_name') ?>" <?= field_aria_attrs('first_name', required: true) ?>>
                 <?= render_field_error('first_name') ?>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700" for="last_name"><?= lang('Users.last_name') ?></label>
                 <input id="last_name" name="last_name" type="text" value="<?= esc(old('last_name', $editUser['last_name'] ?? '')) ?>" required
-                    class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error('last_name') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+                    maxlength="100" class="<?= input_class('last_name') ?>" <?= field_aria_attrs('last_name', required: true) ?>>
                 <?= render_field_error('last_name') ?>
             </div>
         </div>
@@ -34,8 +34,8 @@
         <div>
             <label class="block text-sm font-medium text-gray-700" for="email"><?= lang('Users.email') ?></label>
             <?php if (is_superadmin()): ?>
-                <input id="email" name="email" type="email" value="<?= esc(old('email', $editUser['email'] ?? '')) ?>" required
-                    class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error('email') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+            <input id="email" name="email" type="email" value="<?= esc(old('email', $editUser['email'] ?? '')) ?>" required
+                maxlength="255" class="<?= input_class('email') ?>" <?= field_aria_attrs('email', required: true) ?>>
                 <?= render_field_error('email') ?>
             <?php else: ?>
                 <input id="email" name="email" type="email" value="<?= esc($editUser['email'] ?? '') ?>" readonly aria-readonly="true"
@@ -59,7 +59,8 @@ $hiddenLockedRoleIds = array_diff($oldRoleIdsStr, $assignableIds);
                         <label class="inline-flex items-start gap-2 text-sm rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
                             <input type="checkbox" name="role_ids[]" value="<?= (int) $role['id'] ?>"
                                 <?= in_array((string) $role['id'], $oldRoleIdsStr, true) ? 'checked' : '' ?>
-                                class="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                                class="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500 <?= esc(field_error_class('role_ids', 'ring-2 ring-red-500'), 'attr') ?>"
+                                <?= field_aria_attrs('role_ids') ?>>
                             <span>
                                 <span class="font-medium text-gray-900"><?= esc($role['name']) ?></span>
                                 <span class="block text-xs text-gray-500"><?= esc($role['code']) ?></span>

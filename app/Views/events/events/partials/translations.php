@@ -72,6 +72,7 @@ $translationLabel = static function (string $key, string $fallback): string {
                     'value' => old("translations.{$index}.title", $titleValue),
                     'placeholder' => 'Events.field_title_placeholder',
                     'help' => $isDefault ? 'Events.field_title_help' : 'Events.translation_optional_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? [],
                 ]) ?>
 
@@ -84,6 +85,7 @@ $translationLabel = static function (string $key, string $fallback): string {
                     'value' => old("translations.{$index}.slug", $slugValue),
                     'placeholder' => 'Events.field_slug_placeholder',
                     'help' => 'Events.field_slug_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? [],
                 ]) ?>
 

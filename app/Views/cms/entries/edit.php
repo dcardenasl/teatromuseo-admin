@@ -256,6 +256,7 @@ if ($selectedTagValues !== []) {
                                 'checkUrl' => route_to('admin.cms.entries.check_slug') . '?language_id=' . (int)$lang['id'],
                                 'currentId' => $item['id'] ?? '',
                                 'value' => old("translations.{$index}.slug", $transValue['slug'] ?? ''),
+                                'maxlength' => 150,
                                 'help' => 'Entries.translation_slug_help',
                                 'errors' => $errors ?? []
                             ]) ?>
@@ -279,6 +280,7 @@ if ($selectedTagValues !== []) {
                             'fieldKey' => 'featured_image',
                             'copyEnabled' => true,
                             'accept' => 'image',
+                            'maxlength' => 2048,
                         ]) ?>
 
                             <details class="group border border-gray-100 rounded-lg bg-gray-50/30" <?= (!empty($transValue['meta_title']) || !empty($transValue['meta_description']) || !empty($transValue['og_image']['file_id'] ?? null) || !empty($transValue['og_image']['url'] ?? null)) ? 'open' : '' ?>>
@@ -314,8 +316,9 @@ if ($selectedTagValues !== []) {
                                     'help' => lang('Entries.translation_og_image_help'),
                                     'value' => old("translations.{$index}.og_image", $transValue['og_image'] ?? []),
                                     'fieldKey' => 'og_image',
-                                    'copyEnabled' => true,
-                                    'accept' => 'image',
+                                'copyEnabled' => true,
+                                'accept' => 'image',
+                                'maxlength' => 2048,
                                 ]) ?>
                                 </div>
                             </details>

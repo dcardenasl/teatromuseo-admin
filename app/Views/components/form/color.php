@@ -74,7 +74,7 @@ $presets = [
                 name="<?= esc($name, 'attr') ?>"
                 x-model="value"
                 placeholder="<?= esc($placeholder, 'attr') ?>"
-                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-mono text-gray-900 uppercase shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 pl-3 pr-10"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-mono text-gray-900 uppercase shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 pl-3 pr-10 <?= esc(field_error_class($name), 'attr') ?>"
                 <?= $required ? 'required' : '' ?>
                 <?= field_aria_attrs($name, $required) ?>
             >

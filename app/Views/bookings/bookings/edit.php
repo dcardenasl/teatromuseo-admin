@@ -36,6 +36,7 @@
             'value' => $item['guest_email'] ?? '',
             'placeholder' => 'Bookings.field_guest_email_placeholder',
             'help' => 'Bookings.field_guest_email_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 

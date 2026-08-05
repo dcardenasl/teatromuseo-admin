@@ -126,6 +126,8 @@ $translateTargets = is_array($translateTargets ?? null) ? $translateTargets : []
                         $fieldPlaceholder = (string) ($row['placeholder'] ?? '');
                         $fieldInputType = (string) ($row['inputType'] ?? 'text');
                         $fieldReadonly = ! empty($row['readonly']);
+                        $fieldMaxLength = $row['maxlength'] ?? null;
+                        $fieldMaxLength = is_numeric($fieldMaxLength) && (int) $fieldMaxLength > 0 ? (int) $fieldMaxLength : null;
                         ?>
                         <div class="rounded-xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
                             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -146,24 +148,31 @@ $translateTargets = is_array($translateTargets ?? null) ? $translateTargets : []
                                               name="<?= esc($fieldName) ?>"
                                               rows="4"
                                               placeholder="<?= esc($fieldPlaceholder) ?>"
-                                              class="form-input text-sm"
-                                              <?= $fieldReadonly ? 'readonly' : '' ?>><?= esc($fieldValue) ?></textarea>
+                                              class="<?= esc(input_class($fieldName)) ?> text-sm"
+                                              <?= $fieldMaxLength !== null ? 'maxlength="' . $fieldMaxLength . '"' : '' ?>
+                                              <?= $fieldReadonly ? 'readonly' : '' ?>
+                                              <?= field_aria_attrs($fieldName) ?>><?= esc(old($fieldName, $fieldValue)) ?></textarea>
                                 <?php elseif ($fieldInputType === 'code'): ?>
                                     <textarea id="<?= esc($fieldId) ?>"
                                               name="<?= esc($fieldName) ?>"
                                               rows="5"
                                               placeholder="<?= esc($fieldPlaceholder) ?>"
-                                              class="form-input font-mono text-sm bg-gray-950 text-green-400 border-gray-700"
-                                              <?= $fieldReadonly ? 'readonly' : '' ?>><?= esc($fieldValue) ?></textarea>
+                                              class="<?= esc(input_class($fieldName)) ?> font-mono text-sm bg-gray-950 text-green-400 border-gray-700"
+                                              <?= $fieldMaxLength !== null ? 'maxlength="' . $fieldMaxLength . '"' : '' ?>
+                                              <?= $fieldReadonly ? 'readonly' : '' ?>
+                                              <?= field_aria_attrs($fieldName) ?>><?= esc(old($fieldName, $fieldValue)) ?></textarea>
                                 <?php else: ?>
                                     <input id="<?= esc($fieldId) ?>"
                                            type="text"
                                            name="<?= esc($fieldName) ?>"
-                                           value="<?= esc($fieldValue) ?>"
+                                           value="<?= esc(old($fieldName, $fieldValue)) ?>"
                                            placeholder="<?= esc($fieldPlaceholder) ?>"
-                                           class="form-input text-sm"
-                                           <?= $fieldReadonly ? 'readonly' : '' ?>>
+                                           class="<?= esc(input_class($fieldName)) ?> text-sm"
+                                           <?= $fieldMaxLength !== null ? 'maxlength="' . $fieldMaxLength . '"' : '' ?>
+                                           <?= $fieldReadonly ? 'readonly' : '' ?>
+                                           <?= field_aria_attrs($fieldName) ?>>
                                 <?php endif; ?>
+                            <?= render_field_error($fieldName) ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

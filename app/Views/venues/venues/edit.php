@@ -25,6 +25,7 @@
             'value' => $item['name'] ?? '',
             'placeholder' => 'Venues.field_name_placeholder',
             'help' => 'Venues.field_name_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -35,6 +36,7 @@
             'value' => $item['slug'] ?? '',
             'placeholder' => 'Venues.field_slug_placeholder',
             'help' => 'Venues.field_slug_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 

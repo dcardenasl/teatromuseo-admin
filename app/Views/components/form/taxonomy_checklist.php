@@ -15,7 +15,7 @@ if (! is_array($selected)) {
 $selected = array_map('strval', $selected);
 $help = $help ?? '';
 ?>
-<fieldset>
+<fieldset class="<?= esc(field_error_class($name, 'rounded-lg border border-red-500 bg-red-50/40 p-3'), 'attr') ?>" <?= field_aria_attrs($name) ?>>
     <legend class="block text-sm font-medium text-gray-700"><?= esc(lang($label)) ?></legend>
     <?php if ($help !== ''): ?>
         <p class="mt-1 text-xs text-gray-500"><?= esc(lang($help)) ?></p>
@@ -23,7 +23,7 @@ $help = $help ?? '';
     <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         <?php foreach ($options as $value => $optionLabel): ?>
             <label class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:border-brand-300">
-                <input type="checkbox" name="<?= esc($name, 'attr') ?>[]" value="<?= esc($value, 'attr') ?>" <?= in_array((string) $value, $selected, true) ? 'checked' : '' ?> class="rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                <input type="checkbox" name="<?= esc($name, 'attr') ?>[]" value="<?= esc($value, 'attr') ?>" <?= in_array((string) $value, $selected, true) ? 'checked' : '' ?> class="rounded border-gray-300 text-brand-600 focus:ring-brand-500" <?= field_aria_attrs($name) ?> >
                 <span><?= esc($optionLabel) ?></span>
             </label>
         <?php endforeach; ?>
@@ -31,4 +31,5 @@ $help = $help ?? '';
     <?php if ($options === []): ?>
         <p class="mt-3 text-sm text-gray-500"><?= esc(lang('Entries.taxonomy_empty')) ?></p>
     <?php endif; ?>
+    <?= render_field_error($name) ?>
 </fieldset>

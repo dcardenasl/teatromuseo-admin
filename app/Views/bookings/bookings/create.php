@@ -55,6 +55,7 @@
             'value' => $item['guest_email'] ?? '',
             'placeholder' => 'Bookings.field_guest_email_placeholder',
             'help' => 'Bookings.field_guest_email_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -65,6 +66,7 @@
             'value' => $item['holder_name'] ?? '',
             'placeholder' => 'Bookings.field_holder_name_placeholder',
             'help' => 'Bookings.field_holder_name_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -75,6 +77,7 @@
             'value' => $item['holder_email'] ?? '',
             'placeholder' => 'Bookings.field_holder_email_placeholder',
             'help' => 'Bookings.field_holder_email_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 

@@ -39,7 +39,7 @@ $help = $help ?? '';
         <?php endif; ?>
     </label>
     
-    <div class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-1.5 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+    <div class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-1.5 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 <?= esc(field_error_class($name, 'border-red-500 focus-within:border-red-500 focus-within:ring-red-500'), 'attr') ?>">
         <div class="flex flex-wrap gap-1.5 items-center">
             <template x-for="(tag, index) in tags" :key="index">
                 <span class="inline-flex items-center gap-1 rounded-md bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
@@ -60,6 +60,7 @@ $help = $help ?? '';
                 @blur="addTag()"
                 placeholder="<?= esc(lang($placeholder), 'attr') ?>"
                 class="flex-1 min-w-[120px] bg-transparent border-0 p-0 text-sm focus:ring-0 focus:outline-none"
+                <?= field_aria_attrs($name, $required) ?>
             >
         </div>
         <input type="hidden" name="<?= esc($name, 'attr') ?>" :value="tags.join(',')">

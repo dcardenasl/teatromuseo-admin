@@ -18,6 +18,7 @@ $value = (string) $value;
 $help = $help ?? '';
 $accept = $accept ?? '';
 $filterType = $filterType ?? '';
+$errorClass = field_error_class($name, 'border-red-500 bg-red-50/40');
 ?>
 <div>
     <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -30,7 +31,7 @@ $filterType = $filterType ?? '';
             accept: '<?= esc($accept, 'js') ?>',
             filterType: '<?= esc($filterType, 'js') ?>'
         })"
-         x-init="init()">
+         x-init="init()" class="<?= esc($errorClass, 'attr') ?>">
 
         <input type="hidden" :name="fieldName" :value="csvValue">
 
@@ -52,7 +53,8 @@ $filterType = $filterType ?? '';
         </div>
 
         <button type="button" @click="openPicker()"
-                class="mt-3 flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center transition-colors hover:border-brand-400 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                class="mt-3 flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center transition-colors hover:border-brand-400 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                <?= field_aria_attrs($name) ?>>
             <div class="flex flex-col items-center gap-1">
                 <?= ui_icon('upload', 'h-6 w-6 text-gray-400') ?>
                 <p class="text-sm text-gray-500"><?= esc(lang('Files.picker_select_file')) ?></p>

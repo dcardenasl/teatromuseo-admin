@@ -91,18 +91,20 @@ $configSampleJs = json_encode($configSample, JSON_UNESCAPED_UNICODE | JSON_UNESC
                 'required'    => true,
                 'value'       => $item['block_key'] ?? '',
                 'readonly'    => $isSystem,
+                'maxlength'   => 50,
                 'placeholder' => 'BlockTypes.field_block_key_placeholder',
                 'help'        => 'BlockTypes.field_block_key_help',
                 'errors'      => $errors ?? [],
             ]) ?>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <?= view('components/form/text', ['name' => 'name',     'label' => 'BlockTypes.field_name',     'required' => true, 'value' => $item['name'] ?? '',     'errors' => $errors ?? []]) ?>
-                <?= view('components/form/text', ['name' => 'category', 'label' => 'BlockTypes.field_category', 'required' => true, 'value' => $item['category'] ?? '', 'errors' => $errors ?? []]) ?>
+                <?= view('components/form/text', ['name' => 'name',     'label' => 'BlockTypes.field_name',     'required' => true, 'value' => $item['name'] ?? '',     'maxlength' => 100, 'errors' => $errors ?? []]) ?>
+                <?= view('components/form/text', ['name' => 'category', 'label' => 'BlockTypes.field_category', 'required' => true, 'value' => $item['category'] ?? '', 'maxlength' => 50, 'errors' => $errors ?? []]) ?>
             </div>
 
             <!-- Schema JSON oculto (se construye en rebuildJson) -->
             <input type="hidden" name="schema_definition" :value="schemaJson">
+            <?= render_field_error('schema_definition') ?>
 
             <!-- Campos de Contenido -->
             <div>
@@ -150,7 +152,7 @@ $configSampleJs = json_encode($configSample, JSON_UNESCAPED_UNICODE | JSON_UNESC
                 </summary>
                 <div class="px-4 pb-4 pt-2 space-y-4 border-t border-gray-100">
                     <?= view('components/form/textarea', ['name' => 'description',      'label' => 'BlockTypes.field_description',      'required' => false, 'value' => $item['description'] ?? '',                            'rows' => 2,  'errors' => $errors ?? []]) ?>
-                    <?= view('components/form/text', ['name' => 'icon',             'label' => 'BlockTypes.field_icon',             'required' => false, 'value' => $item['icon'] ?? '',                                              'errors' => $errors ?? []]) ?>
+                    <?= view('components/form/text', ['name' => 'icon',             'label' => 'BlockTypes.field_icon',             'required' => false, 'value' => $item['icon'] ?? '', 'maxlength' => 50,                     'errors' => $errors ?? []]) ?>
                     <?= view('components/form/boolean', ['name' => 'supports_pages',   'label' => 'BlockTypes.field_supports_pages',   'value' => $item['supports_pages']   ?? true,  'on_label' => 'App.yes', 'off_label' => 'App.no', 'errors' => $errors ?? []]) ?>
                     <?= view('components/form/boolean', ['name' => 'supports_entries', 'label' => 'BlockTypes.field_supports_entries', 'value' => $item['supports_entries'] ?? true,  'on_label' => 'App.yes', 'off_label' => 'App.no', 'errors' => $errors ?? []]) ?>
                     <div>
@@ -158,9 +160,9 @@ $configSampleJs = json_encode($configSample, JSON_UNESCAPED_UNICODE | JSON_UNESC
                             <?= lang('BlockTypes.field_is_container') ?>
                         </span>
                         <input type="hidden" name="is_container" value="0">
-                        <label class="mt-2 inline-flex cursor-pointer items-center gap-3">
+                        <label class="mt-2 inline-flex cursor-pointer items-center gap-3 <?= esc(field_error_class('is_container', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                             <input id="is_container" name="is_container" type="checkbox" value="1"
-                                   class="peer sr-only" x-model="isContainer" @change="rebuildJson()">
+                                   class="peer sr-only" x-model="isContainer" @change="rebuildJson()" <?= field_aria_attrs('is_container') ?>>
                             <span class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-gray-200 transition-colors duration-200 ease-in-out peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2"
                                   :style="isContainer ? 'width: 2.75rem; height: 1.5rem; background-color: var(--color-brand-600)' : 'width: 2.75rem; height: 1.5rem'"
                                   aria-hidden="true">
@@ -169,6 +171,7 @@ $configSampleJs = json_encode($configSample, JSON_UNESCAPED_UNICODE | JSON_UNESC
                             </span>
                             <span class="text-sm font-medium text-gray-700" x-text="isContainer ? 'Sí' : 'No'"></span>
                         </label>
+                        <?= render_field_error('is_container') ?>
                     </div>
 
                     <!-- Seleccion de bloques hijos permitidos -->

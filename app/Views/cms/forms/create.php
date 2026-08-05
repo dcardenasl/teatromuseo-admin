@@ -20,22 +20,26 @@
                 <input type="text" name="form_key" required
                        placeholder="contact"
                        pattern="[a-zA-Z0-9_\-]+"
+                       maxlength="50"
                        class="<?= input_class('form_key') ?> w-full"
-                       value="<?= esc(old('form_key', '')) ?>">
+                       value="<?= esc(old('form_key', '')) ?>" <?= field_aria_attrs('form_key', required: true) ?>>
+                <?= render_field_error('form_key') ?>
                 <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_key_hint') ?></p>
             </div>
             <div class="flex items-end gap-6">
-                <label class="flex items-center gap-2 text-sm">
+                <label class="flex items-center gap-2 text-sm <?= esc(field_error_class('is_active', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                     <input type="hidden" name="is_active" value="0">
-                    <input type="checkbox" name="is_active" value="1" checked class="rounded border-gray-300">
+                    <input type="checkbox" name="is_active" value="1" checked class="rounded border-gray-300" <?= field_aria_attrs('is_active') ?> >
                     <?= lang('Forms.field_active') ?>
                 </label>
+                <?= render_field_error('is_active') ?>
                 <div>
-                    <label class="flex items-center gap-2 text-sm">
+                    <label class="flex items-center gap-2 text-sm <?= esc(field_error_class('has_captcha', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                         <input type="hidden" name="has_captcha" value="0">
-                        <input type="checkbox" name="has_captcha" value="1" class="rounded border-gray-300">
+                        <input type="checkbox" name="has_captcha" value="1" class="rounded border-gray-300" <?= field_aria_attrs('has_captcha') ?> >
                         <?= lang('Forms.field_captcha') ?>
                     </label>
+                    <?= render_field_error('has_captcha') ?>
                     <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_captcha_hint') ?></p>
                 </div>
             </div>
@@ -44,18 +48,21 @@
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_notify_email') ?></label>
-                <input type="email" name="notify_email" class="<?= input_class('notify_email') ?> w-full" placeholder="admin@example.com" value="<?= esc(old('notify_email', '')) ?>">
+                <input type="email" name="notify_email" maxlength="255" class="<?= input_class('notify_email') ?> w-full" placeholder="admin@example.com" value="<?= esc(old('notify_email', '')) ?>" <?= field_aria_attrs('notify_email') ?>>
+                <?= render_field_error('notify_email') ?>
                 <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_notify_email_hint') ?></p>
             </div>
             <div class="space-y-3">
-                <label class="flex items-center gap-2 text-sm">
+                <label class="flex items-center gap-2 text-sm <?= esc(field_error_class('autoreply_enabled', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                     <input type="hidden" name="autoreply_enabled" value="0">
-                    <input type="checkbox" name="autoreply_enabled" value="1" class="rounded border-gray-300">
+                    <input type="checkbox" name="autoreply_enabled" value="1" class="rounded border-gray-300" <?= field_aria_attrs('autoreply_enabled') ?> >
                     <?= lang('Forms.field_autoreply') ?>
                 </label>
+                <?= render_field_error('autoreply_enabled') ?>
                 <div>
                     <label class="mb-1.5 block text-xs font-medium text-gray-600"><?= lang('Forms.field_autoreply_email_field') ?></label>
-                    <input type="text" name="autoreply_email_field" class="<?= input_class('autoreply_email_field') ?> w-full text-sm" placeholder="email" value="<?= esc(old('autoreply_email_field', '')) ?>">
+                    <input type="text" name="autoreply_email_field" maxlength="100" class="<?= input_class('autoreply_email_field') ?> w-full text-sm" placeholder="email" value="<?= esc(old('autoreply_email_field', '')) ?>" <?= field_aria_attrs('autoreply_email_field') ?>>
+                    <?= render_field_error('autoreply_email_field') ?>
                     <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_autoreply_email_field_hint') ?></p>
                 </div>
             </div>
@@ -107,25 +114,30 @@
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_name') ?> <span class="text-red-500">*</span></label>
-                                <input type="text" name="translations[<?= $idx ?>][name]" class="<?= input_class('translations.' . $idx . '.name') ?> w-full" <?= $isDefault ? 'required' : '' ?>>
+                                <input type="text" name="translations[<?= $idx ?>][name]" maxlength="255" class="<?= input_class('translations.' . $idx . '.name') ?> w-full" <?= $isDefault ? 'required' : '' ?> <?= field_aria_attrs('translations.' . $idx . '.name', $isDefault) ?>>
+                                <?= render_field_error('translations.' . $idx . '.name') ?>
                             </div>
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_submit_label') ?></label>
-                                <input type="text" name="translations[<?= $idx ?>][submit_label]" class="<?= input_class('translations.' . $idx . '.submit_label') ?> w-full" value="Enviar">
+                                <input type="text" name="translations[<?= $idx ?>][submit_label]" maxlength="100" class="<?= input_class('translations.' . $idx . '.submit_label') ?> w-full" value="<?= esc(old('translations.' . $idx . '.submit_label', 'Enviar')) ?>" <?= field_aria_attrs('translations.' . $idx . '.submit_label') ?>>
+                                <?= render_field_error('translations.' . $idx . '.submit_label') ?>
                             </div>
                         </div>
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_description') ?></label>
-                            <textarea name="translations[<?= $idx ?>][description]" rows="2" class="<?= input_class('translations.' . $idx . '.description') ?> block w-full resize-none"></textarea>
+                            <textarea name="translations[<?= $idx ?>][description]" rows="2" class="<?= input_class('translations.' . $idx . '.description') ?> block w-full resize-none" <?= field_aria_attrs('translations.' . $idx . '.description') ?>><?= esc(old('translations.' . $idx . '.description', '')) ?></textarea>
+                            <?= render_field_error('translations.' . $idx . '.description') ?>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_success_message') ?></label>
-                                <textarea name="translations[<?= $idx ?>][success_message]" rows="2" class="<?= input_class('translations.' . $idx . '.success_message') ?> block w-full resize-none"></textarea>
+                                <textarea name="translations[<?= $idx ?>][success_message]" rows="2" class="<?= input_class('translations.' . $idx . '.success_message') ?> block w-full resize-none" <?= field_aria_attrs('translations.' . $idx . '.success_message') ?>><?= esc(old('translations.' . $idx . '.success_message', '')) ?></textarea>
+                                <?= render_field_error('translations.' . $idx . '.success_message') ?>
                             </div>
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_error_message') ?></label>
-                                <textarea name="translations[<?= $idx ?>][error_message]" rows="2" class="<?= input_class('translations.' . $idx . '.error_message') ?> block w-full resize-none"></textarea>
+                                <textarea name="translations[<?= $idx ?>][error_message]" rows="2" class="<?= input_class('translations.' . $idx . '.error_message') ?> block w-full resize-none" <?= field_aria_attrs('translations.' . $idx . '.error_message') ?>><?= esc(old('translations.' . $idx . '.error_message', '')) ?></textarea>
+                                <?= render_field_error('translations.' . $idx . '.error_message') ?>
                             </div>
                         </div>
                     </div>

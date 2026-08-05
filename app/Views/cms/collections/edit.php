@@ -98,6 +98,7 @@
                                 'placeholder' => 'Collections.translation_slug_placeholder',
                                 'help' => 'Collections.translation_slug_help',
                                 'value' => old("translations.{$index}.slug", $transValue['slug'] ?? ''),
+                                'maxlength' => 150,
                                 'errors' => $errors ?? []
                             ]) ?>
 
@@ -140,6 +141,7 @@
                 'value' => $item['collection_key'] ?? '',
                 'placeholder' => 'Collections.field_collection_key_placeholder',
                 'help' => 'Collections.field_collection_key_help',
+                'maxlength' => 50,
                 'errors' => $errors ?? []
             ]) ?>
 

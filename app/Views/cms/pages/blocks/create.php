@@ -67,6 +67,11 @@ $languagesJs   = json_encode(array_values($languages), JSON_UNESCAPED_UNICODE | 
 $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 $previewUrl    = route_to('admin.cms.blocks.preview');
 $parentIdJs    = json_encode($parentInstanceId);
+$oldBlockId = old('block_id', '');
+$oldBlockId = is_scalar($oldBlockId) ? (int) $oldBlockId : 0;
+$serverFieldErrors = session('fieldErrors');
+$serverFieldErrors = is_array($serverFieldErrors) ? $serverFieldErrors : [];
+$serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 $isImageAccept = static function (string $accept): bool {
     $normalized = strtolower(trim($accept));
 
@@ -89,7 +94,7 @@ $isImageAccept = static function (string $accept): bool {
     <?php endif; ?>
 </div>
 
-<div x-data="blockInstanceBuilder(<?= esc($blockTypesJs, 'attr') ?>, <?= esc($languagesJs, 'attr') ?>, <?= esc($entryOptionsUrlJs, 'attr') ?>, '<?= esc($translateUrl, 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>')" class="space-y-6">
+<div x-data="blockInstanceBuilder(<?= esc($blockTypesJs, 'attr') ?>, <?= esc($languagesJs, 'attr') ?>, <?= esc($entryOptionsUrlJs, 'attr') ?>, '<?= esc($translateUrl, 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>', <?= esc(json_encode($oldBlockId), 'attr') ?>)" class="space-y-6">
     <?php ob_start(); ?>
     <div class="relative mb-4">
         <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -157,7 +162,8 @@ $isImageAccept = static function (string $accept): bool {
             </button>
         </div>
 
-        <form method="post" action="<?= route_to($ownerStoreRoute, (string)$page['id']) ?>" class="space-y-6">
+        <form method="post" action="<?= route_to($ownerStoreRoute, (string)$page['id']) ?>" class="space-y-6"
+              data-server-field-errors="<?= esc((string) $serverFieldErrorsJs, 'attr') ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="block_id" :value="selectedBlockType?.id">
             <?php if ($parentInstanceId !== null): ?>
@@ -1002,7 +1008,7 @@ const applyTranslatedText = (targetInput, translatedValue) => {
     }
 };
 
-function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', translateUrl = '', defaultLangCode = 'ES') {
+function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', translateUrl = '', defaultLangCode = 'ES', initialBlockId = 0) {
     const configFactory = typeof window.blockInstanceConfigFactory === 'function'
         ? window.blockInstanceConfigFactory(entryOptionsUrl, {})
         : {};
@@ -1061,6 +1067,11 @@ function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', trans
             if (typeof configFactory.init === 'function') {
                 configFactory.init.call(this);
             }
+            const initialBlock = this.blockTypes.find(bt => Number(bt.id) === Number(initialBlockId));
+            if (initialBlock) {
+                this.selectBlockType(initialBlock);
+            }
+            window.requestAnimationFrame(() => window.AdminFormFieldErrors?.apply(this.$root));
         },
 
         selectBlockType(bt) {
@@ -1304,4 +1315,6 @@ function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', trans
         },
     };
 }
+
 </script>
+<?= view('components/form/server_field_errors') ?>

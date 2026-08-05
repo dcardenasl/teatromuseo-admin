@@ -63,6 +63,9 @@ $blockKey    = $blockType['block_key'] ?? '';
 $previewUrl  = route_to('admin.cms.blocks.preview');
 $configJs    = json_encode($blockConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$serverFieldErrors = session('fieldErrors');
+$serverFieldErrors = is_array($serverFieldErrors) ? $serverFieldErrors : [];
+$serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 ?>
 <meta name="block-preview-url" content="<?= esc($previewUrl) ?>">
 
@@ -103,7 +106,8 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
         <form method="post"
               id="block-edit-form"
               action="<?= route_to($ownerUpdateRoute, (string) $page['id'], (string) $block['id']) ?>"
-              class="space-y-6">
+              class="space-y-6"
+              data-server-field-errors="<?= esc((string) $serverFieldErrorsJs, 'attr') ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="return_to" value="<?= esc($returnTo ?? '', 'attr') ?>">
             <input type="hidden" name="block_id" value="<?= esc((string) $blockIdValue) ?>">
@@ -864,6 +868,7 @@ window.openBlockEditPreview = window.openBlockEditPreview || function openBlockE
     }));
 };
 </script>
+<?= view('components/form/server_field_errors') ?>
 <?php $blockEditContent = ob_get_clean(); ?>
 
 <?= view('components/display/form_section', [

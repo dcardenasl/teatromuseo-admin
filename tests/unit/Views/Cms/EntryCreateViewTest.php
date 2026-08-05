@@ -51,4 +51,27 @@ final class EntryCreateViewTest extends CIUnitTestCase
         $this->assertStringContainsString('translations&#x5B;0&#x5D;&#x5B;featured_image&#x5D;&#x5B;url&#x5D;', $html);
         $this->assertStringContainsString('translations&#x5B;0&#x5D;&#x5B;og_image&#x5D;&#x5B;url&#x5D;', $html);
     }
+
+    public function testCreateViewMarksApiExcerptErrorsAndLimitsLength(): void
+    {
+        service('request')->setLocale('es');
+        session()->set('fieldErrors', [
+            'translations.0.excerpt' => 'El resumen no puede superar los 500 caracteres.',
+        ]);
+
+        $html = view('cms/entries/create', [
+            'item' => [],
+            'collections' => [5 => 'Blog'],
+            'languages' => [['id' => 1, 'is_default' => true, 'code' => 'es']],
+            'defaultLangId' => 1,
+            'defaultLangCode' => 'es',
+            'defaultLangIndex' => 0,
+            'translateTargets' => [],
+        ]);
+
+        $this->assertStringContainsString('name="translations&#x5B;0&#x5D;&#x5B;excerpt&#x5D;"', $html);
+        $this->assertStringContainsString('maxlength="500"', $html);
+        $this->assertStringContainsString('aria-invalid="true"', $html);
+        $this->assertStringContainsString('El resumen no puede superar los 500 caracteres.', $html);
+    }
 }

@@ -16,7 +16,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700" for="name"><?= lang('ApiKeys.name') ?></label>
             <input id="name" name="name" type="text" value="<?= esc(old('name', '')) ?>" required
-                class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error('name') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+                maxlength="100" class="<?= esc(input_class('name')) ?>" <?= field_aria_attrs('name', required: true) ?>>
             <?= render_field_error('name') ?>
         </div>
 
@@ -31,7 +31,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700" for="<?= esc($field) ?>"><?= esc($label) ?></label>
                     <input id="<?= esc($field) ?>" name="<?= esc($field) ?>" type="number" min="1" value="<?= esc(old($field, '')) ?>"
-                        class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error($field) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+                        class="<?= esc(input_class($field)) ?>" <?= field_aria_attrs($field) ?>>
                     <?= render_field_error($field) ?>
                 </div>
             <?php endforeach; ?>

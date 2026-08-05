@@ -155,8 +155,11 @@ $previewUrl   = route_to('admin.cms.blocks.preview');
                 <input type="text"
                        x-model="customBlockKey"
                        placeholder="<?= esc(lang('BlockTypes.field_block_key_placeholder')) ?>"
-                       class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-mono text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                       maxlength="50"
+                       class="<?= esc(input_class('block_key')) ?> font-mono text-sm"
+                       <?= field_aria_attrs('block_key', required: true) ?>>
                 <p class="text-xs text-gray-500"><?= esc(lang('BlockTypes.field_block_key_help')) ?></p>
+                <?= render_field_error('block_key') ?>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -166,6 +169,7 @@ $previewUrl   = route_to('admin.cms.blocks.preview');
                     'required' => true,
                     'value' => '',
                     'placeholder' => 'BlockTypes.field_name_placeholder',
+                    'maxlength' => 100,
                     'errors' => $errors ?? []
                 ]) ?>
 
@@ -175,12 +179,14 @@ $previewUrl   = route_to('admin.cms.blocks.preview');
                     'required' => true,
                     'value' => '',
                     'placeholder' => 'BlockTypes.field_category_placeholder',
+                    'maxlength' => 50,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
 
             <!-- Schema: hidden JSON + editor estructurado -->
             <input type="hidden" name="schema_definition" :value="schemaJson">
+            <?= render_field_error('schema_definition') ?>
 
             <!-- Campos de Contenido -->
             <div>
@@ -230,7 +236,7 @@ $previewUrl   = route_to('admin.cms.blocks.preview');
                 </summary>
                 <div class="px-4 pb-4 pt-2 space-y-4 border-t border-gray-100">
                     <?= view('components/form/textarea', ['name' => 'description', 'label' => 'BlockTypes.field_description', 'required' => false, 'value' => '', 'rows' => 2, 'errors' => $errors ?? []]) ?>
-                    <?= view('components/form/text', ['name' => 'icon',        'label' => 'BlockTypes.field_icon',        'required' => false, 'value' => '', 'errors' => $errors ?? []]) ?>
+                    <?= view('components/form/text', ['name' => 'icon',        'label' => 'BlockTypes.field_icon',        'required' => false, 'value' => '', 'maxlength' => 50, 'errors' => $errors ?? []]) ?>
                     <?= view('components/form/boolean', ['name' => 'supports_pages',   'label' => 'BlockTypes.field_supports_pages',   'value' => true,  'on_label' => 'App.yes', 'off_label' => 'App.no', 'errors' => $errors ?? []]) ?>
                     <?= view('components/form/boolean', ['name' => 'supports_entries', 'label' => 'BlockTypes.field_supports_entries', 'value' => true,  'on_label' => 'App.yes', 'off_label' => 'App.no', 'errors' => $errors ?? []]) ?>
                     <div>
@@ -238,9 +244,9 @@ $previewUrl   = route_to('admin.cms.blocks.preview');
                             <?= lang('BlockTypes.field_is_container') ?>
                         </span>
                         <input type="hidden" name="is_container" value="0">
-                        <label class="mt-2 inline-flex cursor-pointer items-center gap-3">
+                        <label class="mt-2 inline-flex cursor-pointer items-center gap-3 <?= esc(field_error_class('is_container', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                             <input id="is_container" name="is_container" type="checkbox" value="1"
-                                   class="peer sr-only" x-model="isContainer" @change="rebuildJson()">
+                                   class="peer sr-only" x-model="isContainer" @change="rebuildJson()" <?= field_aria_attrs('is_container') ?>>
                             <span class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-gray-200 transition-colors duration-200 ease-in-out peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2"
                                   :style="isContainer ? 'width: 2.75rem; height: 1.5rem; background-color: var(--color-brand-600)' : 'width: 2.75rem; height: 1.5rem'"
                                   aria-hidden="true">
@@ -249,6 +255,7 @@ $previewUrl   = route_to('admin.cms.blocks.preview');
                             </span>
                             <span class="text-sm font-medium text-gray-700" x-text="isContainer ? 'Sí' : 'No'"></span>
                         </label>
+                        <?= render_field_error('is_container') ?>
                     </div>
 
                     <!-- Seleccion de bloques hijos permitidos -->

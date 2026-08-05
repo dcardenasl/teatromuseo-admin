@@ -35,6 +35,7 @@
                     'value' => old('video_url', $item['video_url'] ?? ''),
                     'placeholder' => 'Museum.field_video_url_placeholder',
                     'help' => 'Museum.field_video_url_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
@@ -120,6 +121,7 @@
                                 'required' => $isDefault,
                                 'placeholder' => 'Museum.field_name_placeholder',
                                 'help' => 'Museum.field_name_help',
+                                'maxlength' => 255,
                                 'value' => old("translations.{$index}.name", $transValue['name'] ?? ''),
                                 'errors' => $errors ?? []
                             ]) ?>

@@ -30,6 +30,7 @@
                     'value' => old('icon', ''),
                     'placeholder' => 'Museum.field_icon_placeholder',
                     'help' => 'Museum.field_icon_help',
+                    'maxlength' => 255,
                     'errors' => $errors ?? []
                 ]) ?>
             </div>
@@ -97,6 +98,7 @@
                                 'required' => $isDefault,
                                 'placeholder' => 'Museum.field_name_placeholder',
                                 'help' => 'Museum.field_name_help',
+                                'maxlength' => 255,
                                 'value' => old("translations.{$index}.name", ''),
                                 'errors' => $errors ?? []
                             ]) ?>

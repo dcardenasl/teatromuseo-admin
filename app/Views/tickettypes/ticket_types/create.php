@@ -42,6 +42,7 @@
             'value' => $item['name'] ?? '',
             'placeholder' => 'TicketTypes.field_name_placeholder',
             'help' => 'TicketTypes.field_name_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 

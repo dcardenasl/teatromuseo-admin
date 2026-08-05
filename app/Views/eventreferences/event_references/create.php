@@ -31,6 +31,7 @@
             'value' => $item['source_system'] ?? '',
             'placeholder' => 'EventReferences.field_source_system_placeholder',
             'help' => 'EventReferences.field_source_system_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -41,6 +42,7 @@
             'value' => $item['source_type'] ?? '',
             'placeholder' => 'EventReferences.field_source_type_placeholder',
             'help' => 'EventReferences.field_source_type_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -51,6 +53,7 @@
             'value' => $item['source_id'] ?? '',
             'placeholder' => 'EventReferences.field_source_id_placeholder',
             'help' => 'EventReferences.field_source_id_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -61,6 +64,7 @@
             'value' => $item['relation'] ?? '',
             'placeholder' => 'EventReferences.field_relation_placeholder',
             'help' => 'EventReferences.field_relation_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -71,6 +75,7 @@
             'value' => $item['metadata'] ?? '',
             'placeholder' => 'EventReferences.field_metadata_placeholder',
             'help' => 'EventReferences.field_metadata_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
             </div>

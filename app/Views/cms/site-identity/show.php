@@ -94,6 +94,7 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
             $label       = cms_setting_resolve_label($setting);
             $placeholder = cms_setting_resolve_placeholder($setting);
             $helpText    = cms_setting_resolve_help($setting);
+            $fieldName   = "{$key}_value";
             ?>
                     <div class="px-5 py-4">
                         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -107,7 +108,7 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
 
                         <?php if ($inputType === 'boolean'): ?>
                             <?= view('components/form/boolean', [
-                            'name'      => "{$key}_value",
+                            'name'      => $fieldName,
                             'label'     => '',
                             'value'     => filter_var($currentVal, FILTER_VALIDATE_BOOLEAN),
                             'on_label'  => 'App.yes',
@@ -117,18 +118,22 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
                         ]) ?>
 
                         <?php elseif ($inputType === 'textarea' || $inputType === 'richtext'): ?>
-                            <textarea name="<?= esc($key) ?>_value"
+                            <textarea name="<?= esc($fieldName) ?>"
                                       rows="4"
                                       placeholder="<?= esc($placeholder) ?>"
-                                      class="form-input text-sm"
-                                      <?= $isReadonly ? 'readonly' : '' ?>><?= esc($currentVal) ?></textarea>
+                                      class="<?= esc(input_class($fieldName)) ?> text-sm"
+                                      <?= $isReadonly ? 'readonly' : '' ?>
+                                      <?= field_aria_attrs($fieldName) ?>><?= esc(old($fieldName, $currentVal)) ?></textarea>
+                            <?= render_field_error($fieldName) ?>
 
                         <?php elseif ($inputType === 'code'): ?>
-                            <textarea name="<?= esc($key) ?>_value"
+                            <textarea name="<?= esc($fieldName) ?>"
                                       rows="5"
                                       placeholder="<?= esc($placeholder) ?>"
-                                      class="form-input font-mono text-sm bg-gray-950 text-green-400 border-gray-700"
-                                      <?= $isReadonly ? 'readonly' : '' ?>><?= esc($currentVal) ?></textarea>
+                                      class="<?= esc(input_class($fieldName)) ?> font-mono text-sm bg-gray-950 text-green-400 border-gray-700"
+                                      <?= $isReadonly ? 'readonly' : '' ?>
+                                      <?= field_aria_attrs($fieldName) ?>><?= esc(old($fieldName, $currentVal)) ?></textarea>
+                            <?= render_field_error($fieldName) ?>
 
                         <?php elseif ($inputType === 'select'):
                             $rawOptions = $setting['options_json'] ?? null;
@@ -149,13 +154,14 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
                                 }
                             }
                             ?>
-                            <select name="<?= esc($key) ?>_value" class="form-input text-sm" <?= $isReadonly ? 'disabled' : '' ?>>
+                            <select name="<?= esc($fieldName) ?>" class="<?= esc(input_class($fieldName)) ?> text-sm" <?= $isReadonly ? 'disabled' : '' ?> <?= field_aria_attrs($fieldName) ?>>
                                 <?php foreach ($options as $optVal => $optLabel): ?>
                                     <option value="<?= esc($optVal) ?>" <?= ($currentVal === $optVal) ? 'selected' : '' ?>>
                                         <?= esc($optLabel) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <?= render_field_error($fieldName) ?>
 
                         <?php else:
                             $htmlType = match ($inputType) {
@@ -169,11 +175,13 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
                             };
                             ?>
                             <input type="<?= esc($htmlType) ?>"
-                                   name="<?= esc($key) ?>_value"
-                                   value="<?= esc($currentVal) ?>"
+                                   name="<?= esc($fieldName) ?>"
+                                   value="<?= esc(old($fieldName, $currentVal)) ?>"
                                    placeholder="<?= esc($placeholder) ?>"
-                                   class="form-input text-sm"
-                                   <?= $isReadonly ? 'readonly' : '' ?>>
+                                   class="<?= esc(input_class($fieldName)) ?> text-sm"
+                                   <?= $isReadonly ? 'readonly' : '' ?>
+                                   <?= field_aria_attrs($fieldName) ?>>
+                            <?= render_field_error($fieldName) ?>
                         <?php endif; ?>
 
                         <?php if ($helpText !== ''): ?>

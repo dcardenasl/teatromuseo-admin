@@ -20,6 +20,7 @@
             'value' => $item['menu_key'] ?? '',
             'placeholder' => 'Menus.field_menu_key_placeholder',
             'help' => 'Menus.field_menu_key_help',
+            'maxlength' => 50,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -30,6 +31,7 @@
             'value' => $item['location'] ?? '',
             'placeholder' => 'Menus.field_location_placeholder',
             'help' => 'Menus.field_location_help',
+            'maxlength' => 50,
             'errors' => $errors ?? []
         ]) ?>
         <?php $mainFields = ob_get_clean(); ?>

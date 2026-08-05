@@ -94,6 +94,7 @@ foreach ($languages as $language) {
                         'label' => 'Events.field_event_type_name',
                         'required' => ! empty($language['is_default']),
                         'value' => old("translations.{$index}.name", $translationValue['name'] ?? ''),
+                        'maxlength' => 255,
                         'errors' => $errors ?? [],
                     ]) ?>
                     <?= view('components/form/slug', [
@@ -103,6 +104,7 @@ foreach ($languages as $language) {
                         'sourceId' => sprintf('[name="translations[%d][name]"]', $index),
                         'value' => old("translations.{$index}.slug", $translationValue['slug'] ?? ''),
                         'help' => 'Events.field_event_type_slug_help',
+                        'maxlength' => 255,
                         'checkUrl' => route_to('admin.events.event_types.check_slug'),
                         'languageSelector' => sprintf('[name="translations[%d][locale]"]', $index),
                         'currentId' => $item['id'] ?? '',

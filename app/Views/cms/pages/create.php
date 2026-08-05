@@ -173,6 +173,7 @@
                                 'sourceId' => sprintf('[name="translations[%d][title]"]', $index),
                                 'checkUrl' => $checkUrl,
                                 'value' => old("translations.{$index}.slug", ''),
+                                'maxlength' => 150,
                                 'help' => 'Pages.translation_slug_help',
                                 'errors' => $errors ?? []
                             ]) ?>
@@ -224,6 +225,7 @@
                                         'fieldKey' => 'og_image',
                                         'copyEnabled' => true,
                                         'accept' => 'image',
+                                        'maxlength' => 2048,
                                     ]) ?>
                                 </div>
                             </details>
