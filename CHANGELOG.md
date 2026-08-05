@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`Universal` CRUD module** — removed. It gated a generic CRUD over cms-domain behind a plain
+  `auth` filter (every other module requires `admin`/`superadmin`/`permission:`), had no service
+  layer, no language files, and no PSR-4 registration of its own; the stale `Catalog` PSR-4 entry
+  in `app/Config/Autoload.php` that pointed at the same removed tree is gone too.
 - **Nested API validation feedback** — `ApiClient` and `BaseWebController` now flatten nested
   `fieldErrors`/`errors` payloads into the dot-notated keys consumed by forms, so authentication,
   CMS, and shared CRUD failures retain actionable field-level messages instead of falling back to
