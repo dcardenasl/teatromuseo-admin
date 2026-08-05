@@ -17,15 +17,6 @@
 
 ### Fase 1 — Seguridad
 
-- [ ] **SEC-04 — Eliminar el módulo `Universal`.** `app/Modules/Universal/Config/Routes.php:10`
-  protege el grupo solo con `['filter' => 'auth']`, mientras todos los demás módulos exigen `admin`,
-  `superadmin` o `permission:`. Expone un CRUD genérico sobre cms-domain a **cualquier usuario
-  autenticado**. Es además el único módulo sin capa de servicio (agarra `service('domainApiClient')`
-  directo), sin archivos de idioma (textos en inglés incrustados en
-  `app/Views/admin/universal/index.php:32,90`), sin registro PSR-4 propio, y con las vistas en
-  `app/Views/admin/` en vez de `app/Views/{módulo}/`.
-  Borrar: `app/Modules/Universal/`, `app/Views/admin/universal/`, y el registro PSR-4 muerto
-  `'App\Modules\Catalog'` de `app/Config/Autoload.php:55` (apunta a un directorio inexistente).
 - [ ] **SEC-07 — El CI clona el repositorio equivocado.**
   `.github/workflows/ci.yml:29` clona `ci4-website-builder-domain` en `../ci4-website-builder-domain`,
   pero `composer.json:71` mapea `"App\\Libraries\\Cms\\": "../teatromuseo-cms-domain/app/Libraries/Cms/"`.
@@ -115,6 +106,10 @@
 - [ ] Definir roles/permisos de aprobación antes de implementar migraciones, servicios y UI.
 
 ## ✅ Completadas
+
+- **SEC-04 — Eliminar el módulo `Universal` (2026-08-05):** se retiraron sus rutas, controlador y
+  vistas, junto con el mapeo PSR-4 muerto de `Catalog`. Se añadió regresión que confirma que la ruta
+  `/admin/universal/pages` ya no existe. `composer quality` ✅.
 
 - **PERF-BLOCKS-001 — "Bloques de Contenido" tardaba 3-8s en cargar, ahora ~1s (2026-08-02):**
   Reporte: navegar a `/admin/cms/pages/{id}/blocks` se sentía "muy lento". Dos causas

@@ -52,7 +52,6 @@ class Autoload extends AutoloadConfig
         'App\Modules\Language'  => APPPATH . 'Modules/Language',
         'App\Modules\Iam'       => APPPATH . 'Modules/Iam',
         'App\Modules\System'    => APPPATH . 'Modules/System',
-        'App\Modules\Catalog'   => APPPATH . 'Modules/Catalog',
         'App\Modules\Cms'       => APPPATH . 'Modules/Cms',
         'App\Modules\Analytics' => APPPATH . 'Modules/Analytics',
         'App\Modules\Events'  => APPPATH . 'Modules/Events',

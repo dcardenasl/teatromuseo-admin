@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 
@@ -60,5 +61,13 @@ final class ErrorPagesTest extends CIUnitTestCase
         $result->assertStatus(500);
         $this->assertStringContainsString('data-error-page="500"', $body);
         $this->assertStringContainsString(htmlentities(lang('App.error500Title'), ENT_QUOTES, 'UTF-8'), $body);
+    }
+
+    public function testUniversalCrudRouteNoLongerExists(): void
+    {
+        $this->expectException(PageNotFoundException::class);
+
+        $result = $this->withSession(['access_token' => 'test-token'])
+            ->get('/admin/universal/pages');
     }
 }
