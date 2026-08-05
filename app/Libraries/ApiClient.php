@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Libraries;
 
+use App\Support\FieldErrorNormalizer;
 use App\Support\SessionKeys;
 use CodeIgniter\HTTP\CURLRequest;
 use CodeIgniter\HTTP\Response;
@@ -507,42 +508,13 @@ class ApiClient implements ApiClientInterface
 
         $fieldErrors = [];
 
-        $sources = [];
-        if (isset($payload['fieldErrors']) && is_array($payload['fieldErrors'])) {
-            $sources[] = $payload['fieldErrors'];
-        }
-        if (isset($payload['errors']) && is_array($payload['errors'])) {
-            $sources[] = $payload['errors'];
-        }
+        foreach (['fieldErrors', 'errors'] as $source) {
+            if (! isset($payload[$source])) {
+                continue;
+            }
 
-        foreach ($sources as $errors) {
-            foreach ($errors as $key => $value) {
-                if (! is_string($key) || $key === 'general') {
-                    continue;
-                }
-
-                if (is_scalar($value)) {
-                    $fieldErrors[$key] = (string) $value;
-                    continue;
-                }
-
-                if (is_array($value)) {
-                    // If it's an array of errors, take the first string we can find.
-                    foreach ($value as $entry) {
-                        if (is_scalar($entry)) {
-                            $fieldErrors[$key] = (string) $entry;
-                            break;
-                        }
-                        if (is_array($entry)) {
-                            foreach ($entry as $subEntry) {
-                                if (is_scalar($subEntry)) {
-                                    $fieldErrors[$key] = (string) $subEntry;
-                                    break 2;
-                                }
-                            }
-                        }
-                    }
-                }
+            foreach (FieldErrorNormalizer::normalize($payload[$source]) as $key => $message) {
+                $fieldErrors[$key] ??= $message;
             }
         }
 
