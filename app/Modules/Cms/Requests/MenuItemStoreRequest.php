@@ -42,6 +42,9 @@ class MenuItemStoreRequest extends BaseFormRequest
             'css_class'   => 'permit_empty|string|max_length[100]',
             'sort_order'  => 'required|integer',
             'is_active'   => 'permit_empty|in_list[0,1]',
+            'translations' => 'permit_empty',
+            'translations.*.label' => 'permit_empty|string|max_length[150]',
+            'translations.*.custom_url' => 'permit_empty|string|max_length[500]',
         ];
     }
 
@@ -85,7 +88,7 @@ class MenuItemStoreRequest extends BaseFormRequest
                 $customUrl = isset($row['custom_url']) ? trim((string) $row['custom_url']) : '';
 
                 return [
-                    'language_id' => (int) $languageId,
+                    'language_id' => (int) ($row['language_id'] ?? $languageId),
                     'label'       => $label,
                     'custom_url'  => $payload['link_type'] === 'custom_url' ? ($customUrl !== '' ? $customUrl : null) : null,
                 ];

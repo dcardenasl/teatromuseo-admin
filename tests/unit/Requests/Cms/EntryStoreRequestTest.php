@@ -123,4 +123,21 @@ final class EntryStoreRequestTest extends CIUnitTestCase
         $this->assertCount(1, $payload['translations']);
         $this->assertSame(9, $payload['translations'][0]['og_image_file_id']);
     }
+
+    public function testValidationRejectsTranslationFieldsThatExceedDomainLimits(): void
+    {
+        $request = service('request');
+        $request->setGlobal('post', [
+            'collection_id' => '12',
+            'status' => 'draft',
+            'translations' => [[
+                'excerpt' => str_repeat('x', 501),
+            ]],
+        ]);
+
+        $formRequest = new EntryStoreRequest($request, service('validation'));
+
+        $this->assertFalse($formRequest->validate());
+        $this->assertArrayHasKey('translations.0.excerpt', $formRequest->errors());
+    }
 }

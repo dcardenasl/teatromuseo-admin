@@ -51,6 +51,10 @@ class CollectionStoreRequest extends BaseFormRequest
             'block_template' => 'permit_empty',
             'wizard_config' => 'permit_empty',
             'translations' => 'permit_empty',
+            'translations.*.slug' => 'permit_empty|string|max_length[150]',
+            'translations.*.name' => 'permit_empty|string|max_length[150]',
+            'translations.*.description' => 'permit_empty|string',
+            'translations.*.entry_cta_label' => 'permit_empty|string|max_length[100]',
         ];
     }
 

@@ -16,9 +16,9 @@ class LanguageStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|min_length[2]|max_length[255]',
-            'name' => 'required|min_length[2]|max_length[255]',
-            'native_name' => 'permit_empty|string|max_length[255]',
+            'code' => 'required|min_length[2]|max_length[10]',
+            'name' => 'required|min_length[2]|max_length[50]',
+            'native_name' => 'required|string|max_length[50]',
             'is_default' => 'permit_empty|in_list[0,1]',
             'is_active' => 'permit_empty|in_list[0,1]',
             'sort_order' => 'permit_empty|integer',
