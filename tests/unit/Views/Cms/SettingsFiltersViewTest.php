@@ -25,9 +25,10 @@ final class SettingsFiltersViewTest extends CIUnitTestCase
         ]);
 
         $this->assertStringContainsString('name="setting_group"', $html);
-        foreach (['identity', 'contact', 'integration', 'analytics', 'social'] as $group) {
+        foreach (['identity', 'integration', 'analytics', 'social'] as $group) {
             $this->assertStringContainsString('value="' . $group . '"', $html);
         }
+        $this->assertStringNotContainsString('value="contact"', $html);
         foreach (['general', 'seo', 'cms_meta'] as $obsoleteGroup) {
             $this->assertStringNotContainsString('value="' . $obsoleteGroup . '"', $html);
         }

@@ -21,7 +21,7 @@ return [
     'social_section' => 'Redes sociales',
     'social_section_intro' => 'Configura los enlaces a los perfiles de redes sociales de la organización. Se mostrarán automáticamente en el pie de página.',
     'footer_section' => 'Personalización del Footer',
-    'footer_section_intro' => 'Configura el diseño y los colores de fondo, texto y bordes del pie de página.',
+    'footer_section_intro' => 'Configura el diseño de los menús de navegación y legales del pie de página.',
 
     // Etiquetas genéricas para campos de archivo metadata-driven
     'select_file'  => 'Seleccionar archivo',
