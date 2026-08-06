@@ -58,6 +58,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cross-repo `CmsEnums` coupling** — `MenuItemStoreRequest`/`BlockInstanceController` now use a
+  locally owned `App\Support\CmsFieldEnums` instead of a `composer.json` PSR-4 mapping into
+  `teatromuseo-cms-domain`'s tree, which silently broke in CI and was never present in the Docker
+  image. `.env.example`/`docker-compose.yml` also now point at the current hub (`8180`) and admin
+  (`8182`) ports.
+- **Occurrence datetimes ignored their event timezone** — `formatDate()` now accepts an optional
+  timezone alongside the date value, and datetime-local form inputs normalize API timestamps
+  (`Y-m-d H:i:s`) into the format the HTML5 input expects.
 - **`Universal` CRUD module** — removed. It gated a generic CRUD over cms-domain behind a plain
   `auth` filter (every other module requires `admin`/`superadmin`/`permission:`), had no service
   layer, no language files, and no PSR-4 registration of its own; the stale `Catalog` PSR-4 entry
