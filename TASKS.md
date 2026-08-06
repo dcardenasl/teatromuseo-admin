@@ -17,19 +17,8 @@
 
 ### Fase 1 — Seguridad
 
-- [ ] **SEC-07 — El CI clona el repositorio equivocado.**
-  `.github/workflows/ci.yml:29` clona `ci4-website-builder-domain` en `../ci4-website-builder-domain`,
-  pero `composer.json:71` mapea `"App\\Libraries\\Cms\\": "../teatromuseo-cms-domain/app/Libraries/Cms/"`.
-  La ruta nunca se puebla, y **no es un mapeo muerto**:
-  `app/Modules/Cms/Requests/MenuItemStoreRequest.php:7` y
-  `app/Modules/Cms/Controllers/BlockInstanceController.php:8` hacen `use App\Libraries\Cms\CmsEnums;`.
-  Además el `Dockerfile` solo hace `COPY . .` → **la imagen Docker del admin no contiene
-  `App\Libraries\Cms`**. Fix inmediato: corregir la ruta del clone. Fix estructural: `CORE-04`.
-
 ### Fase 2 — Configuración y CI
 
-- [ ] **CFG-01 — Puertos incorrectos.** `.env.example`: `app.baseURL` en 8082 (debe ser **8182**) y
-  `apiClient.baseUrl` en 8080 (debe ser **8180**). `docker-compose.yml:26` bindea `8082:80`.
 - [ ] **CFG-02 — El `.env.example` documenta 9 variables y el código lee 90.** Es esencialmente
   ficción. Reconstruirlo desde las claves reales: `API_BASE_URL`, `DOMAIN_API_BASE_URL`,
   `PUBLIC_SITE_URL`, `CMS_PREVIEW_SECRET`, `API_APP_KEY`, `BFF_API_APP_KEY`,
@@ -46,12 +35,8 @@
 
 ### Fase 3 — Extracción a `ci4-api-core`
 
-- [ ] **CORE-04 — Romper el acoplamiento PSR-4 hacia un repositorio hermano.** `composer.json:71`
-  mapea `App\Libraries\Cms\` al `app/` de `teatromuseo-cms-domain`, obligando a cada clone, job de
-  CI y build de Docker a reproducir el layout exacto del monorepo — y ya rompe los dos últimos
-  (`SEC-07`). Extraer `CmsEnums` y lo que arrastre a `ci4-api-core` o a un paquete de contratos, y
-  eliminar el mapeo relativo. Retirar también `composer.json:127`
-  (`"sync-swagger": "cp ../ci4-website-builder-api/..."`, directorio inexistente).
+- [x] ~~CORE-04~~ — **completado 2026-08-06.** Ver Completadas. (`composer.json:127`
+  `sync-swagger` ya se había retirado en un pase anterior, junto con `SEC-07`.)
 
 ### Fase 6 — Frontend y docs
 
@@ -106,6 +91,26 @@
 - [ ] Definir roles/permisos de aprobación antes de implementar migraciones, servicios y UI.
 
 ## ✅ Completadas
+
+- **CORE-04 — Roto el acoplamiento PSR-4 hacia `teatromuseo-cms-domain` (2026-08-06):**
+  supera el arreglo parcial de `SEC-07` de abajo — en vez de mantener el checkout cruzado
+  correctamente apuntado, se eliminó por completo. El admin solo usaba 2 de las 6 constantes de
+  `App\Libraries\Cms\CmsEnums` (`MENU_LINK_TYPES` en `MenuItemStoreRequest`,
+  `NON_TRANSLATABLE_TYPES` en `BlockInstanceController`). Se creó `App\Support\CmsFieldEnums` con
+  exactamente esas dos (siguiendo el patrón ya existente de `App\Support\CatalogOptions`), se quitó
+  el mapeo `"App\\Libraries\\Cms\\": "../teatromuseo-cms-domain/app/Libraries/Cms/"` de
+  `composer.json`, y se retiró el paso de CI que clonaba el repo hermano. La imagen Docker
+  (`COPY app ./app`) ya contiene todo lo que el admin necesita — antes, no. Duplicación aceptada
+  a propósito: son solo 2 constantes de validación cliente-side, el mismo trade-off que cualquier
+  front/back desacoplado asume; mantener sincronizado a mano si cms-domain cambia esas listas.
+  Verificado: `composer quality` (PHPStan + CS) ✅, 758 tests / 2.634 assertions ✅, incluidos los
+  25 tests de `MenuItem`/`BlockInstance` que ejercitan las constantes migradas.
+
+- **SEC-07 + CFG-01 — CI y puertos canónicos (2026-08-05):** el workflow clona
+  `teatromuseo-cms-domain` en `../teatromuseo-cms-domain` y valida `CmsEnums.php`; se retiró el
+  script muerto de Swagger y se alinearon `.env.example`, Compose y el cliente de dominio con
+  admin `8182`, hub `8180` y CMS `8190`. Verificado: `composer quality` y 758 tests / 2.634
+  assertions.
 
 - **SEC-04 — Eliminar el módulo `Universal` (2026-08-05):** se retiraron sus rutas, controlador y
   vistas, junto con el mapeo PSR-4 muerto de `Catalog`. Se añadió regresión que confirma que la ruta

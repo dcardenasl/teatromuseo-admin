@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Cms\Requests;
 
-use App\Libraries\Cms\CmsEnums;
 use App\Modules\Cms\Support\TranslationRowNormalizer;
+use App\Support\CmsFieldEnums;
 use App\Support\Requests\BaseFormRequest;
 
 class MenuItemStoreRequest extends BaseFormRequest
@@ -33,7 +33,7 @@ class MenuItemStoreRequest extends BaseFormRequest
         return [
             'menu_id'     => 'required|integer',
             'parent_id'   => 'permit_empty|integer',
-            'link_type'   => 'required|' . CmsEnums::inListRule(CmsEnums::MENU_LINK_TYPES),
+            'link_type'   => 'required|' . CmsFieldEnums::inListRule(CmsFieldEnums::MENU_LINK_TYPES),
             'page_id'     => 'permit_empty|integer',
             'entry_id'    => 'permit_empty|integer',
             'collection_id' => 'permit_empty|integer',

@@ -68,7 +68,6 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "App\\Libraries\\Cms\\": "../teatromuseo-cms-domain/app/Libraries/Cms/",
             "Config\\": "app/Config/"
         },
         "exclude-from-classmap": [
@@ -124,7 +123,6 @@
             "@test",
             "@quality"
         ],
-        "sync-swagger": "cp ../ci4-website-builder-api/public/swagger.json swagger_contract.json",
         "cs-fix": "@format",
         "cs-check": "@format:check",
         "phpstan": "@analyse"

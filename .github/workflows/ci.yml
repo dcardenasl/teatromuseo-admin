@@ -21,13 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout ci4-website-builder-domain (App\Libraries\Cms\ PSR-4 dependency)
-        # actions/checkout's `path` input is confined to $GITHUB_WORKSPACE and
-        # rejects `../` targets, so a real sibling checkout (matching this
-        # repo's composer.json App\Libraries\Cms\ => ../ci4-website-builder-domain/...
-        # PSR-4 mapping) needs a plain git clone instead of the checkout action.
-        run: git clone --branch dev --depth 1 https://github.com/dcardenasl/ci4-website-builder-domain.git ../ci4-website-builder-domain
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
