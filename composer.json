@@ -112,16 +112,13 @@
         "format:check": "vendor/bin/php-cs-fixer fix --dry-run --diff",
         "format": "vendor/bin/php-cs-fixer fix",
         "i18n-check": "php scripts/i18n-check.php",
-        "coverage:check": "php scripts/check-coverage.php 54.20 tests/coverage.xml",
+        "coverage:check": "php scripts/check-coverage.php 60 tests/coverage/clover.xml",
         "quality": [
             "@analyse",
             "@format:check",
             "@i18n-check",
-            "@test:fixture-policy"
-        ],
-        "ci": [
-            "@test",
-            "@quality"
+            "@test:fixture-policy",
+            "@test"
         ],
         "cs-fix": "@format",
         "cs-check": "@format:check",

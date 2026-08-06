@@ -17,7 +17,7 @@
         ignoreDeprecatedCodeUnits="true"
         disableCodeCoverageIgnore="true">
         <report>
-            <clover outputFile="tests/coverage.xml"/>
+            <clover outputFile="tests/coverage/clover.xml"/>
             <html outputDirectory="tests/coverage/"/>
         </report>
     </coverage>
