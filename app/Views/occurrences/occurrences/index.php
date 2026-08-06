@@ -116,8 +116,8 @@ $occurrenceVenueLabels = array_map('strval', $venues ?? []);
                         <tr class="<?= esc(table_row_class()) ?>">
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($occurrenceEventLabels)) ?>)[String(row.event_id)] ?? '—'"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($occurrenceVenueLabels)) ?>)[String(row.venue_id)] ?? '—'"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate(row.start_time)"></td>
-                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate(row.end_time)"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate({ date: row.start_time, timezone: row.timezone })"></td>
+                            <td class="<?= esc(table_td_class('muted')) ?>" x-text="formatDate({ date: row.end_time, timezone: row.timezone })"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="(<?= esc(json_encode($occurrenceStatusLabels)) ?>)[String(row.status)] ?? String(row.status ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.capacity ?? '-')"></td>
                             <td class="<?= esc(table_td_class('muted')) ?>" x-text="String(row.available_spots ?? '-')"></td>

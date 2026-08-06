@@ -24,10 +24,18 @@ export const toDateInput = (value) => {
 export const formatDate = (value) => {
     const candidate = toDateInput(value);
     if (candidate === null || candidate === '') return '-';
-    const date = new Date(candidate);
+    const raw = String(candidate);
+    const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(?::\d{2})?$/.test(raw)
+        ? raw.replace(' ', 'T')
+        : raw;
+    const date = new Date(normalized);
     if (Number.isNaN(date.getTime())) return String(candidate);
+    const timezone = typeof value === 'object' && value !== null && !Array.isArray(value)
+        ? (typeof value.timezone === 'string' ? value.timezone : undefined)
+        : undefined;
     return new Intl.DateTimeFormat(localeTag(), {
         day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit',
+        ...(timezone ? { timeZone: timezone } : {})
     }).format(date);
 };
