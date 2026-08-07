@@ -116,7 +116,7 @@ $wizardDefaultLanguageLabel = (string) ($wizardDefaultLanguage['label'] ?? $wiza
                         <div class="space-y-4">
                             <div x-show="collectionErrors.step1" x-cloak class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" x-text="collectionErrors.step1"></div>
                             <div class="grid gap-4 md:grid-cols-2">
-                                <?= view('components/forms/text_input', ['name' => 'collection_name', 'label' => lang('Wizard.wizard_structure_field_name'), 'type' => 'text', 'class' => 'block md:col-span-2', 'maxlength' => 150, 'alpineErrorField' => 'collection_name', 'attrs' => 'x-model="form.name"']) ?>
+                                <?= view('components/form/text_input', ['name' => 'collection_name', 'label' => lang('Wizard.wizard_structure_field_name'), 'type' => 'text', 'class' => 'block md:col-span-2', 'maxlength' => 150, 'alpineErrorField' => 'collection_name', 'attrs' => 'x-model="form.name"']) ?>
                                 <?= view('components/form/slug', [
                                     'name' => 'collection_slug_base',
                                     'label' => 'Wizard.wizard_structure_field_slug_base',
@@ -230,7 +230,7 @@ $wizardDefaultLanguageLabel = (string) ($wizardDefaultLanguage['label'] ?? $wiza
                                                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                                                     <input type="hidden" id="collection_translation_language_<?= $translationIndex ?>" name="<?= esc($translationFieldPrefix) ?>[language_id]" value="<?= esc($languageId) ?>">
 
-                                                    <?= view('components/forms/text_input', [
+                                                    <?= view('components/form/text_input', [
                                                         'name' => "collection_translation_name_{$translationIndex}",
                                                         'label' => lang('Wizard.wizard_structure_translation_name_label'),
                                                         'type' => 'text',
@@ -379,8 +379,8 @@ $wizardDefaultLanguageLabel = (string) ($wizardDefaultLanguage['label'] ?? $wiza
                         </template>
                     </select>
                 </label>
-                <?= view('components/forms/text_input', ['name' => 'page_title', 'label' => lang('Wizard.wizard_structure_page_title'), 'type' => 'text', 'class' => 'block', 'maxlength' => 255, 'alpineErrorField' => 'page_title', 'attrs' => 'x-model="page.title"']) ?>
-                <?= view('components/forms/text_input', ['name' => 'page_slug', 'label' => lang('Wizard.wizard_structure_page_slug'), 'type' => 'text', 'class' => 'block', 'maxlength' => 150, 'alpineErrorField' => 'page_slug', 'attrs' => 'x-model="page.slug"']) ?>
+                <?= view('components/form/text_input', ['name' => 'page_title', 'label' => lang('Wizard.wizard_structure_page_title'), 'type' => 'text', 'class' => 'block', 'maxlength' => 255, 'alpineErrorField' => 'page_title', 'attrs' => 'x-model="page.title"']) ?>
+                <?= view('components/form/text_input', ['name' => 'page_slug', 'label' => lang('Wizard.wizard_structure_page_slug'), 'type' => 'text', 'class' => 'block', 'maxlength' => 150, 'alpineErrorField' => 'page_slug', 'attrs' => 'x-model="page.slug"']) ?>
             </div>
             <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
                 <p class="font-semibold text-gray-900 mb-3"><?= esc(lang('Wizard.wizard_structure_final_summary')) ?></p>
@@ -399,10 +399,10 @@ $wizardDefaultLanguageLabel = (string) ($wizardDefaultLanguage['label'] ?? $wiza
         <form @submit.prevent="submitMenu()" class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-6">
             <div><p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500"><?= esc(lang('Wizard.create_menu')) ?></p><h2 class="mt-1 text-2xl font-bold text-gray-900"><?= esc(lang('Wizard.create_menu')) ?></h2></div>
             <div class="grid gap-4 md:grid-cols-2">
-                <?= view('components/forms/text_input', ['name' => 'menu_key', 'label' => lang('Wizard.wizard_structure_menu_key'), 'type' => 'text', 'class' => 'block', 'maxlength' => 50, 'alpineErrorField' => 'menu_key', 'attrs' => 'x-model="menu.menu_key"']) ?>
-                <?= view('components/forms/text_input', ['name' => 'menu_location', 'label' => lang('Wizard.wizard_structure_menu_location'), 'type' => 'text', 'class' => 'block', 'maxlength' => 50, 'alpineErrorField' => 'menu_location', 'attrs' => 'x-model="menu.location"']) ?>
+                <?= view('components/form/text_input', ['name' => 'menu_key', 'label' => lang('Wizard.wizard_structure_menu_key'), 'type' => 'text', 'class' => 'block', 'maxlength' => 50, 'alpineErrorField' => 'menu_key', 'attrs' => 'x-model="menu.menu_key"']) ?>
+                <?= view('components/form/text_input', ['name' => 'menu_location', 'label' => lang('Wizard.wizard_structure_menu_location'), 'type' => 'text', 'class' => 'block', 'maxlength' => 50, 'alpineErrorField' => 'menu_location', 'attrs' => 'x-model="menu.location"']) ?>
                 <label class="flex items-center gap-3 rounded-xl border border-gray-200 p-4"><input type="checkbox" x-model="menu.is_active" class="rounded border-gray-300"><span class="text-sm font-semibold text-gray-900"><?= esc(lang('Wizard.wizard_structure_menu_active')) ?></span></label>
-                <?= view('components/forms/text_input', ['name' => 'menu_name', 'label' => lang('Wizard.wizard_structure_menu_name'), 'type' => 'text', 'class' => 'block', 'maxlength' => 150, 'alpineErrorField' => 'menu_name', 'attrs' => 'x-model="menu.name"']) ?>
+                <?= view('components/form/text_input', ['name' => 'menu_name', 'label' => lang('Wizard.wizard_structure_menu_name'), 'type' => 'text', 'class' => 'block', 'maxlength' => 150, 'alpineErrorField' => 'menu_name', 'attrs' => 'x-model="menu.name"']) ?>
             </div>
             <div class="flex flex-wrap gap-3"><button type="submit" class="btn-primary text-sm"><?= esc(lang('Wizard.create_menu')) ?></button><button type="button" @click="screen='home'" class="btn-secondary text-sm"><?= esc(lang('Wizard.btn_back_panel')) ?></button></div>
         </form>
