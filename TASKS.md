@@ -83,6 +83,23 @@
   (con "s") que duplica `components/form/` con un único archivo — una errata que se quedó.
 - [ ] **DOC-01 — Deriva documental:** 7 menciones a `ci4-website-builder*` y 2 a `ci4-*-starter` en
   `CLAUDE.md`, más el puerto 8090 (donde no corre nada). Crear el `AGENTS.md` que falta.
+- [ ] **FRONT-01g — CSP relajado con `'unsafe-eval'` + `'unsafe-inline'` (style-src) por la build
+  estándar de Alpine.js.** `app/Config/ContentSecurityPolicy.php` (constructor, `scriptSrc`/`styleSrc`)
+  agrega ambas directivas porque `node_modules/alpinejs/dist/cdn.min.js` (copiado a
+  `public/assets/vendor/alpine.min.js` por `scripts/build-vendor.js`) evalúa expresiones `x-data`/`x-on`
+  inline vía `new Function()` (necesita `unsafe-eval`) y `x-show` togglea visibilidad escribiendo
+  `el.style.display` directamente (se trata como estilo inline, necesita `unsafe-inline` en `style-src`
+  incluso con nonce — los nonces no cubren mutaciones de `CSSStyleDeclaration` vía JS). Detectado el
+  2026-08-07 al desplegar a `admin.teatromuseo.cl`: sin estas directivas, todo `x-data` falla en
+  silencio (spinner de login que nunca resuelve `isLoading`) o el navegador bloquea el toggle de estilo.
+  **Fix real (no aplicado aún):** migrar a `@alpinejs/csp` (build que compila expresiones sin `eval`,
+  pero solo soporta componentes registrados vía `Alpine.data()`, no objetos `x-data="{...}"` inline) y
+  reemplazar todo `x-show`/`:style` por `x-bind:class` con clases Tailwind reales (`hidden`) en vez de
+  estilo inline. Afecta **589 ocurrencias de `x-show`/`x-data="{`/`x-bind:style`/`:style=` en 109
+  vistas** (`grep -rn` en `app/Views`, ver conteo completo por archivo si se retoma). No es un cambio de
+  una línea: requiere reescribir cada componente inline, rebuild (`npm run build`), y QA de las 109
+  pantallas — se pospone deliberadamente en vez de hacerse a medias vía FTP. El tótem (`teatromuseo-totem-ci4`)
+  no tiene este problema porque no usa Alpine.js (JS vanilla), no porque lo haya resuelto.
 
 ### TRN-006 — Estados editoriales, permisos y controles de publicación
 

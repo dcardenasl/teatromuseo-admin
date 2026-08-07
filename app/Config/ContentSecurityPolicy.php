@@ -190,9 +190,27 @@ class ContentSecurityPolicy extends BaseConfig
             "'self'",
             'https://cdn.jsdelivr.net',
             'https://accounts.google.com',
+            // Required because the UI uses Alpine.js's standard build, which
+            // evaluates x-data/x-on expressions via `new Function()`. Alpine
+            // ships a CSP-compliant build (@alpinejs/csp) that avoids this,
+            // but it only supports named Alpine.data() components — not the
+            // inline expressions used throughout these templates. Switching
+            // is a real refactor, tracked separately; until then this is
+            // required or every x-data/x-on binding silently fails (e.g. the
+            // login page's loading spinner never resolves).
+            // TRACKED: TASKS.md FRONT-01g.
+            "'unsafe-eval'",
         ];
         $this->styleSrc = [
             "'self'",
+            // Required for the same reason as scriptSrc's 'unsafe-eval': Alpine's
+            // x-show directive toggles visibility by writing el.style.display
+            // directly, which CSP treats as an inline style regardless of nonce
+            // (nonces don't cover CSSStyleDeclaration mutations via JS). Removed
+            // once x-show is replaced with class-based toggling (Tailwind
+            // `hidden`) as part of the same Alpine CSP migration.
+            // TRACKED: TASKS.md FRONT-01g.
+            "'unsafe-inline'",
         ];
         $this->imageSrc = [
             "'self'",
