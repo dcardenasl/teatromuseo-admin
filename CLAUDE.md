@@ -16,11 +16,11 @@ For cross-repo context (current milestone, blocked tasks), read `../TASKS.md`.
 
 ## Project Overview
 
-**CI4 Admin Starter** is a CodeIgniter 4 web application (server-rendered frontend) designed to consume the external API from [`ci4-website-builder-api`](https://github.com/yourusername/ci4-website-builder-api). It provides an administrative panel interface for authentication, user management, file management, audit logs, and metrics.
+**Teatro Museo Admin** is a CodeIgniter 4 web application (server-rendered frontend) designed to consume the external API from the Central Hub. It provides an administrative panel interface for authentication, user management, file management, audit logs, and metrics.
 
 **Architecture flow:**
 ```
-Browser → CI4 Admin Starter (port 8182) → ci4-website-builder-api API (port 8080)
+Browser → Teatro Museo Admin (port 8182) → Central Hub API (port 8180)
 ```
 
 **Current state:** Fully implemented. All modules are active: authentication, dashboard, profile, file management, and admin panel (users, audit logs, API keys, metrics). See `docs/INDEX.md` for detailed architectural documentation.
