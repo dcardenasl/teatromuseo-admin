@@ -92,6 +92,18 @@
 
 ## ✅ Completadas
 
+- **CFG-02 — `.env.example` desalineado del código real (2026-08-07):** la mayoría de las claves
+  ya estaban correctas (`API_BASE_URL`, `PUBLIC_SITE_URL`, `CMS_PREVIEW_SECRET`, `API_APP_KEY`,
+  `BFF_API_APP_KEY`, `CATALOG_DOMAIN_API_KEY`, `EVENT_DOMAIN_API_KEY`), pero quedaban dos bugs
+  reales: (1) el bloque "CMS Domain App" documentaba `CMS_DOMAIN_API_BASE_URL`/`CMS_DOMAIN_API_KEY`,
+  variables ficticias que ningún archivo de `app/Config/` lee — `app/Config/DomainApiClient.php`
+  (el cliente HTTP genérico que en este repo enruta *todos* los servicios del módulo Cms, ver
+  `app/Config/Services.php:116-143`) en realidad lee `DOMAIN_API_BASE_URL`/`DOMAIN_API_APP_KEY`
+  (namespace `domainApiClient.*`), confirmado también por el `env` no rastreado (línea 107). Se
+  corrigieron las dos líneas al nombre real. (2) `SESSION_DRIVER` (forma corta que
+  `app/Config/Session.php:148` lee directo vía `getenv()`/`env()`) no estaba documentada — solo el
+  `session.driver` con FQCN; se agregó junto a las 3 variantes (file/redis/database). Sin cambios
+  en el archivo `env` no rastreado (es de referencia, no se toca).
 - **CORE-04 — Roto el acoplamiento PSR-4 hacia `teatromuseo-cms-domain` (2026-08-06):**
   supera el arreglo parcial de `SEC-07` de abajo — en vez de mantener el checkout cruzado
   correctamente apuntado, se eliminó por completo. El admin solo usaba 2 de las 6 constantes de
