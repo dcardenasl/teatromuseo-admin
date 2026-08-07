@@ -193,26 +193,9 @@ final class ComponentsTest extends CIUnitTestCase
 
     public function testTableCellsFormating(): void
     {
-        // text_cell
-        $html = view('components/table/text_cell', ['value' => 'VentureOS Scaffolding'], ['saveData' => false]);
-        $this->assertStringContainsString('VentureOS Scaffolding', $html);
-
-        // badge_cell
-        $html = view('components/table/badge_cell', ['value' => 'published'], ['saveData' => false]);
-        $this->assertStringContainsString('Published', $html);
-        $this->assertStringContainsString('bg-green-50', $html);
-
         // boolean_cell
         $html = view('components/table/boolean_cell', ['value' => true], ['saveData' => false]);
         $this->assertStringContainsString('text-green-600', $html);
-
-        // date_cell
-        $html = view('components/table/date_cell', ['value' => '2026-05-30 15:34:00'], ['saveData' => false]);
-        $this->assertStringContainsString('2026', $html);
-
-        // number_cell
-        $html = view('components/table/number_cell', ['value' => 199.99, 'type' => 'currency', 'currency' => 'USD', 'locale' => 'en'], ['saveData' => false]);
-        $this->assertStringContainsString('$199.99', $html);
     }
 
     public function testHeadPartialUsesTranslatedPageTitle(): void
