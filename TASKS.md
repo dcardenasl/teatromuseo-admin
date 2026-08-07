@@ -100,6 +100,30 @@
   una línea: requiere reescribir cada componente inline, rebuild (`npm run build`), y QA de las 109
   pantallas — se pospone deliberadamente en vez de hacerse a medias vía FTP. El tótem (`teatromuseo-totem-ci4`)
   no tiene este problema porque no usa Alpine.js (JS vanilla), no porque lo haya resuelto.
+- [ ] **FRONT-01h — Los widgets del dashboard serializan detrás del lock de sesión (archivo o BD, da
+  igual) porque se disparan en paralelo desde la misma página y todos abren la misma sesión.** El 2026-08-07,
+  con `FileHandler`, esto se manifestó como una condición de carrera real: `filesize(): stat failed for
+  .../writable/session/ci4_admin_session...` (log de las 19:43:57, tres widgets — `analytics`, `summary`,
+  `cms-activity` — pisándose el mismo archivo), que rompió la sesión recién creada y disparó "Tu sesión
+  expiró" en la siguiente navegación. Se migraron las sesiones a `SESSION_DRIVER=database` (tabla
+  `ci_sessions` en `cte70303_admin`, ver `app/Config/Session.php`) para eliminar esa corrupción — con MySQL
+  el lock se maneja de forma segura vía locking de fila, ya no se rompe. Pero **la migración a BD no
+  resuelve la lentitud**: CI4 sigue reteniendo el lock de sesión durante toda la vida del request sin
+  importar el backend, así que los 3+ widgets paralelos siguen esperándose uno a otro.
+  **Intento de fix revertido el mismo día:** un filtro `SessionCloseFilter` (`app/Filters/SessionCloseFilter.php`,
+  sigue en el repo pero sin aplicar a ninguna ruta) que cerraba la sesión (`session()->close()`) ANTES de
+  que corriera el controlador del widget, asumiendo que los widgets nunca vuelven a escribir en sesión.
+  Falso: `ApiClient::request()` reintenta con `attemptTokenRefresh()` en cualquier `401`, y si el refresh
+  también falla llama a `clearSessionAuth()` → `session->regenerate(true)` — que explota con
+  `"Session ID cannot be regenerated when there is no active session"` si la sesión ya estaba cerrada.
+  Ese crash fue lo que rompió el login por completo al desplegarlo, y se revirtió de inmediato.
+  **Fix real:** cerrar la sesión solo cuando el widget haya terminado TODO su trabajo con `ApiClient`,
+  incluyendo las rutas de error/refresh — no antes de llamar al controlador. Opciones: (a) cada método
+  `widget*()` de `DashboardController` llama `session()->close()` como última línea, después de que
+  `ApiClient` ya resolvió (éxito o fallo) — mecánico pero hay que tocar los 7 métodos; o (b) que
+  `ApiClient::request()` cierre la sesión él mismo justo después de la última operación de sesión que
+  necesite (login/refresh/clear), en vez de dejarlo a cada caller. No aplicar como filtro `before()`
+  genérico otra vez sin resolver esto primero.
 
 ### TRN-006 — Estados editoriales, permisos y controles de publicación
 
