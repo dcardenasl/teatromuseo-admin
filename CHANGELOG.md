@@ -58,6 +58,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CSP style nonce silently killed `unsafe-inline` on every page** — `layouts/partials/head.php`
+  wrapped its `[x-cloak]` rule in an inline `<style <?= csp_style_nonce() ?>>` block, present on
+  every page render. Per the CSP spec, a `style-src` directive that carries a nonce makes browsers
+  ignore `'unsafe-inline'` in the same directive — and `'unsafe-inline'` was deliberately kept in
+  `style-src` (FRONT-01g) so Alpine's `x-show`/`:style` bindings (which mutate `el.style` directly)
+  keep working. The nonce quietly broke that everywhere: any inline style Alpine tried to apply was
+  blocked (`Applying inline style violates ... 'unsafe-inline' is ignored if ... nonce ... is
+  present`). Moved the `[x-cloak]` rule into the compiled stylesheet (`src/css/app.css`) instead —
+  no inline `<style>` tag means no nonce, and `style-src` now stays `'self' 'unsafe-inline'` as
+  intended on every response.
 - **Dashboard widgets overloaded the server on cold cache** — the dashboard fires 7 independent
   widget requests on load, two of which (`widgetSummary`, `widgetHealth`) each fan out into up to
   8 sequential upstream API calls; on a cache-cold load (e.g. right after a cache config change)
