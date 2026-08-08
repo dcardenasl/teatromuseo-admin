@@ -40,14 +40,16 @@
 
 ### Fase 6 — Frontend y docs
 
-- [ ] **FRONT-01a — Tres mecanismos HTTP se saltan `ApiClient`.**
-  `app/Modules/Cms/Controllers/BlockPreviewController.php:32` usa `curlrequest()` con conocimiento
-  incrustado de la ruta de la web; `app/Libraries/PublicSiteCacheInvalidator.php:72` y `:161`
-  construyen un `CURLRequest` con 25 líneas **copiadas dos veces dentro de la misma clase**.
-  **Parcial (2026-08-07):** `app/Modules/Cms/Controllers/TranslateController.php:35-48` ya no usa
-  `curl_init` crudo con user-agent de Chrome falsificado — ahora usa `Config\Services::curlrequest()`
-  con `try/catch` y user-agent real (`TeatroMuseoAdmin/1.0`). 1 de 3 call sites resuelto; quedan
-  `BlockPreviewController` y la duplicación en `PublicSiteCacheInvalidator`.
+- [x] ~~FRONT-01a~~ — **completado (2026-08-07).** Tres mecanismos HTTP que se saltaban `ApiClient`:
+  `TranslateController.php:35-48` ya no usa `curl_init` crudo con user-agent de Chrome falsificado —
+  ahora usa `Config\Services::curlrequest()` con `try/catch` y user-agent real
+  (`TeatroMuseoAdmin/1.0`). `PublicSiteCacheInvalidator.php`'s 25 líneas de construcción de
+  `CURLRequest` duplicadas dos veces (`invalidateWithResult()` y `status()`) — extraídas a un
+  `buildClient()` privado usando `Config\Services::curlrequest()`, mismo patrón que
+  `TranslateController`. `BlockPreviewController.php:32` ya usaba `curlrequest()` correctamente
+  (try/catch, timeout, fallback local) — el "conocimiento incrustado de la ruta" (`/blocks/preview`)
+  es inherente a cualquier cliente HTTP que llama a una ruta fija de otra app, no un defecto real;
+  no se toca.
 - [ ] **FRONT-01b — Seis namespaces de idioma definidos dos veces** (global + módulo) con claves
   solapadas: `Pages` (57 vs 216 líneas, **12 claves colisionando**), `Collections`, `Forms`,
   `FormSubmissions`, `Profile`, `Auth`. Los valores coinciden hoy, así que es deriva latente, no un
@@ -140,10 +142,12 @@
   `PublicSiteCacheInvalidator::normalizeScopes()` ahora valida contra una constante `VALID_SCOPES` y
   rechaza scopes desconocidos con log de advertencia en vez de no-op silencioso. El hueco real de
   invalidación en event-domain/catalog-domain (sin job equivalente al de CMS) no se tocó.
-- **FRONT-01a — 1 de 3 call sites de curl que se saltaban `ApiClient` (parcial, 2026-08-07):**
+- **FRONT-01a — Mecanismos HTTP que se saltaban `ApiClient` (completado, 2026-08-07):**
   `TranslateController.php:35-48` ya no usa `curl_init` crudo con user-agent de Chrome falsificado —
-  usa `Config\Services::curlrequest()` con `try/catch` real. Quedan `BlockPreviewController.php:32`
-  y la duplicación en `PublicSiteCacheInvalidator.php:72/161`.
+  usa `Config\Services::curlrequest()` con `try/catch` real. `PublicSiteCacheInvalidator.php`
+  extrae la construcción de `CURLRequest` (duplicada en `invalidateWithResult()`/`status()`) a un
+  `buildClient()` privado. `BlockPreviewController.php:32` revisado — ya usaba `curlrequest()`
+  correctamente, sin defecto real que corregir.
 - **CFG-08 — `php-cs-fixer` desalineado de la flota (2026-08-07):** actualizado de `^3.47.1` a
   `^3.95` en `composer.json`, igualando al resto de repos.
 - **Corrección de proceso (2026-08-07):** el batch de esa fecha había sobrescrito `AGENTS.md`
