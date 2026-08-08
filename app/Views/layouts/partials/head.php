@@ -38,15 +38,6 @@ $tiptapLocal   = file_exists(FCPATH . 'assets/vendor/tiptap.bundle.js');
 <?php else: ?>
 <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.539.0/dist/umd/lucide.min.js" integrity="sha384-Ui80VKnKTTUky8NmDUdXcnOrP66fD6bYHb7J1+kL+Zx517BmW5a6kvGDwY3BKt+w" crossorigin="anonymous"></script>
 <?php endif; ?>
-<style <?= csp_style_nonce() ?>>
-    /* Brand tokens live in src/css/app.css (@theme) — compiled into the
-       CSS custom properties below at build time. This block only carries
-       the Alpine x-cloak rule, which must be available before the first
-       Alpine paint to suppress FOUC. */
-    [x-cloak] {
-        display: none !important;
-    }
-</style>
 <script <?= csp_script_nonce() ?>>
   <?php
   // Inject UI labels from lang() files into JavaScript globals

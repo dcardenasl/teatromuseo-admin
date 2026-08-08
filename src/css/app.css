@@ -36,6 +36,14 @@
     progress {
         appearance: none;
     }
+
+    /* Must ship in the compiled stylesheet, not an inline <style> block: an
+       inline tag needs a CSP nonce, and once style-src carries a nonce on a
+       response, browsers ignore its 'unsafe-inline' too — breaking Alpine's
+       x-show (which toggles visibility via inline el.style.display). */
+    [x-cloak] {
+        display: none !important;
+    }
 }
 
 @layer components {
