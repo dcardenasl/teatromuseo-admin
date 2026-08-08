@@ -58,6 +58,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dashboard widgets overloaded the server on cold cache** — the dashboard fires 7 independent
+  widget requests on load, two of which (`widgetSummary`, `widgetHealth`) each fan out into up to
+  8 sequential upstream API calls; on a cache-cold load (e.g. right after a cache config change)
+  this produced dozens of concurrent outbound requests and could exhaust a small server's CPU/RAM,
+  causing unrelated navigation (e.g. to Files) to fail with a server error (2026-08-07 incident).
+  Added `createFetchQueue()` (`src/js/utils/fetchQueue.js`) and routed all 7 widget fetches through
+  a shared `window.dashboardFetchQueue` capped at 3 concurrent requests.
+- **Remote tables fetched their data twice on every page load** — the 28 `remoteTable`-backed
+  index views (Users, Files, Audit, IAM, CMS Entries/Pages/Collections/..., Events, Museum, etc.)
+  set `x-init="init()"` on the same element as `x-data="remoteTable(...)"`. Alpine already
+  auto-invokes an `init()` method found on the `x-data` object, so the explicit `x-init` fired it a
+  second time — two identical `GET .../data` requests per table load. Removed the redundant
+  `x-init`, in both the shipped views and `bin/make-module.sh`'s view stub so newly scaffolded
+  modules don't reintroduce it.
 - **File previews blocked by CSP `img-src`** — file URLs returned by the API are absolute and point
   at the API's own origin, which differs from the admin's; `ContentSecurityPolicy` now derives that
   origin from `apiClient.baseUrl`/`API_BASE_URL` and allows it, fixing thumbnails/previews on
