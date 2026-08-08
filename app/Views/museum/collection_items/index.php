@@ -25,7 +25,7 @@ $publicationStatusClasses = [
             editBase: '<?= route_to('admin.museum.collection_items') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('Museum.collection_items_title'),

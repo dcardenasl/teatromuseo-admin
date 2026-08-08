@@ -12,7 +12,7 @@ $eventReferenceEventLabels = array_map('strval', $events ?? []);
             editBase: '<?= route_to('admin.eventreferences.event_references') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('EventReferences.event_references_title'),

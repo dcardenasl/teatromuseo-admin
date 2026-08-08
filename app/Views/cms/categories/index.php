@@ -10,7 +10,7 @@
             editBase: '<?= route_to('admin.cms.categories') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Categories.categories_title'),

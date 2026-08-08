@@ -2126,7 +2126,7 @@ write_heredoc "app/Views/${VIEW_PATH}/index.php" << 'VIEW_EOF_MARKER'
             editBase: '<?= route_to('VIEW_ROUTE_NAME') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('VIEW_MODULE.VIEW_LANG_PREFIX_title'),

@@ -17,7 +17,7 @@ $eventStatusLabels = [
             editBase: '<?= route_to('admin.events.events') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Events.events_title'),

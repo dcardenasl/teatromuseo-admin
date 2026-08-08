@@ -55,7 +55,7 @@ $dataUrl = route_to('admin.cms.form_submissions.data') . ($activeStatus !== '' ?
         defaultSort: '-created_at',
         routes: { showBase: '<?= route_to('admin.cms.form_submissions') ?>' },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('FormSubmissions.title'),

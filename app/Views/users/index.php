@@ -9,7 +9,7 @@
             editBase: '<?= route_to('admin.users') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('Users.title'),
         'actionsView' => 'users/partials/toolbar_actions',

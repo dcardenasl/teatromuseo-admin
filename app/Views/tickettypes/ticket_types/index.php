@@ -13,7 +13,7 @@ $ticketTypeOccurrenceLabels = array_map('strval', $occurrences ?? []);
             editBase: '<?= route_to('admin.tickettypes.ticket_types') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('TicketTypes.ticket_types_title'),

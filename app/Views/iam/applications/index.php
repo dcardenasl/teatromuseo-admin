@@ -9,7 +9,7 @@
             showBase: '<?= route_to('admin.iam.applications') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('Iam.applications_title'),
