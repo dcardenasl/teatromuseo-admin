@@ -141,6 +141,8 @@ $csrfHash = csrf_hash();
                             <td class="<?= esc(table_td_class()) ?>">
                                 <template x-if="row.is_image || (row.variants && row.variants.sm && row.variants.sm.url)">
                                     <img :src="(row.variants && row.variants.sm && row.variants.sm.url) || ('<?= route_to('files') ?>/' + (row.id ?? '') + '/view')"
+                                         loading="lazy"
+                                         decoding="async"
                                          class="h-10 w-10 rounded-lg object-cover border border-gray-200 grayscale opacity-70"
                                          :alt="row.original_name">
                                 </template>

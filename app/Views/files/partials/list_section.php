@@ -199,6 +199,8 @@ unset($tabsBaseQuery['page'], $tabsBaseQuery['cursor'], $tabsBaseQuery['category
                                 <template x-if="row.is_image || (row.variants && row.variants.sm && row.variants.sm.url)">
                                     <button type="button" @click="$dispatch('open-preview', (row.variants && row.variants.md && row.variants.md.url) || ('<?= route_to('files') ?>/' + (row.id ?? '') + '/view'))">
                                         <img :src="(row.variants && row.variants.sm && row.variants.sm.url) || ('<?= route_to('files') ?>/' + (row.id ?? '') + '/view')"
+                                             loading="lazy"
+                                             decoding="async"
                                              class="h-10 w-10 rounded-lg object-cover border border-gray-200 hover:scale-110 transition-transform shadow-sm"
                                              :alt="row.alt_text || row.original_name">
                                     </button>
@@ -253,6 +255,8 @@ unset($tabsBaseQuery['page'], $tabsBaseQuery['cursor'], $tabsBaseQuery['category
                     <div class="aspect-square w-full overflow-hidden rounded-md bg-white border border-gray-100 flex items-center justify-center">
                         <template x-if="row.is_image || (row.variants && row.variants.sm && row.variants.sm.url)">
                             <img :src="(row.variants && row.variants.sm && row.variants.sm.url) || ('<?= route_to('files') ?>/' + (row.id ?? '') + '/view')"
+                                 loading="lazy"
+                                 decoding="async"
                                  :alt="row.alt_text || row.original_name"
                                  class="w-full h-full object-cover">
                         </template>
