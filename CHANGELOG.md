@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **File previews blocked by CSP `img-src`** — file URLs returned by the API are absolute and point
+  at the API's own origin, which differs from the admin's; `ContentSecurityPolicy` now derives that
+  origin from `apiClient.baseUrl`/`API_BASE_URL` and allows it, fixing thumbnails/previews on
+  `/files` in production (`admin.teatromuseo.cl` → `api.teatromuseo.cl`).
 - **Cross-repo `CmsEnums` coupling** — `MenuItemStoreRequest`/`BlockInstanceController` now use a
   locally owned `App\Support\CmsFieldEnums` instead of a `composer.json` PSR-4 mapping into
   `teatromuseo-cms-domain`'s tree, which silently broke in CI and was never present in the Docker
