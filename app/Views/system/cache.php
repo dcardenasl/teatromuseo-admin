@@ -75,9 +75,20 @@ $scopes = is_array($status['last_invalidation_scopes'] ?? null) ? $status['last_
     </div>
 </section>
 
-<script>
-function cacheElapsed(timestamp) {
-    return {
+<script <?= csp_script_nonce() ?>>
+// This tag needs csp_script_nonce(): ContentSecurityPolicy.php's scriptSrc has
+// no 'unsafe-inline' (only 'unsafe-eval', for Alpine's expression evaluation),
+// so any inline <script> without a matching nonce is silently dropped by the
+// browser — the block never runs and every reference to it below evaluates as
+// undefined. This was the actual cause of the ReferenceErrors on this page,
+// not a script/element ordering issue. See head.php:50 and
+// cms/wizard/{index,structure}.php for the same pattern.
+//
+// Registered via the `alpine:init` event (rather than a bare global function)
+// per Alpine's own recommended registration pattern, so it's also immune to
+// any future DOM-order changes on this page.
+document.addEventListener('alpine:init', () => {
+    Alpine.data('cacheElapsed', (timestamp) => ({
         label: timestamp ? '<?= esc(lang('System.cache_calculating'), 'js') ?>' : '',
         start() {
             if (!timestamp) return;
@@ -97,6 +108,6 @@ function cacheElapsed(timestamp) {
             update();
             window.setInterval(update, 1000);
         }
-    };
-}
+    }));
+});
 </script>
