@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace App\Libraries;
 
 use CodeIgniter\HTTP\CURLRequest;
-use CodeIgniter\HTTP\Response;
-use CodeIgniter\HTTP\URI;
-use Config\App as AppConfig;
 
 class PublicSiteCacheInvalidator
 {
@@ -67,21 +64,7 @@ class PublicSiteCacheInvalidator
         }
 
         try {
-            $appConfig = config(AppConfig::class);
-            $baseUrl   = rtrim($this->baseUrl, '/');
-            $client    = new CURLRequest(
-                $appConfig,
-                new URI($baseUrl),
-                new Response($appConfig),
-                [
-                    'baseURI'         => $baseUrl,
-                    'timeout'         => max(1, $this->timeout),
-                    'connect_timeout' => max(1, $this->timeout),
-                    'http_errors'     => false,
-                ]
-            );
-
-            $response = $client->request('POST', '/cache/invalidate', [
+            $response = $this->buildClient()->request('POST', '/cache/invalidate', [
                 'headers' => [
                     'Accept'           => 'application/json',
                     'Content-Type'     => 'application/json',
@@ -156,20 +139,7 @@ class PublicSiteCacheInvalidator
         }
 
         try {
-            $appConfig = config(AppConfig::class);
-            $baseUrl   = rtrim($this->baseUrl, '/');
-            $client    = new CURLRequest(
-                $appConfig,
-                new URI($baseUrl),
-                new Response($appConfig),
-                [
-                    'baseURI'         => $baseUrl,
-                    'timeout'         => max(1, $this->timeout),
-                    'connect_timeout' => max(1, $this->timeout),
-                    'http_errors'     => false,
-                ]
-            );
-            $response = $client->request('GET', '/cache/status', [
+            $response = $this->buildClient()->request('GET', '/cache/status', [
                 'headers' => [
                     'Accept' => 'application/json',
                     'X-Invalidate-Key' => $this->invalidateKey,
@@ -196,10 +166,18 @@ class PublicSiteCacheInvalidator
         ];
     }
 
-    /**
-     * @param list<string> $scopes
-     * @return list<string>
-     */
+    private function buildClient(): CURLRequest
+    {
+        $baseUrl = rtrim($this->baseUrl, '/');
+
+        return \Config\Services::curlrequest([
+            'baseURI'         => $baseUrl,
+            'timeout'         => max(1, $this->timeout),
+            'connect_timeout' => max(1, $this->timeout),
+            'http_errors'     => false,
+        ]);
+    }
+
     public const VALID_SCOPES = [
         'settings',
         'menus',
