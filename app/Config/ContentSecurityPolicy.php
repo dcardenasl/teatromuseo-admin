@@ -218,6 +218,18 @@ class ContentSecurityPolicy extends BaseConfig
             'blob:',
             'https://*.googleusercontent.com',
         ];
+
+        // Files are served with absolute URLs built from the API's own base
+        // URL (see FileController: `$data['url']`), which differs from this
+        // app's own origin — allow it explicitly or the browser blocks every
+        // file preview/thumbnail under img-src 'self'.
+        $apiBaseUrl = env('apiClient.baseUrl') ?: env('API_BASE_URL');
+        if (is_string($apiBaseUrl) && trim($apiBaseUrl) !== '') {
+            $apiOrigin = $this->originOf($apiBaseUrl);
+            if ($apiOrigin !== null) {
+                $this->imageSrc[] = $apiOrigin;
+            }
+        }
         $this->connectSrc = [
             "'self'",
             'https://accounts.google.com',
@@ -238,5 +250,23 @@ class ContentSecurityPolicy extends BaseConfig
         if (is_string($reportUri) && trim($reportUri) !== '') {
             $this->reportURI = trim($reportUri);
         }
+    }
+
+    /**
+     * Reduces a full URL to a CSP source expression (scheme://host[:port]).
+     */
+    private function originOf(string $url): ?string
+    {
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        $host   = parse_url($url, PHP_URL_HOST);
+
+        if (! is_string($scheme) || $scheme === '' || ! is_string($host) || $host === '') {
+            return null;
+        }
+
+        $port   = parse_url($url, PHP_URL_PORT);
+        $origin = $scheme . '://' . $host;
+
+        return is_int($port) ? $origin . ':' . $port : $origin;
     }
 }
