@@ -200,13 +200,36 @@ class PublicSiteCacheInvalidator
      * @param list<string> $scopes
      * @return list<string>
      */
+    public const VALID_SCOPES = [
+        'settings',
+        'menus',
+        'pages',
+        'collections',
+        'entries',
+        'taxonomies',
+        'events',
+        'event_types',
+        'categories',
+        'techniques',
+        'collection_items',
+        'redirects',
+        'forms',
+    ];
+
+    /**
+     * @param list<string> $scopes
+     * @return list<string>
+     */
     private function normalizeScopes(array $scopes): array
     {
         $normalized = [];
 
         foreach ($scopes as $scope) {
             $scope = trim((string) $scope);
-            if ($scope === '') {
+            if ($scope === '' || ! in_array($scope, self::VALID_SCOPES, true)) {
+                if ($scope !== '') {
+                    log_message('warning', '[PublicSiteCacheInvalidator] Invalid scope omitted: ' . $scope);
+                }
                 continue;
             }
 
