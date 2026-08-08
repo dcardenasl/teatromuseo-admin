@@ -463,7 +463,17 @@ class ApiClient implements ApiClientInterface
             SessionKeys::EXPIRES_AT->value,
             SessionKeys::USER->value,
         ]);
-        $this->session->regenerate(true);
+
+        // regenerate() needs a native PHP session to be active — CI4's own
+        // Session service tracks/writes state independently of that, so
+        // remove() above works regardless. Guard only this call: it's the
+        // one that crashed with "Session ID cannot be regenerated when
+        // there is no active session" when this ran after session_write_close()
+        // (dashboard widget requests close the session before their final
+        // ApiClient call may reach this failure path).
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $this->session->regenerate(true);
+        }
     }
 
     /**

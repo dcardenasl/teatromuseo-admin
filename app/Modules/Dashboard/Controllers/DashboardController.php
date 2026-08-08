@@ -123,6 +123,8 @@ class DashboardController extends BaseWebController
             . $this->renderDevApiErrorPanel($filesResponse)
             . ($isAdmin ? $this->renderDevApiErrorPanel($usersResponse) : '');
 
+        $this->closeSessionSafely();
+
         return $this->response->setBody($devPanel . view('dashboard/partials/widget_stats', ['stats' => $stats]));
     }
 
@@ -165,6 +167,8 @@ class DashboardController extends BaseWebController
             . ($bffHealth !== null ? $this->renderDevApiErrorPanel($bffHealth) : '')
             . ($webHealth !== null ? $this->renderDevApiErrorPanel($webHealth) : '');
 
+        $this->closeSessionSafely();
+
         return $this->response->setBody($devPanel . view('dashboard/partials/widget_health', [
             'healthServices' => $healthServices,
         ]));
@@ -184,6 +188,8 @@ class DashboardController extends BaseWebController
             }
         }
 
+        $this->closeSessionSafely();
+
         return $this->response->setBody($this->renderDevApiErrorPanel($filesResponse) . view('dashboard/partials/widget_recent_files', [
             'recentFiles' => $this->extractItems($filesResponse),
         ]));
@@ -197,6 +203,8 @@ class DashboardController extends BaseWebController
     public function widgetTranslations(): ResponseInterface
     {
         if (! has_permission('cms.languages.read')) {
+            $this->closeSessionSafely();
+
             return $this->response->setBody(view('dashboard/partials/widget_translations', ['stats' => null]));
         }
 
@@ -208,6 +216,8 @@ class DashboardController extends BaseWebController
                 $cache->save('dashboard_translation_stats', $response, 300);
             }
         }
+
+        $this->closeSessionSafely();
 
         return $this->response->setBody($this->renderDevApiErrorPanel($response) . view('dashboard/partials/widget_translations', [
             'stats' => $this->extractItems($response),
@@ -223,6 +233,8 @@ class DashboardController extends BaseWebController
     public function widgetAnalytics(): ResponseInterface
     {
         if (! has_permission('cms.analytics.read')) {
+            $this->closeSessionSafely();
+
             return $this->response->setBody(view('dashboard/partials/widget_analytics', ['overview' => null]));
         }
 
@@ -234,6 +246,8 @@ class DashboardController extends BaseWebController
                 $cache->save('dashboard_analytics_overview', $response, 300);
             }
         }
+
+        $this->closeSessionSafely();
 
         return $this->response->setBody($this->renderDevApiErrorPanel($response) . view('dashboard/partials/widget_analytics', [
             'overview' => $this->extractData($response),
@@ -386,6 +400,8 @@ class DashboardController extends BaseWebController
             ];
         }
 
+        $this->closeSessionSafely();
+
         return $this->response->setBody($devPanel . view('dashboard/partials/widget_summary', ['items' => $items]));
     }
 
@@ -445,6 +461,8 @@ class DashboardController extends BaseWebController
 
         usort($entries, static fn (array $a, array $b): int => strcmp((string) $b['updated_at'], (string) $a['updated_at']));
 
+        $this->closeSessionSafely();
+
         return $this->response->setBody($devPanel . view('dashboard/partials/widget_cms_activity', [
             'items' => array_slice($entries, 0, 6),
         ]));
@@ -497,5 +515,12 @@ class DashboardController extends BaseWebController
         $payload = $response['data'] ?? [];
 
         return (int) ($payload['meta']['total'] ?? $payload['data']['meta']['total'] ?? $payload['total'] ?? 0);
+    }
+
+    private function closeSessionSafely(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session()->close();
+        }
     }
 }
