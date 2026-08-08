@@ -19,7 +19,7 @@
     <div
         x-data="{ loaded: false, error: false }"
         x-init="
-            fetch('<?= route_to('dashboard.widgets.stats') ?>')
+            window.dashboardFetchQueue.fetch('<?= route_to('dashboard.widgets.stats') ?>')
                 .then(r => r.ok ? r.text() : Promise.reject())
                 .then(h => {
                     $refs.statsContent.innerHTML = h;
@@ -54,7 +54,7 @@
         <div
             x-data="{ loaded: false, error: false }"
             x-init="
-                fetch('<?= route_to('dashboard.widgets.summary') ?>')
+                window.dashboardFetchQueue.fetch('<?= route_to('dashboard.widgets.summary') ?>')
                     .then(r => r.ok ? r.text() : Promise.reject())
                     .then(h => {
                         $refs.summaryContent.innerHTML = h;
@@ -86,7 +86,7 @@
         <div
             x-data="{ loaded: false, error: false }"
             x-init="
-                fetch('<?= route_to('dashboard.widgets.translations') ?>')
+                window.dashboardFetchQueue.fetch('<?= route_to('dashboard.widgets.translations') ?>')
                     .then(r => r.ok ? r.text() : Promise.reject())
                     .then(h => { $refs.translationsContent.innerHTML = h; loaded = true; })
                     .catch(() => { error = true; loaded = true; })
@@ -114,7 +114,7 @@
                 <div
                     x-data="{ loaded: false, error: false }"
                     x-init="
-                        fetch('<?= route_to('dashboard.widgets.cms-activity') ?>')
+                        window.dashboardFetchQueue.fetch('<?= route_to('dashboard.widgets.cms-activity') ?>')
                             .then(r => r.ok ? r.text() : Promise.reject())
                             .then(h => { $refs.cmsActivityContent.innerHTML = h; loaded = true; })
                             .catch(() => { error = true; loaded = true; })
@@ -151,7 +151,7 @@
                 <div
                     x-data="{ loaded: false, error: false }"
                     x-init="
-                        fetch('<?= route_to('dashboard.widgets.analytics') ?>')
+                        window.dashboardFetchQueue.fetch('<?= route_to('dashboard.widgets.analytics') ?>')
                             .then(r => r.ok ? r.text() : Promise.reject())
                             .then(h => { $refs.analyticsContent.innerHTML = h; loaded = true; })
                             .catch(() => { error = true; loaded = true; })
@@ -177,7 +177,7 @@
             <div
                 x-data="{ loaded: false, error: false }"
                 x-init="
-                    fetch('<?= route_to('dashboard.widgets.health') ?>')
+                    window.dashboardFetchQueue.fetch('<?= route_to('dashboard.widgets.health') ?>')
                         .then(r => r.ok ? r.text() : Promise.reject())
                         .then(h => {
                             $refs.healthContent.innerHTML = h;
@@ -212,7 +212,7 @@
         <div
             x-data="{ loaded: false, error: false }"
             x-init="
-                fetch('<?= route_to('dashboard.widgets.recent-files') ?>')
+                window.dashboardFetchQueue.fetch('<?= route_to('dashboard.widgets.recent-files') ?>')
                     .then(r => r.ok ? r.text() : Promise.reject())
                     .then(h => {
                         $refs.filesContent.innerHTML = h;
