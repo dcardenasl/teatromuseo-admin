@@ -32,21 +32,22 @@ class TranslateController extends BaseWebController
             'q'      => $text,
         ]);
 
-        $ch = curl_init($url);
-        if ($ch === false) {
-            return $this->response->setJSON(['error' => 'Translation service unavailable.'])->setStatusCode(503);
-        }
-
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
-            CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            CURLOPT_TIMEOUT        => 10,
+        $client = \Config\Services::curlrequest([
+            'timeout'     => 10,
+            'http_errors' => false,
+            'headers'     => [
+                'User-Agent' => 'TeatroMuseoAdmin/1.0',
+                'Accept'     => 'application/json',
+            ],
         ]);
 
-        $body   = curl_exec($ch);
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        try {
+            $response = $client->get($url);
+            $status   = $response->getStatusCode();
+            $body     = $response->getBody();
+        } catch (\Throwable $e) {
+            return $this->response->setJSON(['error' => 'Translation service unavailable.'])->setStatusCode(503);
+        }
 
         if (! is_string($body)) {
             return $this->response->setJSON(['error' => 'No response from translation service.'])->setStatusCode(503);
