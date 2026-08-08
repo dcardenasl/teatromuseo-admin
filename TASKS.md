@@ -112,6 +112,24 @@
   `autoNonce = false` (legítimo: permite nonces selectivos vía `csp_script_nonce()` en vistas puntuales,
   ver `system/cache.php`, en vez de forzar nonce global) y el fix puntual de `system/cache.php` — ninguno
   de los dos resuelve FRONT-01g por sí solo.
+  **Análisis de alcance (2026-08-07):** confirmado `grep -rlE "x-show=|x-data=\"\{|x-bind:style|:style="
+  app/Views/` → 109 archivos exactos. Muestra real (`layouts/partials/sidebar.php`, top offender
+  `cms/pages/blocks/create.php` con 41 ocurrencias): el patrón dominante es
+  `x-data="{ open: <?= $phpBooleanExpr ?> }"` — un objeto inline con un valor **dinámico inyectado
+  desde PHP en cada render** (no una constante estática), más `x-show="open"` para el toggle. La
+  build CSP de Alpine (`@alpinejs/csp`) no evalúa expresiones libres: cada componente debe
+  registrarse vía `Alpine.data('nombre', (arg) => ({...}))` en un script externo (no inline), y la
+  vista pasa el valor dinámico como argumento de invocación (`x-data="navGroup(true)"`), no como
+  objeto literal — la build CSP sí permite llamadas a funciones registradas con argumentos simples,
+  solo prohíbe expresiones/objetos arbitrarios sin registrar. Es un patrón claro y replicable, pero
+  mecánico y extenso: 109 vistas con formas distintas (algunas con múltiples `x-data` por vista,
+  valores dinámicos variados). **No se ejecuta en esta sesión** — se pospone deliberadamente,
+  consistente con lo que este mismo ítem ya decía antes de este análisis; hacerlo a medias dejaría
+  un estado mixto (algunas vistas CSP-safe, otras no) sin una CSP realmente más estricta todavía,
+  que es peor que no tocarlo. Próximo paso real: registrar todos los componentes recurrentes
+  (nav-group toggle, modales, etc.) como factories `Alpine.data()` en un archivo compartido nuevo
+  (`src/js/alpine-components.js`), luego migrar vista por vista empezando por `layouts/partials/`
+  (compartidas, mayor apalancamiento) antes que las 41 ocurrencias aisladas en `create.php`.
 - [x] ~~FRONT-01h~~ — **completado (2026-08-07).** Implementado `closeSessionSafely()` en los 7 métodos de widget de `DashboardController` y resguardado `clearSessionAuth()` en `ApiClient`. Los widgets del dashboard se procesan en paralelo liberando el lock de sesión inmediatamente tras consumir las APIs.
 
 ### TRN-006 — Estados editoriales, permisos y controles de publicación
