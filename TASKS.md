@@ -140,6 +140,20 @@
 
 ## ✅ Completadas
 
+- **Incidente de producción — 508 "Límite de Procesos" al entrar a Files mientras el dashboard
+  carga (2026-08-07):** `admin` y el hub (`teatromuseo-api`) comparten la misma cuenta de hosting
+  compartido (mismo `ftp.teatromuseo.cl`), por lo tanto el mismo cupo de procesos concurrentes.
+  `app/Views/files/partials/list_section.php` y `trash.php` renderizan un `<img>` por fila que cae
+  a un endpoint PHP por-archivo (`/files/{id}/view`, vía `FileController::serveFile()`) cuando el
+  archivo no tiene `variants.sm.url` generado — esto ocurre solo para imágenes reales sin variante
+  (los archivos no-imagen ya usaban un ícono local sin red). Con 25 filas por página (default), eso
+  puede disparar hasta 25 requests PHP concurrentes solo en miniaturas, sumado a los widgets del
+  dashboard que aún no terminaron de cerrar su proceso al navegar. Fix: `loading="lazy"` +
+  `decoding="async"` en las 3 miniaturas afectadas (tabla y grilla de `files/index`, tabla de
+  `files/trash`; el picker de archivos ya lo tenía). El picker de archivos compartido
+  (`file_picker_modal.php`) ya tenía este atributo. La causa raíz más profunda (muchas imágenes sin
+  `variants.sm` generado) sigue sin resolver — requeriría un backfill de variantes, fuera de alcance
+  de este fix.
 - **FRONT-01h — Race condition de session-lock en widgets del dashboard (2026-08-07):** los 7
   métodos `widget*()` de `DashboardController` ahora llaman `closeSessionSafely()` como última línea,
   después de que todo el trabajo de `ApiClient` (incluyendo rutas de error/refresh) terminó;
