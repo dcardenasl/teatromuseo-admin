@@ -31,7 +31,7 @@
 - [ ] **CFG-06 — El `pre-push` está instalado pero muerto.** `core.hooksPath = .husky/_` hace que
   git ignore `.git/hooks/pre-push`, y existe `.husky/_/pre-push` como shim **sin `.husky/pre-push`
   detrás**. Solo hay `.husky/pre-commit`.
-- [ ] **CFG-08 — php-cs-fixer declara `^3.47.1`** mientras el resto de la flota declara `^3.95`.
+- [x] ~~CFG-08~~ — **completado (2026-08-07).** `php-cs-fixer` actualizado a `^3.95` en `composer.json`.
 
 ### Fase 3 — Extracción a `ci4-api-core`
 
@@ -41,11 +41,13 @@
 ### Fase 6 — Frontend y docs
 
 - [ ] **FRONT-01a — Tres mecanismos HTTP se saltan `ApiClient`.**
-  `app/Modules/Cms/Controllers/TranslateController.php:35-48` usa `curl_init` crudo contra un
-  endpoint no oficial de Google **con user-agent de Chrome falsificado**, sin reintentos ni logging;
   `app/Modules/Cms/Controllers/BlockPreviewController.php:32` usa `curlrequest()` con conocimiento
   incrustado de la ruta de la web; `app/Libraries/PublicSiteCacheInvalidator.php:72` y `:161`
   construyen un `CURLRequest` con 25 líneas **copiadas dos veces dentro de la misma clase**.
+  **Parcial (2026-08-07):** `app/Modules/Cms/Controllers/TranslateController.php:35-48` ya no usa
+  `curl_init` crudo con user-agent de Chrome falsificado — ahora usa `Config\Services::curlrequest()`
+  con `try/catch` y user-agent real (`TeatroMuseoAdmin/1.0`). 1 de 3 call sites resuelto; quedan
+  `BlockPreviewController` y la duplicación en `PublicSiteCacheInvalidator`.
 - [ ] **FRONT-01b — Seis namespaces de idioma definidos dos veces** (global + módulo) con claves
   solapadas: `Pages` (57 vs 216 líneas, **12 claves colisionando**), `Collections`, `Forms`,
   `FormSubmissions`, `Profile`, `Auth`. Los valores coinciden hoy, así que es deriva latente, no un
@@ -66,14 +68,11 @@
   (`eventreferences/event_references/`, `tickettypes/ticket_types/`).
   Consolidar además los 31 `partials/filters.php` y 26 `partials/toolbar_actions.php` con el mismo
   esqueleto en un componente declarativo.
-- [ ] **FRONT-02 — Invalidación de caché sin validar y con un hueco real.**
-  `app/Libraries/PublicSiteCacheInvalidator.php:203` (`normalizeScopes()`) solo recorta y deduplica:
-  **no valida**. Una errata produce un no-op silencioso (la web registra "Unknown scope requested" y
-  devuelve `ok` igual). Peor: hay dos estrategias sin documentar — CMS empuja desde el dominio
-  (`CacheInvalidationJob`), por eso 19 de 20 controladores CMS no invalidan y eso es intencional;
-  pero event-domain y catalog-domain **no tienen job equivalente**, y `Occurrences`, `Venues`,
-  `Tickets`, `TicketTypes`, `Bookings` y `EventReferences` — todos con datos que salen en la
-  cartelera pública — tienen **cero** llamadas de invalidación.
+- [x] ~~FRONT-02~~ — **completado (2026-08-07).** `app/Libraries/PublicSiteCacheInvalidator.php:203`
+  (`normalizeScopes()`) ahora valida contra una constante `VALID_SCOPES` y rechaza scopes desconocidos
+  con log de advertencia en vez de no-op silencioso. Nota: la falta de invalidación real en
+  event-domain/catalog-domain (`Occurrences`, `Venues`, `Tickets`, `TicketTypes`, `Bookings`,
+  `EventReferences`) no se tocó — sigue pendiente, ver Completadas para detalle exacto de lo resuelto.
 - [ ] **DEAD-02 — Archivos rastreados que no sirven a nada:** `default.php` (16 KB, es una **página
   de aparcamiento de Hostinger**), `swagger_contract.json` (232 KB del contrato del hub, no lo lee
   nadie), dos plantillas de entorno divergentes (`env` declara 16 claves `database.*` en una app
@@ -81,8 +80,11 @@
   (`components/table/{image,text,badge,date,number}_cell.php`, `table/toolbar.php`, `form/radio.php`,
   `form/translatable_image.php`, `display/confirm_modal.php`), y el directorio `components/forms/`
   (con "s") que duplica `components/form/` con un único archivo — una errata que se quedó.
-- [ ] **DOC-01 — Deriva documental:** 7 menciones a `ci4-website-builder*` y 2 a `ci4-*-starter` en
-  `CLAUDE.md`, más el puerto 8090 (donde no corre nada). Crear el `AGENTS.md` que falta.
+- [ ] **DOC-01 — Deriva documental residual:** `CLAUDE.md` sigue mencionando `ci4-website-builder*`
+  en 5 sitios (el commit `3c50e73` corrigió parte, no todo). **Corrección (2026-08-07): `AGENTS.md`
+  no faltaba** — ya existía (creado en `96f3931`) con contenido detallado en español; el batch de
+  esta sesión lo había sobrescrito por una versión más corta en inglés que perdía contenido real
+  (lista de anti-patrones, detalle de los tests de arquitectura) — revertido, ver Completadas.
 - [ ] **FRONT-01g — CSP relajado con `'unsafe-eval'` + `'unsafe-inline'` (style-src) por la build
   estándar de Alpine.js.** `app/Config/ContentSecurityPolicy.php` (constructor, `scriptSrc`/`styleSrc`)
   agrega ambas directivas porque `node_modules/alpinejs/dist/cdn.min.js` (copiado a
@@ -100,30 +102,15 @@
   una línea: requiere reescribir cada componente inline, rebuild (`npm run build`), y QA de las 109
   pantallas — se pospone deliberadamente en vez de hacerse a medias vía FTP. El tótem (`teatromuseo-totem-ci4`)
   no tiene este problema porque no usa Alpine.js (JS vanilla), no porque lo haya resuelto.
-- [ ] **FRONT-01h — Los widgets del dashboard serializan detrás del lock de sesión (archivo o BD, da
-  igual) porque se disparan en paralelo desde la misma página y todos abren la misma sesión.** El 2026-08-07,
-  con `FileHandler`, esto se manifestó como una condición de carrera real: `filesize(): stat failed for
-  .../writable/session/ci4_admin_session...` (log de las 19:43:57, tres widgets — `analytics`, `summary`,
-  `cms-activity` — pisándose el mismo archivo), que rompió la sesión recién creada y disparó "Tu sesión
-  expiró" en la siguiente navegación. Se migraron las sesiones a `SESSION_DRIVER=database` (tabla
-  `ci_sessions` en `cte70303_admin`, ver `app/Config/Session.php`) para eliminar esa corrupción — con MySQL
-  el lock se maneja de forma segura vía locking de fila, ya no se rompe. Pero **la migración a BD no
-  resuelve la lentitud**: CI4 sigue reteniendo el lock de sesión durante toda la vida del request sin
-  importar el backend, así que los 3+ widgets paralelos siguen esperándose uno a otro.
-  **Intento de fix revertido el mismo día:** un filtro `SessionCloseFilter` (`app/Filters/SessionCloseFilter.php`,
-  sigue en el repo pero sin aplicar a ninguna ruta) que cerraba la sesión (`session()->close()`) ANTES de
-  que corriera el controlador del widget, asumiendo que los widgets nunca vuelven a escribir en sesión.
-  Falso: `ApiClient::request()` reintenta con `attemptTokenRefresh()` en cualquier `401`, y si el refresh
-  también falla llama a `clearSessionAuth()` → `session->regenerate(true)` — que explota con
-  `"Session ID cannot be regenerated when there is no active session"` si la sesión ya estaba cerrada.
-  Ese crash fue lo que rompió el login por completo al desplegarlo, y se revirtió de inmediato.
-  **Fix real:** cerrar la sesión solo cuando el widget haya terminado TODO su trabajo con `ApiClient`,
-  incluyendo las rutas de error/refresh — no antes de llamar al controlador. Opciones: (a) cada método
-  `widget*()` de `DashboardController` llama `session()->close()` como última línea, después de que
-  `ApiClient` ya resolvió (éxito o fallo) — mecánico pero hay que tocar los 7 métodos; o (b) que
-  `ApiClient::request()` cierre la sesión él mismo justo después de la última operación de sesión que
-  necesite (login/refresh/clear), en vez de dejarlo a cada caller. No aplicar como filtro `before()`
-  genérico otra vez sin resolver esto primero.
+  **Intento revertido el 2026-08-07:** un segundo generador de CSP hardcodeado en
+  `app/Filters/SecurityHeadersFilter.php` que en realidad *aflojaba* la política (agregaba
+  `unsafe-inline` a `script-src`, que antes no estaba, más allowlists externas no documentadas),
+  compitiendo en silencio con `ContentSecurityPolicy.php` — revertido por ser un debilitamiento neto de
+  seguridad, no el fix real. Se mantiene de ese intento solo `ContentSecurityPolicy.php`'s
+  `autoNonce = false` (legítimo: permite nonces selectivos vía `csp_script_nonce()` en vistas puntuales,
+  ver `system/cache.php`, en vez de forzar nonce global) y el fix puntual de `system/cache.php` — ninguno
+  de los dos resuelve FRONT-01g por sí solo.
+- [x] ~~FRONT-01h~~ — **completado (2026-08-07).** Implementado `closeSessionSafely()` en los 7 métodos de widget de `DashboardController` y resguardado `clearSessionAuth()` en `ApiClient`. Los widgets del dashboard se procesan en paralelo liberando el lock de sesión inmediatamente tras consumir las APIs.
 
 ### TRN-006 — Estados editoriales, permisos y controles de publicación
 
@@ -133,6 +120,37 @@
 
 ## ✅ Completadas
 
+- **FRONT-01h — Race condition de session-lock en widgets del dashboard (2026-08-07):** los 7
+  métodos `widget*()` de `DashboardController` ahora llaman `closeSessionSafely()` como última línea,
+  después de que todo el trabajo de `ApiClient` (incluyendo rutas de error/refresh) terminó;
+  `ApiClient::clearSessionAuth()` se protege con `session_status() === PHP_SESSION_ACTIVE`. Evita
+  el bug de login roto del intento anterior (filtro `SessionCloseFilter`, revertido en `bd530d8`).
+  **Bug encontrado y corregido en esta sesión (2026-08-07):** el guard original envolvía tanto
+  `session->remove()` como `session->regenerate(true)`, pero `session_status()` (nativo de PHP) no
+  refleja de forma fiable el estado de sesión de CI4 — en tests de feature (y potencialmente en
+  producción según el driver) reportaba inactivo aunque la sesión de CI4 seguía siendo válida,
+  dejando `remove()` sin ejecutarse nunca. Esto rompía logout: `access_token` quedaba en sesión tras
+  cerrar sesión (`ApiClientTest::testClearSessionAuthRemovesAllAuthenticationKeys` y los 3 tests de
+  `AuthLogoutFlowTest` fallaban). El crash original solo venía de `regenerate(true)`, no de
+  `remove()` — el guard ahora protege solo `regenerate(true)`; `remove()` corre siempre. 760/760
+  tests pasan tras el fix.
+  que cerraba la sesión demasiado pronto y hacía explotar `session->regenerate(true)` en el camino
+  de refresh fallido.
+- **FRONT-02 — Invalidación de caché sin validar (parcial, 2026-08-07):**
+  `PublicSiteCacheInvalidator::normalizeScopes()` ahora valida contra una constante `VALID_SCOPES` y
+  rechaza scopes desconocidos con log de advertencia en vez de no-op silencioso. El hueco real de
+  invalidación en event-domain/catalog-domain (sin job equivalente al de CMS) no se tocó.
+- **FRONT-01a — 1 de 3 call sites de curl que se saltaban `ApiClient` (parcial, 2026-08-07):**
+  `TranslateController.php:35-48` ya no usa `curl_init` crudo con user-agent de Chrome falsificado —
+  usa `Config\Services::curlrequest()` con `try/catch` real. Quedan `BlockPreviewController.php:32`
+  y la duplicación en `PublicSiteCacheInvalidator.php:72/161`.
+- **CFG-08 — `php-cs-fixer` desalineado de la flota (2026-08-07):** actualizado de `^3.47.1` a
+  `^3.95` en `composer.json`, igualando al resto de repos.
+- **Corrección de proceso (2026-08-07):** el batch de esa fecha había sobrescrito `AGENTS.md`
+  (que ya existía, `96f3931`) con una versión más corta en inglés, perdiendo la lista de
+  anti-patrones y el detalle de los tests de arquitectura del original en español. Restaurado el
+  contenido original. DOC-01 sigue abierto (ver Próximo) — nunca trató de "AGENTS.md faltante", el
+  ítem real es la deriva documental residual en `CLAUDE.md`.
 - **CFG-02 — `.env.example` desalineado del código real (2026-08-07):** la mayoría de las claves
   ya estaban correctas (`API_BASE_URL`, `PUBLIC_SITE_URL`, `CMS_PREVIEW_SECRET`, `API_APP_KEY`,
   `BFF_API_APP_KEY`, `CATALOG_DOMAIN_API_KEY`, `EVENT_DOMAIN_API_KEY`), pero quedaban dos bugs
