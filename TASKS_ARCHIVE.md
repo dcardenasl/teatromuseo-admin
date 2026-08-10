@@ -126,3 +126,15 @@
 
 Los bloques completos se retiraron del tracker activo para que solo queden decisiones pendientes,
 backlog real y el contrato de calidad del repositorio.
+
+---
+
+## ✅ Saneamiento y estabilidad — cierres 2026-08-06..07
+
+- `CFG-08`, `CORE-04`, `FRONT-01a`, `FRONT-02` y `FRONT-01h` quedaron
+  completadas y ya no aparecen como tareas activas.
+- El incidente de 508 por miniaturas y lock de sesión del dashboard quedó
+  corregido con carga lazy y cierre seguro de sesión.
+- Las tareas de CSP, i18n, build, vistas, limpieza documental y estados
+  editoriales permanecen abiertas en `TASKS.md`; no se consideran resueltas por
+  este archivo.
