@@ -9,6 +9,7 @@ use App\Modules\Cms\Services\BlockInstanceApiService;
 use App\Modules\Cms\Services\BlockTypeOptionsResolver;
 use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Cms\Support\BlockOwnerRouting;
+use App\Modules\Files\Services\FileApiService;
 use App\Support\CmsFieldEnums;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -20,6 +21,7 @@ class BlockInstanceController extends BaseWebController
     private const OWNER_CACHE_TTL = 120;
 
     protected BlockInstanceApiService $blockInstanceService;
+    protected FileApiService $fileService;
     protected BlockTypeOptionsResolver $blockTypeOptions;
     protected TranslationAuditApiService $translationAuditService;
 
@@ -30,6 +32,7 @@ class BlockInstanceController extends BaseWebController
     {
         parent::initController($request, $response, $logger);
         $this->blockInstanceService = service('blockInstanceApiService');
+        $this->fileService = service('fileApiService');
         $this->blockTypeOptions = service('blockTypeOptionsResolver');
         $this->translationAuditService = service('translationAuditApiService');
     }
@@ -139,6 +142,72 @@ class BlockInstanceController extends BaseWebController
     private function shouldSeedBlankTranslations(array $blockType): bool
     {
         return $this->blockSchemaFields($blockType) === [];
+    }
+
+    /**
+     * Resolve the small thumbnail variant for image references used by child
+     * blocks. The block API intentionally returns the stored media reference,
+     * while this admin listing needs a display-ready URL for both images.
+     *
+     * @param array<int, array<string, mixed>> $children
+     * @return array<int, array<string, mixed>>
+     */
+    private function enrichChildImageThumbnails(array $children): array
+    {
+        $fileIds = [];
+        foreach ($children as $child) {
+            $config = is_array($child['block_config'] ?? null) ? $child['block_config'] : [];
+            foreach (['photo', 'hover_photo'] as $field) {
+                $reference = is_array($config[$field] ?? null) ? $config[$field] : [];
+                $fileId = (int) ($reference['file_id'] ?? 0);
+                if ($fileId > 0) {
+                    $fileIds[$fileId] = $fileId;
+                }
+            }
+        }
+
+        if ($fileIds === []) {
+            return $children;
+        }
+
+        // The picker manifest already contains a display URL backed by the
+        // thumb variant. Resolve it once instead of issuing one API request
+        // per image and exhausting the Hub's request rate limit.
+        $manifestResponse = $this->safeApiCall(fn () => $this->fileService->pickerManifest());
+        if (! $manifestResponse['ok']) {
+            return $children;
+        }
+
+        $manifest = $this->extractData($manifestResponse);
+        $items = is_array($manifest['items'] ?? null) ? $manifest['items'] : [];
+        $thumbnailUrls = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $fileId = (int) ($item['id'] ?? 0);
+            $thumbUrl = trim((string) ($item['preview_url'] ?? ''));
+            if ($fileId > 0 && $thumbUrl !== '' && isset($fileIds[$fileId])) {
+                $thumbnailUrls[$fileId] = $thumbUrl;
+            }
+        }
+
+        foreach ($children as &$child) {
+            $config = is_array($child['block_config'] ?? null) ? $child['block_config'] : [];
+            foreach (['photo', 'hover_photo'] as $field) {
+                $reference = is_array($config[$field] ?? null) ? $config[$field] : [];
+                $fileId = (int) ($reference['file_id'] ?? 0);
+                if (isset($thumbnailUrls[$fileId])) {
+                    $reference['thumb_url'] = $thumbnailUrls[$fileId];
+                    $config[$field] = $reference;
+                }
+            }
+            $child['block_config'] = $config;
+        }
+        unset($child);
+
+        return $children;
     }
 
     public function index(string $ownerId): string|RedirectResponse
@@ -719,6 +788,7 @@ class BlockInstanceController extends BaseWebController
         $blocksResponse = $this->safeApiCall(fn () => $this->blockInstanceService->list($ownerId, $ownerType));
         $allBlocks      = $blocksResponse['ok'] ? $this->extractItems($blocksResponse) : [];
         $children       = array_values(array_filter($allBlocks, static fn (array $b) => (int) ($b['parent_instance_id'] ?? 0) === (int) $instanceId));
+        $children       = $this->enrichChildImageThumbnails($children);
 
         // Same reasoning as index(): this view only renders name/icon, so it
         // uses the cheap, unhydrated catalog instead of resolve().

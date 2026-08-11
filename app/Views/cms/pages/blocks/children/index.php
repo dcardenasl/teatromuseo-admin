@@ -104,28 +104,52 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                     </svg>
                 </div>
 
-                <!-- Slide preview image -->
+                <!-- Child preview images -->
                 <?php
-                $previewImg = '';
-                foreach ($child['translations'] ?? [] as $t) {
-                    $bd = is_array($t['block_data'] ?? null) ? $t['block_data'] : [];
-                    if (is_array($bd['image'] ?? null) && ! empty($bd['image']['url'])) {
-                        $previewImg = (string) $bd['image']['url'];
-                        break;
+                $blockConfig = is_array($child['block_config'] ?? null) ? $child['block_config'] : [];
+                $previewImages = [];
+                $seenPreviewUrls = [];
+                foreach (['photo', 'hover_photo'] as $imageKey) {
+                    $reference = is_array($blockConfig[$imageKey] ?? null) ? $blockConfig[$imageKey] : [];
+                    $imageUrl = trim((string) ($reference['thumb_url'] ?? $reference['url'] ?? ''));
+                    if ($imageUrl !== '' && ! isset($seenPreviewUrls[$imageUrl])) {
+                        $previewImages[] = [
+                            'key' => $imageKey,
+                            'url' => $imageUrl,
+                        ];
+                        $seenPreviewUrls[$imageUrl] = true;
                     }
                 }
-                $blockConfig = is_array($child['block_config'] ?? null) ? $child['block_config'] : [];
-                if ($previewImg === '' && is_array($blockConfig['photo'] ?? null)) {
-                    $previewImg = (string) ($blockConfig['photo']['url'] ?? '');
+
+                // Keep the generic block preview fallback for child types that
+                // do not use the two team-member media references.
+                if ($previewImages === []) {
+                    foreach ($child['translations'] ?? [] as $t) {
+                        $bd = is_array($t['block_data'] ?? null) ? $t['block_data'] : [];
+                        if (is_array($bd['image'] ?? null) && ! empty($bd['image']['url'])) {
+                            $previewImages[] = [
+                                'key' => 'image',
+                                'url' => (string) $bd['image']['url'],
+                            ];
+                            break;
+                        }
+                    }
                 }
                 $collectionKey = $blockConfig['collection_key'] ?? null;
                 $matchedCollectionId = ($collectionKey !== null && isset($collectionsMap[(string) $collectionKey]))
                     ? $collectionsMap[(string) $collectionKey]
                     : null;
                 ?>
-                <?php if ($previewImg !== ''): ?>
-                    <div class="shrink-0 w-16 h-10 rounded overflow-hidden border border-gray-200">
-                        <img src="<?= esc($previewImg) ?>" alt="" class="w-full h-full object-cover">
+                <?php if ($previewImages !== []): ?>
+                    <div class="flex shrink-0 gap-1" data-preview-variant="thumb">
+                        <?php foreach ($previewImages as $previewImage): ?>
+                            <div class="w-16 h-10 rounded overflow-hidden border border-gray-200 bg-white">
+                                <img src="<?= esc($previewImage['url']) ?>"
+                                     alt=""
+                                     data-preview-image="<?= esc($previewImage['key']) ?>"
+                                     class="w-full h-full object-cover">
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 <?php else: ?>
                     <div class="bg-brand-50 text-brand-700 p-2.5 rounded-lg border border-brand-100 shrink-0">
