@@ -1,7 +1,7 @@
 <header class="mb-8">
     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900"><?= sprintf(lang('Dashboard.welcome_title'), esc($user['first_name'] ?? $user['username'] ?? 'User')) ?></h1>
+            <h1 class="text-2xl font-bold text-gray-900"><?= sprintf(lang('Dashboard.welcome_title'), esc($displayName ?? lang('Dashboard.user_fallback'))) ?></h1>
             <p class="text-gray-500 mt-1">
                 <?= lang('Dashboard.welcome_subtitle') ?>
                 <a href="<?= route_to('profile') ?>" class="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 font-medium ml-1 transition-colors">

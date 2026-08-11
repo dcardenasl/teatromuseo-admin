@@ -185,6 +185,34 @@ final class ApiClientTest extends CIUnitTestCase
         $this->assertSame(['data' => ['items' => []]], $result['data']);
     }
 
+    public function testRequestHonorsExplicitRetryBudget(): void
+    {
+        session()->set(SessionKeys::ACCESS_TOKEN->value, 'test-token');
+        $client   = new ApiClient(new ApiClientConfig());
+        $response  = $this->createResponseMock(503, ['detail' => 'unavailable']);
+        $http      = $this->createMock(\CodeIgniter\HTTP\CURLRequest::class);
+
+        $http->expects($this->once())
+            ->method('request')
+            ->with(
+                'GET',
+                '/api/v1/test',
+                $this->callback(function (array $options): bool {
+                    $this->assertArrayNotHasKey('max_retries', $options);
+
+                    return true;
+                })
+            )
+            ->willReturn($response);
+
+        $this->setProtectedProperty($client, 'http', $http);
+
+        $result = $client->request('GET', '/test', ['max_retries' => 0], true);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(503, $result['status']);
+    }
+
     public function testPostForwardsToRequestAsPostMethod(): void
     {
         session()->set(SessionKeys::ACCESS_TOKEN->value, 'test-token');

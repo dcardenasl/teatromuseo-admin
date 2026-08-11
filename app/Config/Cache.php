@@ -24,7 +24,7 @@ class Cache extends BaseConfig
      * The name of the preferred handler that should be used. If for some reason
      * it is not available, the $backupHandler will be used in its place.
      */
-    public string $handler = 'apcu';
+    public string $handler = 'file';
 
     /**
      * --------------------------------------------------------------------------
@@ -144,6 +144,16 @@ class Cache extends BaseConfig
         'redis'     => RedisHandler::class,
         'wincache'  => WincacheHandler::class,
     ];
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $configured = env('cache.handler') ?: env('ADMIN_CACHE_HANDLER');
+        if (is_string($configured) && array_key_exists($configured, $this->validHandlers)) {
+            $this->handler = $configured;
+        }
+    }
 
     /**
      * --------------------------------------------------------------------------

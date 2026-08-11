@@ -137,7 +137,7 @@ class ApiClient implements ApiClientInterface
 
         if ($authenticated) {
             // Proactively refresh token if it expires within 30 seconds, avoiding a round-trip 401.
-            if (! self::$isRefreshing) {
+            if ($this->canMutateSession() && ! self::$isRefreshing) {
                 $expiresAt = $this->session->get(SessionKeys::EXPIRES_AT->value);
                 if (is_int($expiresAt) && $expiresAt <= time() + 30) {
                     $this->attemptTokenRefresh();
@@ -161,7 +161,11 @@ class ApiClient implements ApiClientInterface
         // unavailable upstream must fail within the configured request
         // timeout instead of multiplying latency and exceeding PHP's global
         // max_execution_time while the user is saving a form.
-        $maxRetries = in_array($method, ['GET', 'HEAD'], true) ? 2 : 0;
+        $requestedRetries = $options['max_retries'] ?? null;
+        unset($options['max_retries']);
+        $maxRetries = in_array($method, ['GET', 'HEAD'], true)
+            ? max(0, min(2, is_numeric($requestedRetries) ? (int) $requestedRetries : 2))
+            : 0;
         $attempt    = 0;
         do {
             if ($attempt > 0) {
@@ -174,7 +178,12 @@ class ApiClient implements ApiClientInterface
             $attempt++;
         } while ($status >= 500 && $attempt <= $maxRetries);
 
-        if ($authenticated && $status === 401 && ! self::$isRefreshing && $this->attemptTokenRefresh()) {
+        if ($authenticated
+            && $status === 401
+            && $this->canMutateSession()
+            && ! self::$isRefreshing
+            && $this->attemptTokenRefresh()
+        ) {
             self::$isRefreshing = true;
 
             try {
@@ -282,6 +291,15 @@ class ApiClient implements ApiClientInterface
         }
 
         return true;
+    }
+
+    /**
+     * Widget endpoints release the native PHP session lock before upstream
+     * I/O. CLI/test sessions do not hold that lock, so they remain writable.
+     */
+    private function canMutateSession(): bool
+    {
+        return is_cli() || session_status() === PHP_SESSION_ACTIVE;
     }
 
     protected function buildUri(string $path, bool $skipPrefix = false): string

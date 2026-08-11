@@ -4,9 +4,19 @@
 > [`../TASKS.md`](../TASKS.md). Cierres históricos:
 > [`TASKS_ARCHIVE.md`](TASKS_ARCHIVE.md).
 
-## 🔴 En progreso
+## ✅ Completadas
 
-*(sin tarea del plan PublicRead asignada al Admin en este momento)*
+- [x] **ADM-DASH-02 — Dashboard cross-domain y datos confiables** — cerrada
+  2026-08-11. El dashboard ahora consume Hub, CMS, Catálogo y Eventos desde
+  una lectura cacheada versionada, muestra actividad cross-domain y representa
+  cada fuente no disponible como estado explícito, nunca como cero.
+
+- [x] **ADM-DASH-01 — Dashboard administrativo resistente** — cerrada
+  2026-08-11. Entrega agregada y protegida contra fan-out, reintentos y
+  carreras de caché. Rollout y smoke de producción documentados en
+  [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+## 🔴 En progreso
 
 ## 🟡 Próximo
 

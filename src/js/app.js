@@ -42,7 +42,7 @@ import { structureWizard } from './components/wizard/structureIndex.js';
 // Caps how many dashboard widgets fetch concurrently — loading all of them
 // at once fans out into dozens of upstream API calls and can exhaust a
 // small server's CPU/RAM (2026-08-07 incident).
-window.dashboardFetchQueue = createFetchQueue(3);
+window.dashboardFetchQueue = createFetchQueue(1);
 
 document.addEventListener('alpine:init', () => {
     Alpine.store('confirm', confirmStore());

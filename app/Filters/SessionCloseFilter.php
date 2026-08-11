@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\Support\SessionKeys;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -30,6 +31,14 @@ class SessionCloseFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
+        // Keep the session open for the short token-refresh window. The
+        // ApiClient must be able to persist a rotated token before the lock is
+        // released; all other widget requests are read-only after auth.
+        $expiresAt = session()->get(SessionKeys::EXPIRES_AT->value);
+        if (is_int($expiresAt) && $expiresAt <= time() + 30) {
+            return null;
+        }
+
         session()->close();
 
         return null;

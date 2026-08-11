@@ -4,20 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\ApiClientInterface;
+use App\Libraries\DomainApiClientInterface;
 use App\Modules\Analytics\Services\AnalyticsApiService;
-use App\Modules\Cms\Services\CategoryApiService;
-use App\Modules\Cms\Services\CollectionApiService;
-use App\Modules\Cms\Services\EntryApiService;
-use App\Modules\Cms\Services\FormApiService;
-use App\Modules\Cms\Services\FormSubmissionApiService;
-use App\Modules\Cms\Services\MenuApiService;
-use App\Modules\Cms\Services\PageApiService;
-use App\Modules\Cms\Services\TagApiService;
 use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Dashboard\Services\HealthApiService;
-use App\Modules\Files\Services\FileApiService;
-use App\Modules\Metrics\Services\MetricsApiService;
-use App\Modules\Users\Services\UserApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
@@ -29,8 +20,15 @@ final class DashboardFlowTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        cache()->clean();
+    }
+
     protected function tearDown(): void
     {
+        cache()->clean();
         Services::reset();
         parent::tearDown();
     }
@@ -50,50 +48,13 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetStatsAggregatesAdminMetrics(): void
     {
-        $userService = $this->createMock(UserApiService::class);
-        $userService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 1])
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['meta' => ['total' => 42]],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        $fileService = $this->createMock(FileApiService::class);
-        $fileService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 5])
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['meta' => ['total' => 5], 'data' => []],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        $metricsService = $this->createMock(MetricsApiService::class);
-        $metricsService->expects($this->once())
-            ->method('summary')
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['request_stats' => ['availability_percent' => 99.9]],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('userApiService', $userService);
-        Services::injectMock('fileApiService', $fileService);
-        Services::injectMock('metricsApiService', $metricsService);
+        $this->injectDashboardSummary(
+            hubSections: [
+                'users' => ['total' => 42],
+                'files' => ['total' => 5, 'recent' => []],
+                'metrics' => ['request_stats' => ['availability_percent' => 99.9]],
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -108,48 +69,7 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetStatsStillRendersWhenUserSummaryFails(): void
     {
-        $userService = $this->createMock(UserApiService::class);
-        $userService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok'          => false,
-                'status'      => 500,
-                'data'        => [],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => ['failed'],
-                'fieldErrors' => [],
-            ]);
-
-        $fileService = $this->createMock(FileApiService::class);
-        $fileService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['meta' => ['total' => 0], 'data' => []],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        $metricsService = $this->createMock(MetricsApiService::class);
-        $metricsService->expects($this->once())
-            ->method('summary')
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => [],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('userApiService', $userService);
-        Services::injectMock('fileApiService', $fileService);
-        Services::injectMock('metricsApiService', $metricsService);
+        $this->injectDashboardSummary(hubStatus: 500, hubOk: false);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -190,26 +110,21 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetRecentFilesReturnsFileList(): void
     {
-        $fileService = $this->createMock(FileApiService::class);
-        $fileService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 5])
-            ->willReturn([
-                'ok'     => true,
-                'status' => 200,
-                'data'   => [
-                    'meta' => ['total' => 1],
-                    'data' => [
-                        ['id' => 99, 'original_name' => 'report.pdf', 'category' => 'document', 'human_size' => '1 MB', 'uploaded_at' => '2026-01-01 00:00:00', 'is_image' => false],
-                    ],
+        $this->injectDashboardSummary(
+            hubSections: [
+                'files' => [
+                    'total' => 1,
+                    'recent' => [[
+                        'id' => 99,
+                        'original_name' => 'report.pdf',
+                        'category' => 'document',
+                        'human_size' => '1 MB',
+                        'uploaded_at' => '2026-01-01 00:00:00',
+                        'is_image' => false,
+                    ]],
                 ],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('fileApiService', $fileService);
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -307,37 +222,7 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetSummaryOnlyQueriesPermittedResources(): void
     {
-        $pageService = $this->createMock(PageApiService::class);
-        $pageService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 1])
-            ->willReturn([
-                'ok' => true, 'status' => 200, 'data' => ['meta' => ['total' => 7]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('pageApiService', $pageService);
-
-        $entryService = $this->createMock(EntryApiService::class);
-        $entryService->expects($this->never())->method('list');
-        Services::injectMock('entryApiService', $entryService);
-        $collectionService = $this->createMock(CollectionApiService::class);
-        $collectionService->expects($this->never())->method('list');
-        Services::injectMock('collectionApiService', $collectionService);
-        $menuService = $this->createMock(MenuApiService::class);
-        $menuService->expects($this->never())->method('list');
-        Services::injectMock('menuApiService', $menuService);
-        $categoryService = $this->createMock(CategoryApiService::class);
-        $categoryService->expects($this->never())->method('list');
-        Services::injectMock('categoryApiService', $categoryService);
-        $tagService = $this->createMock(TagApiService::class);
-        $tagService->expects($this->never())->method('list');
-        Services::injectMock('tagApiService', $tagService);
-        $formService = $this->createMock(FormApiService::class);
-        $formService->expects($this->never())->method('list');
-        Services::injectMock('formApiService', $formService);
-        $submissionService = $this->createMock(FormSubmissionApiService::class);
-        $submissionService->expects($this->never())->method('counts');
-        Services::injectMock('formSubmissionApiService', $submissionService);
+        $this->injectDashboardSummary(cmsSections: ['counts' => ['pages' => 7]]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -352,24 +237,7 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetSummaryCountsFormsFromTheUnpaginatedListResponse(): void
     {
-        // Unlike Pages/Entries/etc, the domain's /cms/forms endpoint ignores
-        // filters and always returns a flat array with no `meta.total` — a
-        // regression test for the bug where the dashboard showed "0
-        // Formularios Dinámicos" despite forms existing, because it was
-        // looking for a pagination envelope that this endpoint never sends.
-        $formService = $this->createMock(FormApiService::class);
-        $formService->expects($this->once())
-            ->method('list')
-            ->with([])
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => [
-                    ['id' => 1, 'form_key' => 'contact'],
-                    ['id' => 2, 'form_key' => 'gdpr_rights'],
-                ],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('formApiService', $formService);
+        $this->injectDashboardSummary(cmsSections: ['counts' => ['forms' => 2]]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -384,15 +252,9 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetSummaryShowsSubmissionsTotalAndPendingBadgeWhenPermitted(): void
     {
-        $submissionService = $this->createMock(FormSubmissionApiService::class);
-        $submissionService->expects($this->once())
-            ->method('counts')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['new' => 3, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('formSubmissionApiService', $submissionService);
+        $this->injectDashboardSummary(cmsSections: [
+            'submissions' => ['new' => 3, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -410,15 +272,9 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetSummaryOmitsSubmissionsBadgeWhenNothingIsPending(): void
     {
-        $submissionService = $this->createMock(FormSubmissionApiService::class);
-        $submissionService->expects($this->once())
-            ->method('counts')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['new' => 0, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('formSubmissionApiService', $submissionService);
+        $this->injectDashboardSummary(cmsSections: [
+            'submissions' => ['new' => 0, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -433,29 +289,12 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetCmsActivityMergesPagesAndEntriesSortedByRecency(): void
     {
-        $pageService = $this->createMock(PageApiService::class);
-        $pageService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['data' => [
-                    ['id' => 1, 'slug' => 'inicio', 'updated_at' => '2026-07-01 00:00:00', 'translations' => [['title' => 'Old Home Page']]],
-                ]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('pageApiService', $pageService);
-
-        $entryService = $this->createMock(EntryApiService::class);
-        $entryService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['data' => [
-                    ['id' => 5, 'slug' => 'noticia-reciente', 'updated_at' => '2026-07-20 12:00:00', 'translations' => [['title' => 'Recent News']]],
-                ]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('entryApiService', $entryService);
+        $this->injectDashboardSummary(cmsSections: [
+            'recent_activity' => [
+                ['type' => 'page', 'id' => 1, 'updated_at' => '2026-07-01 00:00:00', 'translations' => [['title' => 'Old Home Page']]],
+                ['type' => 'entry', 'id' => 5, 'updated_at' => '2026-07-20 12:00:00', 'translations' => [['title' => 'Recent News']]],
+            ],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -469,5 +308,40 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertNotFalse($recentPos);
         $this->assertNotFalse($oldPos);
         $this->assertLessThan($oldPos, $recentPos, 'The more recently updated entry should be listed first.');
+    }
+
+    /**
+     * @param array<string, mixed> $hubSections
+     * @param array<string, mixed> $cmsSections
+     */
+    private function injectDashboardSummary(
+        array $hubSections = [],
+        array $cmsSections = [],
+        int $hubStatus = 200,
+        bool $hubOk = true,
+        int $cmsStatus = 200,
+        bool $cmsOk = true,
+    ): void {
+        $hub = $this->createMock(ApiClientInterface::class);
+        $hub->method('request')->willReturn($this->aggregateResponse($hubSections, $hubStatus, $hubOk));
+        Services::injectMock('apiClient', $hub);
+
+        $cms = $this->createMock(DomainApiClientInterface::class);
+        $cms->method('request')->willReturn($this->aggregateResponse($cmsSections, $cmsStatus, $cmsOk));
+        Services::injectMock('domainApiClient', $cms);
+    }
+
+    /** @param array<string, mixed> $sections */
+    private function aggregateResponse(array $sections, int $status, bool $ok): array
+    {
+        return [
+            'ok'          => $ok,
+            'status'      => $status,
+            'data'        => ['sections' => $sections],
+            'raw'         => '',
+            'headers'     => [],
+            'messages'    => [],
+            'fieldErrors' => [],
+        ];
     }
 }

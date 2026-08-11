@@ -35,6 +35,8 @@ use App\Modules\Cms\Services\RedirectApiService;
 use App\Modules\Cms\Services\SettingApiService;
 use App\Modules\Cms\Services\TagApiService;
 use App\Modules\Cms\Services\TranslationAuditApiService;
+use App\Modules\Dashboard\Services\DashboardDataService;
+use App\Modules\Dashboard\Services\FileDashboardLock;
 use App\Modules\Dashboard\Services\HealthApiService;
 use App\Modules\EventReferences\Services\EventReferenceApiService;
 use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
@@ -83,6 +85,32 @@ use InvalidArgumentException;
  */
 class Services extends BaseService
 {
+    public static function dashboardDataService(bool $getShared = true): DashboardDataService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('dashboardDataService');
+        }
+
+        $dashboardConfig = config('Dashboard');
+
+        return new DashboardDataService(
+            static::apiClient(),
+            static::domainApiClient(),
+            static::catalogDomainApiClient(),
+            static::eventDomainApiClient(),
+            service('cache'),
+            new FileDashboardLock(
+                WRITEPATH . 'cache/dashboard-locks',
+                $dashboardConfig->lockMaxAge,
+                $dashboardConfig->lockWaitMs,
+            ),
+            $dashboardConfig->freshTtl,
+            $dashboardConfig->staleTtl,
+            $dashboardConfig->failureCooldownTtl,
+            $dashboardConfig->upstreamMaxRetries,
+        );
+    }
+
     public static function formRequest(string $class, bool $getShared = true): FormRequestInterface
     {
         if ($getShared) {
