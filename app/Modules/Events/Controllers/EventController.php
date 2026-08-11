@@ -38,7 +38,7 @@ class EventController extends BaseWebController
         return $this->tableDataResponse(
             [],
             ['name', 'created_at'],
-            fn (array $params) => $this->eventService->list($params),
+            fn (array $params) => $this->eventService->list([...$params, 'projection' => 'list']),
         );
     }
 

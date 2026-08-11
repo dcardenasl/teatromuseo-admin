@@ -44,7 +44,7 @@ class FormController extends BaseWebController
         return $this->tableDataResponse(
             [],
             ['form_key', 'is_active', 'created_at'],
-            fn (array $params) => $this->formService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->formService->list([...$params, 'projection' => 'list']),
         );
     }
 

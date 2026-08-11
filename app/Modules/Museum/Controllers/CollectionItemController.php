@@ -37,37 +37,7 @@ class CollectionItemController extends BaseWebController
         return $this->tableDataResponse(
             ['category_id'],
             ['name', 'created_at'],
-            function (array $params): array {
-                $response = $this->collectionItemService->list($params);
-                $items = $this->extractItems($response);
-
-                if ($items === []) {
-                    return $response;
-                }
-
-                $categories = $this->categoriesOptions();
-                foreach ($items as &$item) {
-                    if (! is_array($item)) {
-                        continue;
-                    }
-
-                    $categoryId = (string) ($item['category_id'] ?? '');
-                    $item['category'] = $categories[$categoryId] ?? (string) ($item['category_id'] ?? '-');
-                }
-                unset($item);
-
-                $payload = is_array($response['data'] ?? null) ? $response['data'] : [];
-                if (isset($payload['data']) && is_array($payload['data'])) {
-                    $payload['data'] = $items;
-                    $response['data'] = $payload;
-                } else {
-                    $response['data'] = $items;
-                }
-
-                $response['raw'] = '';
-
-                return $response;
-            },
+            fn (array $params): array => $this->collectionItemService->list([...$params, 'projection' => 'list']),
         );
     }
 

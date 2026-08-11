@@ -36,7 +36,7 @@ class TechniqueController extends BaseWebController
         return $this->tableDataResponse(
             [],
             ['name', 'created_at'],
-            fn (array $params) => $this->techniqueService->list($params),
+            fn (array $params) => $this->techniqueService->list([...$params, 'projection' => 'list']),
         );
     }
 

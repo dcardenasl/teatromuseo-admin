@@ -43,9 +43,9 @@ class PageController extends BaseWebController
     public function data(): ResponseInterface
     {
         return $this->tableDataResponse(
-            ['parent_id'],
-            ['name', 'created_at'],
-            fn (array $params) => $this->pageService->list([...$params, 'include_translations' => 1]),
+            ['parent_id', 'status', 'page_type'],
+            ['name', 'page_type', 'status', 'parent_id', 'is_in_sitemap', 'created_at'],
+            fn (array $params) => $this->pageService->list([...$params, 'projection' => 'list']),
         );
     }
 

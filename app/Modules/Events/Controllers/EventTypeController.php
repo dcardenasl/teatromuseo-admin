@@ -33,7 +33,7 @@ final class EventTypeController extends BaseWebController
 
     public function data(): ResponseInterface
     {
-        return $this->tableDataResponse([], ['created_at', 'is_active'], fn (array $params) => $this->eventTypeService->list($params));
+        return $this->tableDataResponse([], ['created_at', 'is_active'], fn (array $params) => $this->eventTypeService->list([...$params, 'projection' => 'list']));
     }
 
     public function checkSlug(): ResponseInterface

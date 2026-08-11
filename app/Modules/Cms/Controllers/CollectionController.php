@@ -38,7 +38,7 @@ class CollectionController extends BaseWebController
         return $this->tableDataResponse(
             [],
             ['name', 'created_at'],
-            fn (array $params) => $this->collectionService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->collectionService->list([...$params, 'projection' => 'list']),
         );
     }
 

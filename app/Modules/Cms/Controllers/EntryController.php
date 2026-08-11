@@ -50,7 +50,7 @@ class EntryController extends BaseWebController
         return $this->tableDataResponse(
             ['collection_id'],
             ['name', 'created_at'],
-            fn (array $params) => $this->entryService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->entryService->list([...$params, 'projection' => 'list']),
         );
     }
 

@@ -36,7 +36,7 @@ class CategoryController extends BaseWebController
         return $this->tableDataResponse(
             [],
             ['name', 'created_at'],
-            fn (array $params) => $this->categoryService->list($params),
+            fn (array $params) => $this->categoryService->list([...$params, 'projection' => 'list']),
         );
     }
 

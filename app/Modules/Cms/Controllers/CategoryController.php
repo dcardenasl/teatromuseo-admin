@@ -39,7 +39,7 @@ class CategoryController extends BaseWebController
         return $this->tableDataResponse(
             ['collection_id', 'parent_id'],
             ['name', 'created_at'],
-            fn (array $params) => $this->categoryService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->categoryService->list([...$params, 'projection' => 'list']),
         );
     }
 
