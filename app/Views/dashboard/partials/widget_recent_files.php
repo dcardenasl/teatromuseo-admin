@@ -32,6 +32,9 @@
                         $fileId   = $file['id'] ?? '';
                         $isImage  = (bool) ($file['is_image'] ?? false);
                         $thumbUrl = $file['variants']['sm']['url'] ?? ($isImage ? route_to('files.view', $fileId) : null);
+                        if (is_string($thumbUrl) && str_starts_with($thumbUrl, '/uploads/')) {
+                            $thumbUrl = rtrim((string) config('ApiClient')->baseUrl, '/') . $thumbUrl;
+                        }
                         ?>
                         <tr class="<?= esc(table_row_class()) ?>">
                             <td class="<?= esc(table_td_class()) ?>">
