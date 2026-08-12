@@ -120,6 +120,7 @@ $listingCollectionJs = json_encode((string) $listingCollection, JSON_UNESCAPED_U
                 <select class="mt-2 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" x-model="projection.order.direction">
                     <option value="asc">Ascendente · más antiguo / menor primero</option>
                     <option value="desc">Descendente · más reciente / mayor primero</option>
+                    <option value="upcoming" x-show="canUseUpcoming()">Próximos primero · futuros ascendentes y pasados descendentes</option>
                 </select>
             </label>
         </div>
@@ -177,8 +178,9 @@ window.listingProjectionEditor = window.listingProjectionEditor || function list
         label: String(item.label || ''),
         operator: String(item.operator || 'equals'),
     })) : [];
+    const projectionVersion = Number(raw.version);
     const projection = {
-        version: 1,
+        version: Number.isFinite(projectionVersion) && projectionVersion > 0 ? projectionVersion : 1,
         slots: {
             title: String(raw.slots?.title || 'entry.title'),
             subtitle: String(raw.slots?.subtitle || ''),
@@ -189,7 +191,9 @@ window.listingProjectionEditor = window.listingProjectionEditor || function list
         extras: normalizeItems(raw.extras),
         order: {
             field: String(raw.order?.field || ''),
-            direction: String(raw.order?.direction || 'desc') === 'asc' ? 'asc' : 'desc',
+            direction: ['asc', 'desc', 'upcoming'].includes(String(raw.order?.direction || 'desc').toLowerCase())
+                ? String(raw.order?.direction || 'desc').toLowerCase()
+                : 'desc',
             public: raw.order?.public === true || raw.order?.public === '1' || raw.order?.public === 'true',
         },
         filters: normalizeItems(raw.filters),
@@ -215,6 +219,9 @@ window.listingProjectionEditor = window.listingProjectionEditor || function list
         syncContext(source, collection) {
             this.source = String(source || '');
             this.collection = String(collection || '');
+            if (this.projection.order.direction === 'upcoming' && !this.canUseUpcoming()) {
+                this.projection.order.direction = 'desc';
+            }
             const fields = this.fields();
             const valid = new Set(fields.map(field => field.value));
             if (!this.projection.slots.date && valid.has(this.projection.order.field)) {
@@ -232,6 +239,9 @@ window.listingProjectionEditor = window.listingProjectionEditor || function list
         fields() {
             const key = ['event_items', 'catalog_items'].includes(this.source) ? this.source : this.collection;
             return Array.isArray(this.catalog[key]) ? this.catalog[key] : [];
+        },
+        canUseUpcoming() {
+            return this.source === 'cms_collection';
         },
         availableFields(criteria = {}) {
             return this.fields().filter(field => {

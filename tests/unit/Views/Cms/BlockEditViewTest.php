@@ -344,4 +344,57 @@ final class BlockEditViewTest extends CIUnitTestCase
         $this->assertStringNotContainsString('pickerSelectLabels', $html);
         $this->assertStringNotContainsString('pickerChangeLabels', $html);
     }
+
+    public function testCollectionProjectionExposesUpcomingOrderingForCmsSources(): void
+    {
+        $html = view('cms/pages/blocks/edit', [
+            'page' => ['id' => 12, 'title' => 'Home'],
+            'block' => [
+                'id' => 3032,
+                'block_id' => 5,
+                'sort_order' => 3,
+                'is_active' => true,
+                'block_config' => [
+                    'source_type' => 'cms_collection',
+                    'collection_key' => 'teatroescuela',
+                    'listing_projection' => [
+                        'version' => 2,
+                        'slots' => ['date' => 'block.teatroescuela_ficha.start_date'],
+                        'order' => [
+                            'field' => 'block.teatroescuela_ficha.start_date',
+                            'direction' => 'upcoming',
+                        ],
+                    ],
+                ],
+                'translations' => [],
+            ],
+            'blockType' => [
+                'block_key' => 'collection_grid',
+                'fields' => [],
+                'config_fields' => [
+                    'collection_key' => [
+                        'type' => 'string',
+                        'label' => 'Colección',
+                    ],
+                ],
+            ],
+            'listingFieldCatalog' => [
+                'teatroescuela' => [[
+                    'value' => 'block.teatroescuela_ficha.start_date',
+                    'label' => 'Curso · Inicio',
+                    'group' => 'TeatroEscuela',
+                    'type' => 'date',
+                    'sortable' => true,
+                    'filterable' => true,
+                ]],
+            ],
+            'languages' => [['id' => 1, 'is_default' => true, 'code' => 'es']],
+            'ownerBlocksRoute' => 'admin.cms.pages.blocks',
+            'ownerUpdateRoute' => 'admin.cms.pages.blocks.update',
+        ]);
+
+        $this->assertStringContainsString('value="upcoming"', $html);
+        $this->assertStringContainsString('canUseUpcoming()', $html);
+        $this->assertStringContainsString('&quot;direction&quot;&#x3A;&quot;upcoming', $html);
+    }
 }
