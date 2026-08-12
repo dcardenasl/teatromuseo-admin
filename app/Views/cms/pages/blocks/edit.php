@@ -838,7 +838,7 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
         </form>
     </section>
 </div>
-<script>
+<script <?= csp_script_nonce() ?>>
 window.openBlockEditPreview = window.openBlockEditPreview || function openBlockEditPreview(blockKey) {
     const form = document.getElementById('block-edit-form');
     if (!(form instanceof HTMLFormElement)) {

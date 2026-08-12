@@ -561,7 +561,7 @@ $wizardFieldCatalogJson = json_encode($wizardFieldCatalog, JSON_UNESCAPED_UNICOD
     <?php endif; ?>
 </div>
 
-<script>
+<script <?= csp_script_nonce() ?>>
 function collectionBlockTemplateBuilder(blockTypes, initialTemplate, collectionPresets, initialWizardConfig, wizardFieldCatalog) {
     return {
         blockTypes: Array.isArray(blockTypes) ? blockTypes : [],

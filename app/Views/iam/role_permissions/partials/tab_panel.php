@@ -206,7 +206,7 @@ $actionBadgeClass = static function (string $action): string {
     </div>
 </form>
 
-<script>
+<script <?= csp_script_nonce() ?>>
 window.togglePermissionGroup = window.togglePermissionGroup || function (resource, state, form) {
     if (!form) {
         return;

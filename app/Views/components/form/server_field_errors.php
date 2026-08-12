@@ -1,4 +1,4 @@
-<script>
+<script <?= csp_script_nonce() ?>>
 window.AdminFormFieldErrors = window.AdminFormFieldErrors || {
     normalize(name) {
         return String(name || '')

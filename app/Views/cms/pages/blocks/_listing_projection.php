@@ -169,7 +169,7 @@ $listingCollectionJs = json_encode((string) $listingCollection, JSON_UNESCAPED_U
     </div>
 </div>
 
-<script>
+<script <?= csp_script_nonce() ?>>
 window.listingProjectionEditor = window.listingProjectionEditor || function listingProjectionEditor(catalog, initial = {}, initialSource = '', initialCollection = '') {
     const raw = typeof initial === 'object' && initial !== null ? initial : {};
     const normalizeItems = (items) => Array.isArray(items) ? items.map((item, index) => ({

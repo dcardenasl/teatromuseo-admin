@@ -397,5 +397,35 @@ final class BlockEditViewTest extends CIUnitTestCase
         $this->assertStringContainsString('canUseUpcoming()', $html);
         $this->assertStringContainsString("this.source === 'auto'", $html);
         $this->assertStringContainsString('&quot;direction&quot;&#x3A;&quot;upcoming', $html);
+        $this->assertStringContainsString('window.listingProjectionEditor', $html);
+    }
+
+    public function testListingProjectionInlineScriptUsesCspNonceWhenEnabled(): void
+    {
+        $appConfig = config(\Config\App::class);
+        $previousCspEnabled = $appConfig->CSPEnabled;
+
+        try {
+            $appConfig->CSPEnabled = true;
+            Services::reset();
+
+            $html = view('cms/pages/blocks/_listing_projection', [
+                'listingFieldCatalog' => ['teatroescuela' => []],
+                'blockConfig' => [],
+                'submittedBlockConfig' => [],
+            ]);
+
+            $markerPosition = strpos($html, 'window.listingProjectionEditor');
+            $this->assertIsInt($markerPosition);
+
+            $openingTagPosition = strrpos(substr($html, 0, $markerPosition), '<script');
+            $this->assertIsInt($openingTagPosition);
+
+            $openingTag = substr($html, $openingTagPosition, $markerPosition - $openingTagPosition);
+            $this->assertMatchesRegularExpression('~<script\s+nonce="[^"]+">\s*$~', $openingTag);
+        } finally {
+            $appConfig->CSPEnabled = $previousCspEnabled;
+            Services::reset();
+        }
     }
 }

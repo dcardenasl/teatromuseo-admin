@@ -340,7 +340,7 @@ $suggestedSortOrder = count($items);
         </form>
     </section>
 
-<script>
+<script <?= csp_script_nonce() ?>>
 document.addEventListener('alpine:init', () => {
     Alpine.data('menuItemForm', (initialLinkType) => ({
         linkType: initialLinkType,

@@ -107,7 +107,7 @@ $translationLabel = static function (string $key, string $fallback): string {
     </div>
 </section>
 
-<script>
+<script <?= csp_script_nonce() ?>>
 document.addEventListener('submit', function (event) {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;

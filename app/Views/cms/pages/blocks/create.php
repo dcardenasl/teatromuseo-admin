@@ -987,7 +987,7 @@ $isImageAccept = static function (string $accept): bool {
 
 </div>
 
-<script>
+<script <?= csp_script_nonce() ?>>
 const findRichTextEditorComponent = (input) => {
     const container = input instanceof HTMLElement ? input.closest('[x-data*="richTextEditor"]') : null;
     const component = container?._x_dataStack?.[0];
