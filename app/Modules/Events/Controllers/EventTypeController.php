@@ -147,13 +147,8 @@ final class EventTypeController extends BaseWebController
         return redirect()->to(route_to('admin.events.event_types'))->with('success', lang('Events.event_types_delete_success'));
     }
 
-    public function reorder(): string|RedirectResponse
+    public function reorder(): string
     {
-        $deny = $this->requireWrite();
-        if ($deny !== null) {
-            return $deny;
-        }
-
         // The event-domain contract caps `per_page` at 100; keep this aligned
         // with the shared table response contract instead of sending `limit`.
         $response = $this->safeApiCall(fn () => $this->eventTypeService->list([
@@ -170,11 +165,6 @@ final class EventTypeController extends BaseWebController
 
     public function saveOrder(): ResponseInterface
     {
-        $deny = $this->requireWrite();
-        if ($deny !== null) {
-            return $this->response->setJSON(['ok' => false, 'message' => lang('App.access_denied')])->setStatusCode(403);
-        }
-
         $request = $this->request;
         if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
             return $this->response->setJSON(['ok' => false, 'message' => lang('App.invalid_request')])->setStatusCode(400);
@@ -209,12 +199,4 @@ final class EventTypeController extends BaseWebController
         return $response['ok'] ? $this->extractItems($response) : [];
     }
 
-    private function requireWrite(): ?RedirectResponse
-    {
-        if (! has_permission('event.event-types.write')) {
-            return $this->withError(lang('App.no_permission'), route_to('admin.events.event_types'));
-        }
-
-        return null;
-    }
 }

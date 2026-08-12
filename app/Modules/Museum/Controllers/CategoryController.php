@@ -157,13 +157,8 @@ class CategoryController extends BaseWebController
         return redirect()->to(route_to('admin.museum.categories'))->with('success', lang('Museum.categories_delete_success'));
     }
 
-    public function reorder(): string|RedirectResponse
+    public function reorder(): string
     {
-        $deny = $this->requireWrite();
-        if ($deny !== null) {
-            return $deny;
-        }
-
         $response = $this->safeApiCall(fn () => $this->categoryService->list(['limit' => 250, 'sort' => 'sort_order']));
         $items = $this->extractItems($response);
 
@@ -175,14 +170,6 @@ class CategoryController extends BaseWebController
 
     public function saveOrder(): ResponseInterface
     {
-        $deny = $this->requireWrite();
-        if ($deny !== null) {
-            return $this->response->setJSON([
-                'ok'      => false,
-                'message' => lang('App.access_denied'),
-            ])->setStatusCode(403);
-        }
-
         $request = $this->request;
         if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
             return $this->response->setJSON([
@@ -227,12 +214,4 @@ class CategoryController extends BaseWebController
         return $response['ok'] ? $this->extractItems($response) : [];
     }
 
-    private function requireWrite(): ?RedirectResponse
-    {
-        if (! has_permission('museum.write')) {
-            return $this->withError(lang('App.no_permission'), route_to('admin.museum.categories'));
-        }
-
-        return null;
-    }
 }
