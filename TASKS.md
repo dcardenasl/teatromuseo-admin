@@ -16,7 +16,10 @@
   carreras de caché. Rollout y smoke de producción documentados en
   [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
-## 🔴 En progreso
+- [x] **ADM-SEC-01 — Autorización declarativa en módulos Event y Catalog** —
+  cerrada 2026-08-12. Los módulos operativos usan autenticación más permiso
+  explícito por endpoint; se retiraron los checks duplicados, se alineó la UI y
+  se añadieron regresiones funcionales y una guarda arquitectónica.
 
 ## 🟡 Próximo
 
