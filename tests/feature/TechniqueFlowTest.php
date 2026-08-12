@@ -42,7 +42,7 @@ final class TechniqueFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.technique.read']],
         ])->get('/admin/museum/techniques');
 
         $result->assertStatus(200);
@@ -52,7 +52,7 @@ final class TechniqueFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.technique.create']],
         ])->post('/admin/museum/techniques', [
             csrf_token() => csrf_hash(),
         ]);
@@ -82,7 +82,7 @@ final class TechniqueFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.technique.delete']],
         ])->post('/admin/museum/techniques/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);

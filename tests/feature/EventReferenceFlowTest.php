@@ -42,7 +42,7 @@ final class EventReferenceFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.event-references.read']],
         ])->get('/admin/eventreferences/event-references');
 
         $result->assertStatus(200);
@@ -52,7 +52,7 @@ final class EventReferenceFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.event-references.write']],
         ])->post('/admin/eventreferences/event-references', [
             csrf_token() => csrf_hash(),
         ]);
@@ -75,7 +75,7 @@ final class EventReferenceFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.event-references.delete']],
         ])->post('/admin/eventreferences/event-references/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);

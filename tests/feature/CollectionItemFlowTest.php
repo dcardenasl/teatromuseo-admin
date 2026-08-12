@@ -59,7 +59,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.collectionItem.read']],
         ])->get('/admin/museum/collection-items');
 
         $result->assertStatus(200);
@@ -93,7 +93,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.collectionItem.read']],
         ])->get('/admin/museum/collection-items/test-uuid');
 
         $result->assertStatus(200);
@@ -106,7 +106,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.collectionItem.create']],
         ])->post('/admin/museum/collection-items', [
             csrf_token() => csrf_hash(),
         ]);
@@ -138,7 +138,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.collectionItem.create']],
         ])->post('/admin/museum/collection-items', [
             csrf_token()      => csrf_hash(),
             'name'            => 'Ficha de prueba',
@@ -176,7 +176,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.collectionItem.update']],
         ])->post('/admin/museum/collection-items/test-uuid', [
             csrf_token()      => csrf_hash(),
             'name'            => 'Ficha de prueba',
@@ -208,7 +208,7 @@ final class CollectionItemFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['catalog.collectionItem.delete']],
         ])->post('/admin/museum/collection-items/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);

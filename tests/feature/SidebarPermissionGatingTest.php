@@ -89,4 +89,30 @@ final class SidebarPermissionGatingTest extends CIUnitTestCase
         $this->assertStringContainsString('admin/museum/categories', $body);
         $this->assertStringContainsString('admin/museum/techniques', $body);
     }
+
+    public function testEventsSectionHidesResourcesWithoutReadPermissions(): void
+    {
+        $result = $this->withSession($this->sessionWithPermissions(['users.read']))->get('/files');
+
+        $result->assertStatus(200);
+        $body = $this->decodedBody($result->getBody());
+        $this->assertStringNotContainsString('admin/events/events', $body);
+        $this->assertStringNotContainsString('admin/events/event-types', $body);
+        $this->assertStringNotContainsString('admin/venues/venues', $body);
+        $this->assertStringNotContainsString('admin/bookings/bookings', $body);
+        $this->assertStringNotContainsString('admin/tickets/tickets', $body);
+    }
+
+    public function testEventsSectionShowsOnlyResourcesWithReadPermissions(): void
+    {
+        $result = $this->withSession($this->sessionWithPermissions(['event.venues.read']))->get('/files');
+
+        $result->assertStatus(200);
+        $body = $this->decodedBody($result->getBody());
+        $this->assertStringContainsString('admin/venues/venues', $body);
+        $this->assertStringNotContainsString('admin/events/events', $body);
+        $this->assertStringNotContainsString('admin/events/event-types', $body);
+        $this->assertStringNotContainsString('admin/bookings/bookings', $body);
+        $this->assertStringNotContainsString('admin/tickets/tickets', $body);
+    }
 }

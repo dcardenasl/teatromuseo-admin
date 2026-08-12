@@ -42,7 +42,7 @@ final class TicketTypeFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.ticket-types.read']],
         ])->get('/admin/tickettypes/ticket-types');
 
         $result->assertStatus(200);
@@ -52,7 +52,7 @@ final class TicketTypeFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.ticket-types.write']],
         ])->post('/admin/tickettypes/ticket-types', [
             csrf_token() => csrf_hash(),
         ]);
@@ -75,7 +75,7 @@ final class TicketTypeFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.ticket-types.delete']],
         ])->post('/admin/tickettypes/ticket-types/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);

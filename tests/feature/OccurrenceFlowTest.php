@@ -42,7 +42,7 @@ final class OccurrenceFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.occurrences.read']],
         ])->get('/admin/occurrences/occurrences');
 
         $result->assertStatus(200);
@@ -52,7 +52,7 @@ final class OccurrenceFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.occurrences.write']],
         ])->post('/admin/occurrences/occurrences', [
             csrf_token() => csrf_hash(),
         ]);
@@ -75,7 +75,7 @@ final class OccurrenceFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.occurrences.delete']],
         ])->post('/admin/occurrences/occurrences/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);

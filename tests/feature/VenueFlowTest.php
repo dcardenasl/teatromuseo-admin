@@ -42,7 +42,7 @@ final class VenueFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.venues.read']],
         ])->get('/admin/venues/venues');
 
         $result->assertStatus(200);
@@ -52,7 +52,7 @@ final class VenueFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.venues.write']],
         ])->post('/admin/venues/venues', [
             csrf_token() => csrf_hash(),
         ]);
@@ -75,7 +75,7 @@ final class VenueFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.venues.delete']],
         ])->post('/admin/venues/venues/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);

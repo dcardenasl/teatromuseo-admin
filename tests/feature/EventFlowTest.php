@@ -59,7 +59,7 @@ final class EventFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.events.read']],
         ])->get('/admin/events/events');
 
         $result->assertStatus(200);
@@ -83,7 +83,7 @@ final class EventFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.events.read']],
         ])->get('/admin/events/events/test-uuid');
 
         $result->assertStatus(200);
@@ -94,7 +94,7 @@ final class EventFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.events.write']],
         ])->post('/admin/events/events', [
             csrf_token() => csrf_hash(),
         ]);
@@ -126,7 +126,7 @@ final class EventFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.events.write']],
         ])->post('/admin/events/events', [
             csrf_token() => csrf_hash(),
             'title'       => 'Evento de prueba',
@@ -162,7 +162,7 @@ final class EventFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.events.write']],
         ])->post('/admin/events/events/test-uuid', [
             csrf_token() => csrf_hash(),
             'title'       => 'Evento de prueba',
@@ -192,7 +192,7 @@ final class EventFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.events.delete']],
         ])->post('/admin/events/events/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);

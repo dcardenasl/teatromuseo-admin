@@ -42,7 +42,7 @@ final class BookingFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.bookings.read']],
         ])->get('/admin/bookings/bookings');
 
         $result->assertStatus(200);
@@ -52,7 +52,7 @@ final class BookingFlowTest extends CIUnitTestCase
     {
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.bookings.write']],
         ])->post('/admin/bookings/bookings', [
             csrf_token() => csrf_hash(),
         ]);
@@ -75,7 +75,7 @@ final class BookingFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['users.read']],
+            'user'         => ['permissions' => ['event.bookings.delete']],
         ])->post('/admin/bookings/bookings/test-uuid/delete', [
             csrf_token() => csrf_hash(),
         ]);
