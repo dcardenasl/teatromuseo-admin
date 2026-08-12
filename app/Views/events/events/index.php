@@ -48,7 +48,7 @@ $eventStatusLabels = [
         <?= view('components/display/empty_state', [
             'title' => 'App.no_results',
             'description' => 'App.no_results_desc',
-            'actionUrl' => route_to('admin.events.events.create'),
+            'actionUrl' => has_permission('event.events.write') ? route_to('admin.events.events.create') : null,
             'actionLabel' => 'App.create',
         ]) ?>
     </template>
@@ -106,7 +106,9 @@ $eventStatusLabels = [
                             <td class="<?= esc(table_td_class()) ?>">
                                 <div class="flex items-center gap-2">
                                     <a :href="showUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.view') ?></a>
-                                    <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                    <?php if (has_permission('event.events.write')): ?>
+                                        <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

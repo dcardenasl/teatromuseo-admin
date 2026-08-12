@@ -7,9 +7,11 @@
     'title' => 'Bookings.bookings_edit',
 ]) ?>
 
-<form id="delete-item-form" method="post" action="<?= route_to('admin.bookings.bookings.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($bookingLabel), 'js') ?>', () => $el.submit())">
-    <?= csrf_field() ?>
-</form>
+<?php if (has_permission('event.bookings.delete')): ?>
+    <form id="delete-item-form" method="post" action="<?= route_to('admin.bookings.bookings.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($bookingLabel), 'js') ?>', () => $el.submit())">
+        <?= csrf_field() ?>
+    </form>
+<?php endif; ?>
 
 <form method="post" action="<?= route_to('admin.bookings.bookings.update', (string) ($item['id'] ?? '')) ?>" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <?= csrf_field() ?>
@@ -83,8 +85,8 @@
         <?= view('components/display/admin_actions_panel', [
             'content' => '<button type="submit" class="' . esc(action_button_class('primary'), 'attr') . '">' . esc(lang('App.update')) . '</button>'
                 . '<a href="' . esc(route_to('admin.bookings.bookings'), 'attr') . '" class="' . esc(action_button_class(), 'attr') . '">' . esc(lang('App.cancel')) . '</a>',
-            'dangerContent' => '<button type="submit" form="delete-item-form" class="' . esc(action_button_class('danger'), 'attr') . '">'
-                . ui_icon('trash', 'h-3.5 w-3.5') . esc(lang('App.delete')) . '</button>',
+            'dangerContent' => has_permission('event.bookings.delete') ? '<button type="submit" form="delete-item-form" class="' . esc(action_button_class('danger'), 'attr') . '">'
+                . ui_icon('trash', 'h-3.5 w-3.5') . esc(lang('App.delete')) . '</button>' : '',
         ]) ?>
     </aside>
 </form>

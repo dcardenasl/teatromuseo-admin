@@ -50,7 +50,7 @@ $occurrenceVenueLabels = array_map('strval', $venues ?? []);
         <?= view('components/display/empty_state', [
             'title' => 'App.no_results',
             'description' => 'App.no_results_desc',
-            'actionUrl' => route_to('admin.occurrences.occurrences.create'),
+            'actionUrl' => has_permission('event.occurrences.write') ? route_to('admin.occurrences.occurrences.create') : null,
             'actionLabel' => 'App.create',
         ]) ?>
     </template>
@@ -125,7 +125,9 @@ $occurrenceVenueLabels = array_map('strval', $venues ?? []);
                             <td class="<?= esc(table_td_class()) ?>">
                                 <div class="flex items-center gap-2">
                                     <a :href="showUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.view') ?></a>
-                                    <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                    <?php if (has_permission('event.occurrences.write')): ?>
+                                        <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

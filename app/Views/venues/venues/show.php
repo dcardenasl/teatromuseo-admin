@@ -49,19 +49,24 @@
     <?php $mainContent = ob_get_clean(); ?>
 
     <?php ob_start(); ?>
-    <a href="<?= route_to('admin.venues.venues.edit', $itemId) ?>" class="<?= esc(action_button_class('primary')) ?>"><?= lang('App.edit') ?></a>
+    <?php if (has_permission('event.venues.write')): ?>
+        <a href="<?= route_to('admin.venues.venues.edit', $itemId) ?>" class="<?= esc(action_button_class('primary')) ?>"><?= lang('App.edit') ?></a>
+    <?php endif; ?>
 
     <?php $actionsContent = ob_get_clean(); ?>
 
-    <?php ob_start(); ?>
-    <form method="post" action="<?= route_to('admin.venues.venues.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($venue['name'] ?? $venue['title'] ?? $venue['id'] ?? null), 'js') ?>', () => $el.submit())">
-        <?= csrf_field() ?>
-        <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
-            <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
-            <?= esc(lang('App.delete')) ?>
-        </button>
-    </form>
-    <?php $dangerContent = ob_get_clean(); ?>
+    <?php $dangerContent = ''; ?>
+    <?php if (has_permission('event.venues.delete')): ?>
+        <?php ob_start(); ?>
+        <form method="post" action="<?= route_to('admin.venues.venues.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($venue['name'] ?? $venue['title'] ?? $venue['id'] ?? null), 'js') ?>', () => $el.submit())">
+            <?= csrf_field() ?>
+            <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
+                <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
+                <?= esc(lang('App.delete')) ?>
+            </button>
+        </form>
+        <?php $dangerContent = ob_get_clean(); ?>
+    <?php endif; ?>
 
     <?= view('components/display/admin_resource_layout', [
         'main' => $mainContent,

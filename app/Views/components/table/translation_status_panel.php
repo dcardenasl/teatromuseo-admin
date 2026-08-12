@@ -7,6 +7,7 @@ $languages = $languages ?? [];
 $translations = $translations ?? [];
 $requiredFields = $requiredFields ?? [];
 $sourceUpdatedAt = $sourceUpdatedAt ?? null;
+$canEdit = (bool) ($canEdit ?? true);
 $languageStates = [];
 $translationByLanguage = [];
 foreach ($translations as $translation) {
@@ -52,14 +53,20 @@ $actionableLanguages = array_values(array_filter($languages, static fn (array $l
             <?php foreach ($actionableLanguages as $language):
                 $languageId = (int) ($language['id'] ?? 0);
                 $languageCode = strtoupper((string) ($language['code'] ?? ('#' . $languageId)));
-                $editUrl = \App\Modules\Cms\Support\TranslationStatus::editUrl($editUrlTemplate, $languageId);
+                $editUrl = $canEdit ? \App\Modules\Cms\Support\TranslationStatus::editUrl($editUrlTemplate, $languageId) : '';
                 $stateData = $languageStates[$languageId] ?? ['status' => 'missing', 'missing_fields' => $requiredFields];
                 $state = $stateData['status'];
                 $missing = $stateData['missing_fields'];
                 $missingLabel = $missing !== [] ? ' (' . implode(', ', array_map(static fn (string $field): string => (string) lang('Translations.field_' . $field), $missing)) . ')' : '';
                 $translationUpdatedAt = $translationByLanguage[$languageId]['updated_at'] ?? null;
                 ?>
-                <li><a href="<?= esc($editUrl) ?>" class="inline-flex flex-wrap items-center gap-2 rounded-lg border <?= \App\Modules\Cms\Support\TranslationStatus::badgeClasses($state, 'action') ?> px-3 py-2 text-xs font-semibold"><span><?= esc($languageCode) ?></span><span><?= esc(lang('Translations.status_' . $state) . $missingLabel) ?></span><?php if ($sourceUpdatedAt !== null): ?><time datetime="<?= esc((string) $sourceUpdatedAt) ?>" class="font-normal opacity-75"><?= esc(lang('Translations.source_updated_at')) ?>: <?= esc((string) $sourceUpdatedAt) ?></time><?php endif; ?><?php if ($translationUpdatedAt !== null): ?><time datetime="<?= esc((string) $translationUpdatedAt) ?>" class="font-normal opacity-75"><?= esc(lang('Translations.translation_updated_at')) ?>: <?= esc((string) $translationUpdatedAt) ?></time><?php endif; ?><span><?= esc(lang('Translations.action_translate')) ?></span></a></li>
+                <li>
+                    <?php if ($canEdit): ?>
+                        <a href="<?= esc($editUrl) ?>" class="inline-flex flex-wrap items-center gap-2 rounded-lg border <?= \App\Modules\Cms\Support\TranslationStatus::badgeClasses($state, 'action') ?> px-3 py-2 text-xs font-semibold"><span><?= esc($languageCode) ?></span><span><?= esc(lang('Translations.status_' . $state) . $missingLabel) ?></span><?php if ($sourceUpdatedAt !== null): ?><time datetime="<?= esc((string) $sourceUpdatedAt) ?>" class="font-normal opacity-75"><?= esc(lang('Translations.source_updated_at')) ?>: <?= esc((string) $sourceUpdatedAt) ?></time><?php endif; ?><?php if ($translationUpdatedAt !== null): ?><time datetime="<?= esc((string) $translationUpdatedAt) ?>" class="font-normal opacity-75"><?= esc(lang('Translations.translation_updated_at')) ?>: <?= esc((string) $translationUpdatedAt) ?></time><?php endif; ?><span><?= esc(lang('Translations.action_translate')) ?></span></a>
+                    <?php else: ?>
+                        <span class="inline-flex flex-wrap items-center gap-2 rounded-lg border <?= \App\Modules\Cms\Support\TranslationStatus::badgeClasses($state, 'pill') ?> px-3 py-2 text-xs font-semibold"><span><?= esc($languageCode) ?></span><span><?= esc(lang('Translations.status_' . $state) . $missingLabel) ?></span><?php if ($sourceUpdatedAt !== null): ?><time datetime="<?= esc((string) $sourceUpdatedAt) ?>" class="font-normal opacity-75"><?= esc(lang('Translations.source_updated_at')) ?>: <?= esc((string) $sourceUpdatedAt) ?></time><?php endif; ?><?php if ($translationUpdatedAt !== null): ?><time datetime="<?= esc((string) $translationUpdatedAt) ?>" class="font-normal opacity-75"><?= esc(lang('Translations.translation_updated_at')) ?>: <?= esc((string) $translationUpdatedAt) ?></time><?php endif; ?></span>
+                    <?php endif; ?>
+                </li>
             <?php endforeach; ?>
         </ul>
     </section>

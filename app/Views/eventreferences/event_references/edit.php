@@ -10,9 +10,11 @@ $eventReferenceLabel = trim($eventReferenceEventLabel . (! empty($item['source_i
     'title' => 'EventReferences.event_references_edit',
 ]) ?>
 
-<form id="delete-item-form" method="post" action="<?= route_to('admin.eventreferences.event_references.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($eventReferenceLabel), 'js') ?>', () => $el.submit())">
-    <?= csrf_field() ?>
-</form>
+<?php if (has_permission('event.event-references.delete')): ?>
+    <form id="delete-item-form" method="post" action="<?= route_to('admin.eventreferences.event_references.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($eventReferenceLabel), 'js') ?>', () => $el.submit())">
+        <?= csrf_field() ?>
+    </form>
+<?php endif; ?>
 
 <form method="post" action="<?= route_to('admin.eventreferences.event_references.update', (string) ($item['id'] ?? '')) ?>" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <?= csrf_field() ?>
@@ -95,8 +97,8 @@ $eventReferenceLabel = trim($eventReferenceEventLabel . (! empty($item['source_i
         <?= view('components/display/admin_actions_panel', [
             'content' => '<button type="submit" class="' . esc(action_button_class('primary'), 'attr') . '">' . esc(lang('App.update')) . '</button>'
                 . '<a href="' . esc(route_to('admin.eventreferences.event_references'), 'attr') . '" class="' . esc(action_button_class(), 'attr') . '">' . esc(lang('App.cancel')) . '</a>',
-            'dangerContent' => '<button type="submit" form="delete-item-form" class="' . esc(action_button_class('danger'), 'attr') . '">'
-                . ui_icon('trash', 'h-3.5 w-3.5') . esc(lang('App.delete')) . '</button>',
+            'dangerContent' => has_permission('event.event-references.delete') ? '<button type="submit" form="delete-item-form" class="' . esc(action_button_class('danger'), 'attr') . '">'
+                . ui_icon('trash', 'h-3.5 w-3.5') . esc(lang('App.delete')) . '</button>' : '',
         ]) ?>
     </aside>
 </form>

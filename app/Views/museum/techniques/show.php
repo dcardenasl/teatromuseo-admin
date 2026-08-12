@@ -48,7 +48,8 @@ foreach ($translations as $translation) {
             'requiredFields' => ['name'],
             'sourceFields' => $technique,
             'sourceUpdatedAt' => $technique['updated_at'] ?? null,
-            'editUrlTemplate' => route_to('admin.museum.techniques.edit', $itemId)
+            'editUrlTemplate' => route_to('admin.museum.techniques.edit', $itemId),
+            'canEdit' => has_permission('catalog.technique.update'),
         ]) ?>
     <?php endif; ?>
 
@@ -127,23 +128,28 @@ foreach ($translations as $translation) {
     <?php $mainContent = ob_get_clean(); ?>
 
     <?php ob_start(); ?>
-    <a href="<?= route_to('admin.museum.techniques.edit', $itemId) ?>" class="<?= esc(action_button_class('primary')) ?>"><?= lang('App.edit') ?></a>
+    <?php if (has_permission('catalog.technique.update')): ?>
+        <a href="<?= route_to('admin.museum.techniques.edit', $itemId) ?>" class="<?= esc(action_button_class('primary')) ?>"><?= lang('App.edit') ?></a>
 
-    <a href="<?= route_to('admin.museum.techniques.reorder') ?>" class="<?= esc(action_button_class('neutral')) ?>">
-        <?= ui_icon('layers', 'h-3.5 w-3.5') ?>
-        <?= esc(lang('Museum.field_sort_order') ?? lang('App.reorder')) ?>
-    </a>
+        <a href="<?= route_to('admin.museum.techniques.reorder') ?>" class="<?= esc(action_button_class('neutral')) ?>">
+            <?= ui_icon('layers', 'h-3.5 w-3.5') ?>
+            <?= esc(lang('Museum.field_sort_order') ?? lang('App.reorder')) ?>
+        </a>
+    <?php endif; ?>
     <?php $actionsContent = ob_get_clean(); ?>
 
-    <?php ob_start(); ?>
-    <form method="post" action="<?= route_to('admin.museum.techniques.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($technique['name'] ?? $technique['title'] ?? $technique['id'] ?? null), 'js') ?>', () => $el.submit())">
-        <?= csrf_field() ?>
-        <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
-            <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
-            <?= esc(lang('App.delete')) ?>
-        </button>
-    </form>
-    <?php $dangerContent = ob_get_clean(); ?>
+    <?php $dangerContent = ''; ?>
+    <?php if (has_permission('catalog.technique.delete')): ?>
+        <?php ob_start(); ?>
+        <form method="post" action="<?= route_to('admin.museum.techniques.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($technique['name'] ?? $technique['title'] ?? $technique['id'] ?? null), 'js') ?>', () => $el.submit())">
+            <?= csrf_field() ?>
+            <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
+                <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
+                <?= esc(lang('App.delete')) ?>
+            </button>
+        </form>
+        <?php $dangerContent = ob_get_clean(); ?>
+    <?php endif; ?>
 
     <?= view('components/display/admin_resource_layout', [
         'main' => $mainContent,

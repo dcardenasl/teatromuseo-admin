@@ -55,7 +55,7 @@ $publicationStatusClasses = [
         <?= view('components/display/empty_state', [
             'title' => 'App.no_results',
             'description' => 'App.no_results_desc',
-            'actionUrl' => route_to('admin.museum.collection_items.create'),
+            'actionUrl' => has_permission('catalog.collectionItem.create') ? route_to('admin.museum.collection_items.create') : null,
             'actionLabel' => 'App.create',
         ]) ?>
     </template>
@@ -151,7 +151,9 @@ $publicationStatusClasses = [
                                 <td class="<?= esc(table_td_class()) ?>">
                                     <div class="flex items-center gap-2">
                                         <a :href="showUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.view') ?></a>
-                                        <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                        <?php if (has_permission('catalog.collectionItem.update')): ?>
+                                            <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

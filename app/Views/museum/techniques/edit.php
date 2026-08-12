@@ -6,9 +6,11 @@
     'title' => 'Museum.techniques_edit',
 ]) ?>
 
-<form id="delete-item-form" method="post" action="<?= route_to('admin.museum.techniques.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['title'] ?? $item['id'] ?? null), 'js') ?>', () => $el.submit())">
-    <?= csrf_field() ?>
-</form>
+<?php if (has_permission('catalog.technique.delete')): ?>
+    <form id="delete-item-form" method="post" action="<?= route_to('admin.museum.techniques.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['title'] ?? $item['id'] ?? null), 'js') ?>', () => $el.submit())">
+        <?= csrf_field() ?>
+    </form>
+<?php endif; ?>
 
 <form method="post" action="<?= route_to('admin.museum.techniques.update', (string) ($item['id'] ?? '')) ?>" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <?= csrf_field() ?>
@@ -146,7 +148,7 @@
     <aside class="space-y-6">
         <?= view('components/display/admin_actions_panel', [
             'content' => '<button type="submit" class="' . esc(action_button_class('primary'), 'attr') . ' w-full justify-center text-center py-2.5">' . esc(lang('App.save')) . '</button>'
-                . '<button type="submit" form="delete-item-form" class="' . esc(action_button_class('danger'), 'attr') . ' w-full justify-center text-center py-2.5 mt-2">' . esc(lang('App.delete')) . '</button>'
+                . (has_permission('catalog.technique.delete') ? '<button type="submit" form="delete-item-form" class="' . esc(action_button_class('danger'), 'attr') . ' w-full justify-center text-center py-2.5 mt-2">' . esc(lang('App.delete')) . '</button>' : '')
                 . '<a href="' . esc(route_to('admin.museum.techniques'), 'attr') . '" class="' . esc(action_button_class(), 'attr') . ' w-full justify-center text-center py-2.5 mt-2">' . esc(lang('App.cancel')) . '</a>',
         ]) ?>
     </aside>
