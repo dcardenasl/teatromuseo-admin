@@ -241,7 +241,13 @@ window.listingProjectionEditor = window.listingProjectionEditor || function list
             return Array.isArray(this.catalog[key]) ? this.catalog[key] : [];
         },
         canUseUpcoming() {
-            return this.source === 'cms_collection';
+            if (this.source === 'cms_collection') {
+                return true;
+            }
+
+            return this.source === 'auto'
+                && this.collection !== ''
+                && Array.isArray(this.catalog[this.collection]);
         },
         availableFields(criteria = {}) {
             return this.fields().filter(field => {

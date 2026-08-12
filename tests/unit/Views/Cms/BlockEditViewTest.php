@@ -395,6 +395,7 @@ final class BlockEditViewTest extends CIUnitTestCase
 
         $this->assertStringContainsString('value="upcoming"', $html);
         $this->assertStringContainsString('canUseUpcoming()', $html);
+        $this->assertStringContainsString("this.source === 'auto'", $html);
         $this->assertStringContainsString('&quot;direction&quot;&#x3A;&quot;upcoming', $html);
     }
 }
