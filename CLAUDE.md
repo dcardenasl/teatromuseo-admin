@@ -223,7 +223,7 @@ if (has_permission('iam.admin-access')) { /* show admin nav */ }
 
 **Filters:**
 - `AuthFilter` (`app/Filters/AuthFilter.php`): Verifies presence of `access_token` in session, redirects to `/login` if missing
-- `AdminFilter` (`app/Filters/AdminFilter.php`): Checks `has_permission('iam.admin-access')`, redirects to `/dashboard` with error flash otherwise (returns JSON 403 for AJAX)
+- `AdminFilter` (`app/Filters/AdminFilter.php`): Broad section gate backed by `Config\AdminAccess::$permissions`; redirects to `/dashboard` with error flash otherwise (returns JSON 403 for AJAX). Resource modules must use explicit `permission:<code>` filters per endpoint.
 - `LocaleFilter` (`app/Filters/LocaleFilter.php`): Reads `session('locale')`, validates against supported locales, sets the language for the current request
 
 All filters are registered in `app/Config/Filters.php`. `csrf` and `locale` run globally on every request; `auth` and `admin` are applied per route group.
@@ -451,7 +451,7 @@ The project uses a **modular architecture** where each feature is self-contained
 - JWT tokens MUST ONLY be stored in PHP sessions, never in cookies/localStorage accessible by JavaScript. UI-only preferences (e.g. table-vs-grid view) may use `sessionStorage` (per-tab, ephemeral), but never `localStorage` — the audit caught one such regression in 2026-05.
 - CSRF protection enabled by default in CodeIgniter 4. `Config\Security::$regenerate = false` is **intentional** to keep multi-tab forms valid; see the long comment on that property for the trade-off.
 - Input validation required on all form submissions. File uploads cross-check `getMimeType()` (real, via fileinfo) against the per-extension whitelist in `FileUploadRequest::ALLOWED_EXTENSION_MIMES`, not just the client-reported `Content-Type`.
-- Admin routes MUST use both `auth` and `admin` filters. The list of permission codes that grant admin entry lives in `Config\AdminAccess::$permissions` (env-overridable via `ADMIN_PERMISSIONS`); `AdminFilter` reads it dynamically — do NOT hardcode the list back into the filter.
+- Admin resource routes MUST use `auth` plus an explicit `permission:<code>` filter on every endpoint. Use `admin` only for a section-level gate where the whole module intentionally shares that boundary; never rely on it for CRUD authorization. The list of broad-gate permission codes lives in `Config\AdminAccess::$permissions` (env-overridable via `ADMIN_PERMISSIONS`); `AdminFilter` reads it dynamically — do NOT hardcode the list back into the filter.
 - `<meta name="session-expires-at">` is emitted by `BaseWebController` so the JS in `bootSessionExpiryWatcher()` can warn the user 60s before the access token expires (event: `session:expiring-soon`). Avoids the "surprise 401 mid-action" UX.
 - File uploads validated by size (max 10 MB) before being passed to API.
 - API app key stored only in `.env`; never exposed to client-side code.
