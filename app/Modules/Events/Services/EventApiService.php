@@ -20,6 +20,7 @@ class EventApiService extends ResourceApiService implements EventApiServiceInter
             'per_page' => 100,
             'sort' => 'sort_order',
             'filter' => ['is_active' => '1'],
+            'projection' => 'list',
         ]);
     }
 

@@ -176,7 +176,10 @@ class CollectionItemController extends BaseWebController
     private function categoriesOptions(): array
     {
         $categoryService = service('museumCategoryApiService');
-        $response = $this->safeApiCall(fn () => $categoryService->list(['per_page' => 100]));
+        $response = $this->safeApiCall(fn () => $categoryService->list([
+            'per_page' => 100,
+            'projection' => 'list',
+        ]));
         $options = [];
 
         foreach ($this->extractItems($response) as $item) {
@@ -194,7 +197,10 @@ class CollectionItemController extends BaseWebController
     private function techniquesOptions(): array
     {
         $techniqueService = service('museumTechniqueApiService');
-        $response = $this->safeApiCall(fn () => $techniqueService->list(['per_page' => 100]));
+        $response = $this->safeApiCall(fn () => $techniqueService->list([
+            'per_page' => 100,
+            'projection' => 'list',
+        ]));
         $options = [];
 
         foreach ($this->extractItems($response) as $item) {

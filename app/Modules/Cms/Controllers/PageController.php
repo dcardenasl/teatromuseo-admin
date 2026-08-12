@@ -285,7 +285,11 @@ class PageController extends BaseWebController
      */
     private function collectionsOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->collectionService->list(['limit' => 200, 'is_active' => true]));
+        $response = $this->safeApiCall(fn () => $this->collectionService->list([
+            'limit' => 200,
+            'is_active' => true,
+            'projection' => 'list',
+        ]));
         $this->maybeFlashDevError($response);
         $items = $this->extractItems($response);
         $options = [];
@@ -313,7 +317,11 @@ class PageController extends BaseWebController
             return $deny;
         }
 
-        $response = $this->safeApiCall(fn () => $this->pageService->list(['limit' => 250, 'sort' => 'sort_order']));
+        $response = $this->safeApiCall(fn () => $this->pageService->list([
+            'limit' => 250,
+            'sort' => 'sort_order',
+            'projection' => 'list',
+        ]));
         $this->maybeFlashDevError($response);
         $items = $this->extractItems($response);
 

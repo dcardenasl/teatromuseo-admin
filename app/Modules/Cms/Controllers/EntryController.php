@@ -303,7 +303,10 @@ class EntryController extends BaseWebController
         $tagOptions = $this->taxonomyLabels($entry['tags'] ?? []);
 
         $collectionId = isset($entry['collection_id']) ? (int) $entry['collection_id'] : 0;
-        $categories = $this->safeApiCall(fn () => $this->categoryService->list(['per_page' => 1000]));
+        $categories = $this->safeApiCall(fn () => $this->categoryService->list([
+            'per_page' => 1000,
+            'projection' => 'list',
+        ]));
         if (! $categories['ok']) {
             $this->maybeFlashDevError($categories);
         }
@@ -317,7 +320,10 @@ class EntryController extends BaseWebController
             $categoryOptions[(string) $category['id']] = $this->taxonomyLabel($category);
         }
 
-        $tags = $this->safeApiCall(fn () => $this->tagService->list(['per_page' => 1000]));
+        $tags = $this->safeApiCall(fn () => $this->tagService->list([
+            'per_page' => 1000,
+            'projection' => 'list',
+        ]));
         if (! $tags['ok']) {
             $this->maybeFlashDevError($tags);
         }
@@ -550,7 +556,11 @@ class EntryController extends BaseWebController
     /** @return array<string, string> */
     private function collectionsOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->entryService->collections(['limit' => 100, 'is_active' => true]));
+        $response = $this->safeApiCall(fn () => $this->entryService->collections([
+            'limit' => 100,
+            'is_active' => true,
+            'projection' => 'list',
+        ]));
         if (! $response['ok']) {
             $this->maybeFlashDevError($response);
         }
