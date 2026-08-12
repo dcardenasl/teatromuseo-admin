@@ -30,9 +30,7 @@ class CatalogDomainApiClient extends DomainApiClient
         $this->baseUrl = $baseUrl;
 
         $appKey = env('catalogDomainApiClient.appKey') ?: env('CATALOG_DOMAIN_API_KEY');
-        if (is_string($appKey) && trim($appKey) !== '') {
-            $this->appKey = $appKey;
-        }
+        $this->appKey = is_string($appKey) && trim($appKey) !== '' ? $appKey : '';
 
         $appName = env('catalogDomainApiClient.appName') ?: env('CATALOG_DOMAIN_API_APP_NAME');
         if (is_string($appName) && trim($appName) !== '') {

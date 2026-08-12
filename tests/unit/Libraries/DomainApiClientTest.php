@@ -77,6 +77,45 @@ final class DomainApiClientTest extends CIUnitTestCase
         $this->unsetEnvVar('DOMAIN_API_BASE_URL');
     }
 
+    public function testCatalogConfigUsesItsDedicatedEnvironmentBaseUrl(): void
+    {
+        $this->unsetEnvVar('catalogDomainApiClient.baseUrl');
+        $this->unsetEnvVar('CATALOG_DOMAIN_API_BASE_URL');
+        $this->setEnvVar('CATALOG_DOMAIN_API_BASE_URL', 'https://catalog.example.test');
+
+        $config = new CatalogDomainApiClientConfig();
+
+        $this->assertSame('https://catalog.example.test', $config->baseUrl);
+
+        $this->unsetEnvVar('CATALOG_DOMAIN_API_BASE_URL');
+    }
+
+    public function testEventConfigUsesItsDedicatedEnvironmentBaseUrl(): void
+    {
+        $this->unsetEnvVar('eventDomainApiClient.baseUrl');
+        $this->unsetEnvVar('EVENT_DOMAIN_API_BASE_URL');
+        $this->setEnvVar('EVENT_DOMAIN_API_BASE_URL', 'https://events.example.test');
+
+        $config = new EventDomainApiClientConfig();
+
+        $this->assertSame('https://events.example.test', $config->baseUrl);
+
+        $this->unsetEnvVar('EVENT_DOMAIN_API_BASE_URL');
+    }
+
+    public function testSpecializedClientsDoNotReuseTheCmsDomainAppKey(): void
+    {
+        $this->unsetEnvVar('catalogDomainApiClient.appKey');
+        $this->unsetEnvVar('CATALOG_DOMAIN_API_KEY');
+        $this->setEnvVar('DOMAIN_API_APP_KEY', 'cms-domain-key');
+
+        $catalogConfig = new CatalogDomainApiClientConfig();
+
+        $this->assertSame('', $catalogConfig->appKey);
+
+        $this->unsetEnvVar('DOMAIN_API_APP_KEY');
+    }
+
     public function testConfigDoesNotReadApiClientHubEnvVars(): void
     {
         // Hub env vars must NOT leak into the domain config — otherwise both

@@ -30,9 +30,7 @@ class EventDomainApiClient extends DomainApiClient
         $this->baseUrl = $baseUrl;
 
         $appKey = env('eventDomainApiClient.appKey') ?: env('EVENT_DOMAIN_API_KEY');
-        if (is_string($appKey) && trim($appKey) !== '') {
-            $this->appKey = $appKey;
-        }
+        $this->appKey = is_string($appKey) && trim($appKey) !== '' ? $appKey : '';
 
         $appName = env('eventDomainApiClient.appName') ?: env('EVENT_DOMAIN_API_APP_NAME');
         if (is_string($appName) && trim($appName) !== '') {
