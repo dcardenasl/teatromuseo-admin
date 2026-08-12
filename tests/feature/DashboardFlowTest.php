@@ -135,6 +135,38 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('report.pdf', $result->getBody());
     }
 
+    public function testWidgetRecentFilesPrefixesHubBaseUrlForRelativeImageVariants(): void
+    {
+        $relativeVariant = '/uploads/2026/01/01/example_sm.webp';
+        $this->injectDashboardSummary(
+            hubSections: [
+                'files' => [
+                    'total' => 1,
+                    'recent' => [[
+                        'id' => 100,
+                        'original_name' => 'example.webp',
+                        'category' => 'image',
+                        'human_size' => '1 MB',
+                        'uploaded_at' => '2026-01-01 00:00:00',
+                        'is_image' => true,
+                        'variants' => ['sm' => ['url' => $relativeVariant]],
+                    ]],
+                ],
+            ],
+        );
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
+        ])->get('/dashboard/widgets/recent-files');
+
+        $result->assertStatus(200);
+        $body = $result->getBody();
+        $expectedUrl = rtrim((string) config('ApiClient')->baseUrl, '/') . $relativeVariant;
+        $this->assertStringContainsString($expectedUrl, $body);
+        $this->assertStringNotContainsString('src="' . $relativeVariant . '"', $body);
+    }
+
     public function testWidgetTranslationsRendersLanguageBarsWhenPermitted(): void
     {
         $translationService = $this->createMock(TranslationAuditApiService::class);
@@ -313,6 +345,8 @@ final class DashboardFlowTest extends CIUnitTestCase
     /**
      * @param array<string, mixed> $hubSections
      * @param array<string, mixed> $cmsSections
+     * @param array<string, mixed> $catalogSections
+     * @param array<string, mixed> $eventSections
      */
     private function injectDashboardSummary(
         array $hubSections = [],
@@ -321,6 +355,8 @@ final class DashboardFlowTest extends CIUnitTestCase
         bool $hubOk = true,
         int $cmsStatus = 200,
         bool $cmsOk = true,
+        array $catalogSections = [],
+        array $eventSections = [],
     ): void {
         $hub = $this->createMock(ApiClientInterface::class);
         $hub->method('request')->willReturn($this->aggregateResponse($hubSections, $hubStatus, $hubOk));
@@ -329,6 +365,14 @@ final class DashboardFlowTest extends CIUnitTestCase
         $cms = $this->createMock(DomainApiClientInterface::class);
         $cms->method('request')->willReturn($this->aggregateResponse($cmsSections, $cmsStatus, $cmsOk));
         Services::injectMock('domainApiClient', $cms);
+
+        $catalog = $this->createMock(DomainApiClientInterface::class);
+        $catalog->method('request')->willReturn($this->aggregateResponse($catalogSections, 200, true));
+        Services::injectMock('catalogDomainApiClient', $catalog);
+
+        $event = $this->createMock(DomainApiClientInterface::class);
+        $event->method('request')->willReturn($this->aggregateResponse($eventSections, 200, true));
+        Services::injectMock('eventDomainApiClient', $event);
     }
 
     /** @param array<string, mixed> $sections */
