@@ -304,8 +304,20 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
             <?php endif; ?>
         <?php endif; ?>
         <!-- START Events -->
-        <?php if (has_permission('event.events.read') || has_permission('event.event-types.read')): ?>
+        <?php
+            $hasEventScheduling = has_permission('event.events.read')
+                || has_permission('event.event-types.read')
+                || has_permission('event.venues.read')
+                || has_permission('event.occurrences.read')
+                || has_permission('event.event-references.read');
+$hasEventTicketing = has_permission('event.ticket-types.read')
+    || has_permission('event.bookings.read')
+    || has_permission('event.tickets.read');
+?>
+        <?php if ($hasEventScheduling || $hasEventTicketing): ?>
             <div class="pt-3 mt-3 border-t border-gray-800 text-xs uppercase text-gray-500"><?= lang('Events.sidebar_label') ?></div>
+        <?php endif; ?>
+        <?php if ($hasEventScheduling): ?>
             <?php $sidebarActive_events_scheduling = url_is('admin/events/events*') || url_is('admin/events/event-types*') || url_is('admin/venues/venues*') || url_is('admin/occurrences/occurrences*') || url_is('admin/eventreferences/event-references*'); ?>
             <div x-data="{ open: <?= $sidebarActive_events_scheduling ? 'true' : "localStorage.getItem('events-g-scheduling') !== 'false'" ?> }" class="space-y-1">
                 <button type="button"
@@ -318,30 +330,40 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
                     </span>
                 </button>
                 <div x-show="open" x-cloak class="<?= $navGroupBodyClass ?>">
-                    <a href="<?= route_to('admin.events.events') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/events/events*', $navSubItemActiveClass) ?> <?= url_is('admin/events/events*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
-                        <?= ui_icon('calendar') ?>
-                        <span><?= lang('Events.events_title') ?></span>
-                    </a>
+                    <?php if (has_permission('event.events.read')): ?>
+                        <a href="<?= route_to('admin.events.events') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/events/events*', $navSubItemActiveClass) ?> <?= url_is('admin/events/events*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('calendar') ?>
+                            <span><?= lang('Events.events_title') ?></span>
+                        </a>
+                    <?php endif; ?>
                     <?php if (has_permission('event.event-types.read')): ?>
                         <a href="<?= route_to('admin.events.event_types') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/events/event-types*', $navSubItemActiveClass) ?> <?= url_is('admin/events/event-types*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
                             <?= ui_icon('tag') ?>
                             <span><?= lang('Events.event_types_title') ?></span>
                         </a>
                     <?php endif; ?>
-                    <a href="<?= route_to('admin.venues.venues') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/venues/venues*', $navSubItemActiveClass) ?> <?= url_is('admin/venues/venues*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
-                        <?= ui_icon('calendar') ?>
-                        <span><?= lang('Venues.venues_title') ?></span>
-                    </a>
-                    <a href="<?= route_to('admin.occurrences.occurrences') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/occurrences/occurrences*', $navSubItemActiveClass) ?> <?= url_is('admin/occurrences/occurrences*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
-                        <?= ui_icon('calendar') ?>
-                        <span><?= lang('Occurrences.occurrences_title') ?></span>
-                    </a>
-                    <a href="<?= route_to('admin.eventreferences.event_references') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/eventreferences/event-references*', $navSubItemActiveClass) ?> <?= url_is('admin/eventreferences/event-references*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
-                        <?= ui_icon('calendar') ?>
-                        <span><?= lang('EventReferences.event_references_title') ?></span>
-                    </a>
+                    <?php if (has_permission('event.venues.read')): ?>
+                        <a href="<?= route_to('admin.venues.venues') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/venues/venues*', $navSubItemActiveClass) ?> <?= url_is('admin/venues/venues*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('calendar') ?>
+                            <span><?= lang('Venues.venues_title') ?></span>
+                        </a>
+                    <?php endif; ?>
+                    <?php if (has_permission('event.occurrences.read')): ?>
+                        <a href="<?= route_to('admin.occurrences.occurrences') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/occurrences/occurrences*', $navSubItemActiveClass) ?> <?= url_is('admin/occurrences/occurrences*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('calendar') ?>
+                            <span><?= lang('Occurrences.occurrences_title') ?></span>
+                        </a>
+                    <?php endif; ?>
+                    <?php if (has_permission('event.event-references.read')): ?>
+                        <a href="<?= route_to('admin.eventreferences.event_references') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/eventreferences/event-references*', $navSubItemActiveClass) ?> <?= url_is('admin/eventreferences/event-references*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('calendar') ?>
+                            <span><?= lang('EventReferences.event_references_title') ?></span>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
+        <?php endif; ?>
+        <?php if ($hasEventTicketing): ?>
             <?php $sidebarActive_events_ticketing = url_is('admin/tickettypes/ticket-types*') || url_is('admin/bookings/bookings*') || url_is('admin/tickets/tickets*'); ?>
             <div x-data="{ open: <?= $sidebarActive_events_ticketing ? 'true' : "localStorage.getItem('events-g-ticketing') !== 'false'" ?> }" class="space-y-1">
                 <button type="button"
@@ -354,31 +376,37 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
                     </span>
                 </button>
                 <div x-show="open" x-cloak class="<?= $navGroupBodyClass ?>">
-                    <a href="<?= route_to('admin.tickettypes.ticket_types') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/tickettypes/ticket-types*', $navSubItemActiveClass) ?> <?= url_is('admin/tickettypes/ticket-types*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
-                        <?= ui_icon('calendar') ?>
-                        <span><?= lang('TicketTypes.ticket_types_title') ?></span>
-                    </a>
-                    <a href="<?= route_to('admin.bookings.bookings') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/bookings/bookings*', $navSubItemActiveClass) ?> <?= url_is('admin/bookings/bookings*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
-                        <?= ui_icon('calendar') ?>
-                        <span><?= lang('Bookings.bookings_title') ?></span>
-                    </a>
-                    <a href="<?= route_to('admin.tickets.tickets') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/tickets/tickets*', $navSubItemActiveClass) ?> <?= url_is('admin/tickets/tickets*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
-                        <?= ui_icon('calendar') ?>
-                        <span><?= lang('Tickets.tickets_title') ?></span>
-                    </a>
+                    <?php if (has_permission('event.ticket-types.read')): ?>
+                        <a href="<?= route_to('admin.tickettypes.ticket_types') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/tickettypes/ticket-types*', $navSubItemActiveClass) ?> <?= url_is('admin/tickettypes/ticket-types*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('calendar') ?>
+                            <span><?= lang('TicketTypes.ticket_types_title') ?></span>
+                        </a>
+                    <?php endif; ?>
+                    <?php if (has_permission('event.bookings.read')): ?>
+                        <a href="<?= route_to('admin.bookings.bookings') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/bookings/bookings*', $navSubItemActiveClass) ?> <?= url_is('admin/bookings/bookings*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('calendar') ?>
+                            <span><?= lang('Bookings.bookings_title') ?></span>
+                        </a>
+                    <?php endif; ?>
+                    <?php if (has_permission('event.tickets.read')): ?>
+                        <a href="<?= route_to('admin.tickets.tickets') ?>" class="<?= $navSubItemClass ?> <?= active_nav('admin/tickets/tickets*', $navSubItemActiveClass) ?> <?= url_is('admin/tickets/tickets*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navSubItemIdleClass ?>">
+                            <?= ui_icon('calendar') ?>
+                            <span><?= lang('Tickets.tickets_title') ?></span>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
         <!-- END Events -->
         <!-- START Museum Catalog -->
         <?php
-            // Permission codes match the catalog-domain route filters exactly
-            // (teatromuseo-catalog-domain/app/Config/Routes/v1/catalog.php):
-            // GET collection-items/categories/techniques each require their own
-            // catalog.{resource}.read permission — there is no single "museum.read".
-            $hasMuseumItem = has_permission('catalog.collectionItem.read')
-                || has_permission('catalog.category.read')
-                || has_permission('catalog.technique.read');
+    // Permission codes match the catalog-domain route filters exactly
+    // (teatromuseo-catalog-domain/app/Config/Routes/v1/catalog.php):
+    // GET collection-items/categories/techniques each require their own
+    // catalog.{resource}.read permission — there is no single "museum.read".
+    $hasMuseumItem = has_permission('catalog.collectionItem.read')
+        || has_permission('catalog.category.read')
+        || has_permission('catalog.technique.read');
 ?>
         <?php if ($hasMuseumItem): ?>
             <div class="pt-3 mt-3 border-t border-gray-800 text-xs uppercase text-gray-500">Museo (Catálogo)</div>
