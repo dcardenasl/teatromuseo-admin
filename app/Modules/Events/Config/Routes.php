@@ -8,16 +8,16 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
-$routes->group('admin/events', ['filter' => ['auth', 'admin']], static function (RouteCollection $routes): void {
+$routes->group('admin/events', ['filter' => ['auth']], static function (RouteCollection $routes): void {
     // Event
-    $routes->get('events', '\\App\\Modules\\Events\\Controllers\\EventController::index', ['as' => 'admin.events.events']);
-    $routes->get('events/data', '\\App\\Modules\\Events\\Controllers\\EventController::data', ['as' => 'admin.events.events.data']);
-    $routes->get('events/create', '\\App\\Modules\\Events\\Controllers\\EventController::create', ['as' => 'admin.events.events.create']);
-    $routes->post('events', '\\App\\Modules\\Events\\Controllers\\EventController::store', ['as' => 'admin.events.events.store']);
-    $routes->get('events/(:segment)', '\\App\\Modules\\Events\\Controllers\\EventController::show/$1', ['as' => 'admin.events.events.show']);
-    $routes->get('events/(:segment)/edit', '\\App\\Modules\\Events\\Controllers\\EventController::edit/$1', ['as' => 'admin.events.events.edit']);
-    $routes->post('events/(:segment)', '\\App\\Modules\\Events\\Controllers\\EventController::update/$1', ['as' => 'admin.events.events.update']);
-    $routes->post('events/(:segment)/delete', '\\App\\Modules\\Events\\Controllers\\EventController::delete/$1', ['as' => 'admin.events.events.delete']);
+    $routes->get('events', '\\App\\Modules\\Events\\Controllers\\EventController::index', ['as' => 'admin.events.events', 'filter' => 'permission:event.events.read']);
+    $routes->get('events/data', '\\App\\Modules\\Events\\Controllers\\EventController::data', ['as' => 'admin.events.events.data', 'filter' => 'permission:event.events.read']);
+    $routes->get('events/create', '\\App\\Modules\\Events\\Controllers\\EventController::create', ['as' => 'admin.events.events.create', 'filter' => 'permission:event.events.write']);
+    $routes->post('events', '\\App\\Modules\\Events\\Controllers\\EventController::store', ['as' => 'admin.events.events.store', 'filter' => 'permission:event.events.write']);
+    $routes->get('events/(:segment)', '\\App\\Modules\\Events\\Controllers\\EventController::show/$1', ['as' => 'admin.events.events.show', 'filter' => 'permission:event.events.read']);
+    $routes->get('events/(:segment)/edit', '\\App\\Modules\\Events\\Controllers\\EventController::edit/$1', ['as' => 'admin.events.events.edit', 'filter' => 'permission:event.events.write']);
+    $routes->post('events/(:segment)', '\\App\\Modules\\Events\\Controllers\\EventController::update/$1', ['as' => 'admin.events.events.update', 'filter' => 'permission:event.events.write']);
+    $routes->post('events/(:segment)/delete', '\\App\\Modules\\Events\\Controllers\\EventController::delete/$1', ['as' => 'admin.events.events.delete', 'filter' => 'permission:event.events.delete']);
 
     $routes->get('event-types', '\\App\\Modules\\Events\\Controllers\\EventTypeController::index', ['as' => 'admin.events.event_types', 'filter' => 'permission:event.event-types.read']);
     $routes->get('event-types/data', '\\App\\Modules\\Events\\Controllers\\EventTypeController::data', ['as' => 'admin.events.event_types.data', 'filter' => 'permission:event.event-types.read']);
