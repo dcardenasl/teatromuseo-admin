@@ -13,7 +13,7 @@ class App extends BaseConfig
      * Application Name
      * --------------------------------------------------------------------------
      */
-    public string $appName = 'API Client';
+    public string $appName = 'Teatromuseo Admin';
 
     /**
      * --------------------------------------------------------------------------
