@@ -134,6 +134,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   contract instead of booleans.
 - **Museum sort-order save** — category/technique reorder success messages now use a real
   `Museum.sort_order_saved` key instead of an unrelated `Files.*` one.
+- **Admin UI locales** — `App::$supportedLocales` now only lists `es`/`en`, the Admin UI's own
+  interface languages. `fr`/`pt` were domain content locales, not Admin UI locales, and belonged
+  under CMS/domain configuration instead of this application list.
 
 ### Changed
 
