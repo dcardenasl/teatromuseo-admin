@@ -58,6 +58,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Event and Catalog admin modules relied on a broad section gate for CRUD authorization** —
+  `Bookings`, `EventReferences`, `Events`, `Occurrences`, `TicketTypes`, `Tickets`, `Venues`
+  and the `Museum` (catalog) module now enforce an explicit `permission:<code>` filter on every
+  route instead of the shared `admin` group filter, so holding any one admin-entry permission no
+  longer implicitly grants access to unrelated resources. Sidebar entries and per-view create/edit/
+  delete actions were aligned to the same granular permissions, and an architecture test now fails
+  the build if a domain route is added without one (ADM-SEC-01).
 - **CSP style nonce silently killed `unsafe-inline` on every page** — `layouts/partials/head.php`
   wrapped its `[x-cloak]` rule in an inline `<style <?= csp_style_nonce() ?>>` block, present on
   every page render. Per the CSP spec, a `style-src` directive that carries a nonce makes browsers
