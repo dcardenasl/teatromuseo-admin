@@ -129,7 +129,9 @@ class App extends BaseConfig
      *
      * @var list<string>
      */
-    public array $supportedLocales = ['es', 'en', 'fr', 'pt'];
+    // These are the Admin UI locales. Domain content locales are managed by
+    // the CMS/domain APIs and must not be added to this application list.
+    public array $supportedLocales = ['es', 'en'];
 
     /**
      * --------------------------------------------------------------------------
@@ -165,8 +167,6 @@ class App extends BaseConfig
     public array $dateFormats = [
         'es' => 'd/m/Y H:i',
         'en' => 'm/d/Y H:i',
-        'fr' => 'd/m/Y H:i',
-        'pt' => 'd/m/Y H:i',
     ];
 
     /**
