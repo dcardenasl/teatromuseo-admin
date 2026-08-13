@@ -58,6 +58,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`Museum` category/technique reorder routes were shadowed by the dynamic `:id` route** —
+  `categories/reorder` and `techniques/reorder` were declared after `categories/(:segment)` /
+  `techniques/(:segment)`, so CI4 matched them against `show()` (and `catalog.*.read`) instead
+  of `reorder()`/`.update`. Moved both pairs of static routes ahead of the dynamic one, matching
+  the pattern already used in `Events` (2026-08-12 audit finding).
+- **`Cms::translate` had no permission of its own** — the proxy to Google Translate relied only
+  on the broad `admin` section gate, so any user holding one of the 18 broad `AdminAccess`
+  permissions could call it regardless of CMS/Museum/Events write access. Added an
+  OR-of-permissions check in `TranslateController::hasAnyContentPermission()` (same pattern as
+  `StructureWizardController`), and taught `AdminRouteAuthorizationTest` to discover
+  admin-gated modules dynamically instead of relying on a hardcoded route-file list, with an
+  explicit exemption list for controller-enforced routes (2026-08-12 audit finding).
+- **`blocks/preview` proxy sent no shared secret to the public site** — `BlockPreviewController`
+  now sends `X-Block-Preview-Key` (from `BLOCK_PREVIEW_KEY`) when calling the public site's
+  `/blocks/preview`, matching the key the public site now optionally enforces (2026-08-12 audit
+  finding).
 - **Event and Catalog admin modules relied on a broad section gate for CRUD authorization** —
   `Bookings`, `EventReferences`, `Events`, `Occurrences`, `TicketTypes`, `Tickets`, `Venues`
   and the `Museum` (catalog) module now enforce an explicit `permission:<code>` filter on every
