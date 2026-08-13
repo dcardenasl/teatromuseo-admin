@@ -65,6 +65,20 @@ final class AdminDomainAuthorizationFlowTest extends CIUnitTestCase
             'path'        => '/admin/museum/categories/test-uuid/delete',
             'permissions' => ['catalog.category.update'],
         ],
+        [
+            // Regression for the route-shadowing bug: `categories/reorder` was
+            // being captured by the dynamic `categories/(:segment)` -> show()
+            // route (registered first), so it silently ran under
+            // `catalog.category.read` instead of `.update`.
+            'method'      => 'get',
+            'path'        => '/admin/museum/categories/reorder',
+            'permissions' => ['catalog.category.read'],
+        ],
+        [
+            'method'      => 'get',
+            'path'        => '/admin/museum/techniques/reorder',
+            'permissions' => ['catalog.technique.read'],
+        ],
     ];
 
     public function testUnrelatedPermissionCannotEnterDomainModules(): void
