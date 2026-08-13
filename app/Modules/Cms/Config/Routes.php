@@ -74,9 +74,15 @@ $routes->group('admin/cms', ['filter' => ['auth', 'admin']], static function (Ro
     $routes->post('settings/(:segment)', '\App\Modules\Cms\Controllers\SettingController::update/$1', ['as' => 'admin.cms.settings.update', 'filter' => 'permission:cms.settings.write']);
     $routes->post('settings/(:segment)/delete', '\App\Modules\Cms\Controllers\SettingController::delete/$1', ['as' => 'admin.cms.settings.delete', 'filter' => 'permission:cms.settings.write']);
 
-    // Translate proxy (DeepL)
-    // Translation calls are expensive (external provider); throttle this
-    // read explicitly while normal Admin GET requests remain unrestricted.
+    // Translate proxy (Google Translate)
+    // Shared by content forms across CMS, Museum and Events — a single
+    // `permission:<code>` filter can't express "any read-or-write permission
+    // belonging to one of those content modules", so
+    // TranslateController::translate() enforces an OR-of-permissions check
+    // in-code instead (same pattern as wizard/structure/* above), deliberately
+    // excluding unrelated broad-admin-section codes like `iam.admin-access`.
+    // Throttled explicitly since translation calls hit an expensive external
+    // provider, while normal Admin GET requests remain unrestricted.
     $routes->get('translate', '\App\Modules\Cms\Controllers\TranslateController::translate', ['as' => 'admin.cms.translate', 'filter' => 'ratelimit:300,60']);
 
     // Translation Auditing
