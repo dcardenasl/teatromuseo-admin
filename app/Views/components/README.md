@@ -29,6 +29,19 @@ Input básico de texto de una sola línea.
 ]) ?>
 ```
 
+### `password.php`
+Campo de contraseña con visibilidad alternable, etiquetas accesibles y estado
+independiente por campo. Mantiene `type="password"` como estado inicial y
+acepta atributos adicionales como `x-model`.
+```php
+<?= view('components/form/password', [
+    'name' => 'password',
+    'label' => 'Auth.password_label',
+    'autocomplete' => 'current-password',
+    'required' => true,
+]) ?>
+```
+
 ### `number.php`
 Input para valores enteros. Soporta `$min`, `$max` y `$step`.
 ```php

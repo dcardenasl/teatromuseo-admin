@@ -37,6 +37,29 @@ final class ComponentsTest extends CIUnitTestCase
         $this->assertStringContainsString('aria-required="true"', $html);
     }
 
+    public function testPasswordComponentRendersAccessibleVisibilityToggle(): void
+    {
+        $html = view('components/form/password', [
+            'name' => 'password',
+            'label' => 'Auth.password_label',
+            'autocomplete' => 'current-password',
+            'required' => true,
+            'attributes' => ['x-model' => 'password'],
+        ], ['saveData' => false]);
+        $decoded = html_entity_decode($html, ENT_QUOTES | ENT_HTML5);
+
+        $this->assertStringContainsString('x-data="passwordToggle()"', $decoded);
+        $this->assertStringContainsString('type="password"', $decoded);
+        $this->assertStringContainsString(":type=\"visible ? 'text' : 'password'\"", $decoded);
+        $this->assertStringContainsString('x-model="password"', $decoded);
+        $this->assertStringContainsString('aria-label="' . lang('App.show_password') . '"', $decoded);
+        $this->assertStringContainsString(':aria-label="visible ?', $decoded);
+        $this->assertStringContainsString('aria-pressed="false"', $decoded);
+        $this->assertStringContainsString('aria-controls="password"', $decoded);
+        $this->assertStringContainsString('data-lucide="eye"', $decoded);
+        $this->assertStringContainsString('data-lucide="eye-off"', $decoded);
+    }
+
     public function testNumberComponentHandlesMinMaxStep(): void
     {
         $html = view('components/form/number', [
