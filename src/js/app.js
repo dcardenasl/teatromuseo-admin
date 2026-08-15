@@ -31,6 +31,7 @@ import { blockSorter } from './components/blockSorter.js';
 import { bootSessionExpiryWatcher } from './components/sessionWatcher.js';
 import { handleGoogleCredentialResponse } from './components/googleAuth.js';
 import { richTextEditor } from './components/richTextEditor.js';
+import { passwordToggle } from './components/passwordToggle.js';
 import {
     copyLangTabsFileFieldToAll,
     copyLangTabsFileFieldToTargets,
@@ -68,6 +69,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('blockSorter', blockSorter);
     Alpine.data('wizard', wizard);
     Alpine.data('structureWizard', structureWizard);
+    Alpine.data('passwordToggle', passwordToggle);
 
     // Window globals expected by PHP views and other components
     window.remoteTable = remoteTableFactory;
