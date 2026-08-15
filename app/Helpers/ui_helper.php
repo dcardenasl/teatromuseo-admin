@@ -304,6 +304,7 @@ if (! function_exists('ui_icon')) {
             'search'    => 'search',
             'plus'      => 'plus',
             'eye'       => 'eye',
+            'eye-off'   => 'eye-off',
             'edit'      => 'pencil',
             'download'  => 'download',
             'trash'     => 'trash-2',

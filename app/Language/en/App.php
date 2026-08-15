@@ -37,6 +37,8 @@ return [
     'edit'            => 'Edit',
     'show_more'       => 'More',
     'hide'            => 'Hide',
+    'show_password'   => 'Show password',
+    'hide_password'   => 'Hide password',
     'search'          => 'Search',
     'filters'         => 'Filters',
     'clear_filters'   => 'Clear filters',

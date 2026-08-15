@@ -37,6 +37,8 @@ return [
     'edit'            => 'Editar',
     'show_more'       => 'Más',
     'hide'            => 'Ocultar',
+    'show_password'   => 'Mostrar contraseña',
+    'hide_password'   => 'Ocultar contraseña',
     'search'          => 'Buscar',
     'filters'         => 'Filtros',
     'clear_filters'   => 'Limpiar filtros',
