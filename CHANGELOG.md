@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Accessible password visibility toggle** — login, register, and reset-password forms now use a
+  shared `components/form/password` field with a labeled show/hide button (`passwordToggle` Alpine
+  component), keeping visibility state independent per field.
 - **Shared server-side field errors** — added a reusable form component for rendering API validation
   messages next to their fields, including nested translation rows and accessible invalid-state
   attributes.
