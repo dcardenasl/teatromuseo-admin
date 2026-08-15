@@ -24,22 +24,23 @@
         <?= render_field_error('email') ?>
     </div>
 
-    <div>
-        <label class="block text-sm font-medium text-gray-700" for="password"><?= lang('Auth.password_label') ?></label>
-        <input id="password" name="password" type="password" x-model="password" autocomplete="new-password" required
-            class="mt-1 w-full rounded-lg border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 <?= has_field_error('password') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
-        <?= render_field_error('password') ?>
-        <p class="mt-1 text-xs"
-           :class="password.length >= 12 ? 'text-green-700' : password.length >= 8 ? 'text-yellow-700' : 'text-red-700'"
-           x-text="password.length >= 12 ? '<?= lang('Auth.password_strong') ?>' : password.length >= 8 ? '<?= lang('Auth.password_medium') ?>' : '<?= lang('Auth.password_weak') ?>'"></p>
-    </div>
+    <?= view('components/form/password', [
+        'name' => 'password',
+        'label' => 'Auth.password_label',
+        'autocomplete' => 'new-password',
+        'required' => true,
+        'attributes' => ['x-model' => 'password'],
+    ]) ?>
+    <p class="mt-1 text-xs"
+       :class="password.length >= 12 ? 'text-green-700' : password.length >= 8 ? 'text-yellow-700' : 'text-red-700'"
+       x-text="password.length >= 12 ? '<?= lang('Auth.password_strong') ?>' : password.length >= 8 ? '<?= lang('Auth.password_medium') ?>' : '<?= lang('Auth.password_weak') ?>'"></p>
 
-    <div>
-        <label class="block text-sm font-medium text-gray-700" for="password_confirmation"><?= lang('Auth.confirm_password') ?></label>
-        <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required
-            class="mt-1 w-full rounded-lg border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 <?= has_field_error('password_confirmation') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
-        <?= render_field_error('password_confirmation') ?>
-    </div>
+    <?= view('components/form/password', [
+        'name' => 'password_confirmation',
+        'label' => 'Auth.confirm_password',
+        'autocomplete' => 'new-password',
+        'required' => true,
+    ]) ?>
 
     <button type="submit"
             class="w-full rounded-lg bg-brand-600 text-white px-4 py-2 font-medium hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">

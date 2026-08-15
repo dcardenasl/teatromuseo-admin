@@ -27,12 +27,12 @@ $googleClientId = (string) ($googleClientId ?? '');
                 class="mt-1 w-full rounded-lg border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 border-gray-300 focus:border-brand-500 focus:ring-brand-500 <?= field_error_class('email') ?>">
             <?= render_field_error('email') ?>
         </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700" for="password"><?= lang('Auth.password_label') ?></label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required
-                class="mt-1 w-full rounded-lg border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 border-gray-300 focus:border-brand-500 focus:ring-brand-500 <?= field_error_class('password') ?>">
-            <?= render_field_error('password') ?>
-        </div>
+        <?= view('components/form/password', [
+            'name' => 'password',
+            'label' => 'Auth.password_label',
+            'autocomplete' => 'current-password',
+            'required' => true,
+        ]) ?>
         <button type="submit" :disabled="isLoading"
             class="w-full rounded-lg bg-brand-600 text-white px-4 py-2 font-medium hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 disabled:cursor-not-allowed">
             <?= lang('Auth.login_button') ?>
