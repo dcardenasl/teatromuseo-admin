@@ -16,6 +16,15 @@
   `sections/source.state`, cache/lock/stale/cooldown y sus tests; verificado
   con 786 tests / 2763 asserts y quality verde.
 
+- [x] **ADM-DASH-05 — Verificación end-to-end y retiro del código viejo.**
+  Cerrada 2026-08-16. Dashboard visual verificado con stack completo y datos
+  previos; al detener Eventos solo esa sección quedó no disponible, se restauró
+  el proceso y se retiró el wiring legacy del dashboard en commit separado.
+
+- [x] **ADM-DASH-06 — Documentación.** Cerrada 2026-08-16. `CLAUDE.md`
+  documenta `BFF_API_BASE_URL`, `/me/admin-dashboard`, responsabilidades BFF /
+  Admin y el comportamiento stale/unavailable.
+
 - [x] **ADM-DASH-02 — Dashboard cross-domain y datos confiables** — cerrada
   2026-08-11. El dashboard ahora consume Hub, CMS, Catálogo y Eventos desde
   una lectura cacheada versionada, muestra actividad cross-domain y representa
@@ -31,6 +40,10 @@
   explícito por endpoint; se retiraron los checks duplicados, se alineó la UI y
   se añadieron regresiones funcionales y una guarda arquitectónica.
 
+## 🔴 En progreso
+
+_(sin tareas en curso)_
+
 ## 🟡 Próximo
 
 ### Dashboard vía BFF (propuesta 2026-08-16) — ver `../docs/plan/2026-08-16-plan-admin-dashboard-via-bff.md`
@@ -41,17 +54,6 @@ degradación por fuente. Este bloque mueve esa orquestación al BFF, que hoy
 tiene el patrón (`aggregate()`/introspect) pero ningún consumidor real.
 Depende de que `BFF-DASH-01..06` (ver `teatromuseo-bff/TASKS.md`) esté
 operativo en local; la Fase B quedó verificada antes de iniciar `ADM-DASH-03`.
-
-- [ ] **ADM-DASH-05 — Verificación end-to-end y retiro del código viejo.**
-  `start-dev.sh` con las 6 apps arriba, confirmar mismos datos y que apagar
-  un dominio solo degrada esa sección. Recién después, retirar
-  `cmsClient`/`catalogClient`/`eventClient` y sus factories en
-  `Services.php` si quedan sin otro uso (confirmar con `grep`). Depende de
-  `ADM-DASH-04`.
-- [ ] **ADM-DASH-06 — Documentación.** Registrar en `CLAUDE.md` (sección
-  dashboard) la nueva dependencia operativa del BFF. Depende de
-  `ADM-DASH-05`.
-
 ### Saneamiento arquitectónico heredado (prioridad 2)
 
 - [ ] **CFG-02** — Reconstruir `.env.example` desde las variables realmente

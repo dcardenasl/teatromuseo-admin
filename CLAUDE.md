@@ -175,6 +175,27 @@ Reference implementations for this contract:
 - `App\Modules\Cms\Requests\MenuItemStoreRequest`
 - `App\Controllers\BaseWebController`
 
+### Dashboard aggregation via the BFF
+
+The administrative dashboard's cross-domain data is consumed through the
+authenticated BFF endpoint `GET /api/v1/me/admin-dashboard`. Configure
+`BFF_API_BASE_URL` (local default: `http://localhost:8188`) in the Admin
+environment before expecting fresh dashboard data.
+
+- `BffApiClient` makes the single authenticated request; the BFF owns the
+  sequential fan-out to Hub, CMS, Catalog, and Event and returns `sections`
+  plus per-source `source` states.
+- `DashboardDataService` owns only the Admin-side permission-aware cache,
+  lock, stale snapshot, and failure cooldown. It preserves unavailable sources
+  as unavailable instead of converting them to zero values.
+- The dashboard must not call the domain clients directly and must not reuse
+  `/api/v1/me/dashboard`; that endpoint remains the canonical fail-fast
+  aggregate example for other BFF consumers.
+- A BFF outage can make the aggregate stale or unavailable while the page
+  remains renderable. Restore/check the BFF and its upstreams before changing
+  dashboard code. Domain CRUD modules continue using their own domain clients;
+  this boundary applies only to the dashboard aggregate.
+
 ### ApiClient: Central HTTP Communication Layer
 
 The `app/Libraries/ApiClient.php` class is the heart of all API communication. It handles:
