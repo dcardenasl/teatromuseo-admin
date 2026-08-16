@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Dashboard\Services;
 
 use App\Libraries\BffApiClientInterface;
-use App\Libraries\DomainApiClientInterface;
 use App\Modules\Dashboard\Services\DashboardDataService;
 use App\Modules\Dashboard\Services\DashboardLockInterface;
 use CodeIgniter\Cache\CacheInterface;
@@ -176,9 +175,6 @@ final class DashboardDataServiceTest extends CIUnitTestCase
         $busyLock->expects($this->once())->method('acquire')->willReturn(null);
         $busyService = new DashboardDataService(
             $bff,
-            $this->createMock(DomainApiClientInterface::class),
-            $this->createMock(DomainApiClientInterface::class),
-            $this->createMock(DomainApiClientInterface::class),
             $this->makeCache($store),
             $busyLock,
             300,
@@ -198,9 +194,6 @@ final class DashboardDataServiceTest extends CIUnitTestCase
     {
         return new DashboardDataService(
             $bff,
-            $this->createMock(DomainApiClientInterface::class),
-            $this->createMock(DomainApiClientInterface::class),
-            $this->createMock(DomainApiClientInterface::class),
             $this->makeCache($store),
             $this->lock(),
             300,

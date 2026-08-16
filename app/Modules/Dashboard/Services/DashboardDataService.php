@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Dashboard\Services;
 
 use App\Libraries\BffApiClientInterface;
-use App\Libraries\DomainApiClientInterface;
 use CodeIgniter\Cache\CacheInterface;
-use LogicException;
 
 /**
  * Bounded, permission-aware dashboard delivery.
@@ -19,13 +17,8 @@ final readonly class DashboardDataService
 {
     private const CACHE_VERSION = 2;
 
-    private BffApiClientInterface $bffClient;
-
     public function __construct(
-        BffApiClientInterface $bffClient,
-        DomainApiClientInterface $cmsClient,
-        DomainApiClientInterface $catalogClient,
-        DomainApiClientInterface $eventClient,
+        private BffApiClientInterface $bffClient,
         private CacheInterface $cache,
         private DashboardLockInterface $lock,
         private int $freshTtl,
@@ -33,8 +26,6 @@ final readonly class DashboardDataService
         private int $failureCooldownTtl,
         private int $maxRetries,
     ) {
-        $this->bffClient = $bffClient;
-        $this->assertLegacyClientsRemainDistinct($cmsClient, $catalogClient, $eventClient);
     }
 
     /**
@@ -128,23 +119,6 @@ final readonly class DashboardDataService
         $snapshot['source'] = $source;
 
         return $snapshot;
-    }
-
-    /**
-     * Keep the old constructor seam safe until ADM-DASH-05 removes it.
-     *
-     * The clients are intentionally not used for data reads anymore; this
-     * guard prevents a transitional factory mistake from silently binding two
-     * legacy domains to one client while the cutover is verified.
-     */
-    private function assertLegacyClientsRemainDistinct(
-        DomainApiClientInterface $cmsClient,
-        DomainApiClientInterface $catalogClient,
-        DomainApiClientInterface $eventClient,
-    ): void {
-        if ($cmsClient === $catalogClient || $cmsClient === $eventClient || $catalogClient === $eventClient) {
-            throw new LogicException('Legacy dashboard domain clients must remain distinct during BFF cutover.');
-        }
     }
 
     /**

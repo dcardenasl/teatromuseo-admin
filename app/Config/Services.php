@@ -95,9 +95,6 @@ class Services extends BaseService
 
         return new DashboardDataService(
             static::bffApiClient(),
-            static::domainApiClient(),
-            static::catalogDomainApiClient(),
-            static::eventDomainApiClient(),
             service('cache'),
             new FileDashboardLock(
                 WRITEPATH . 'cache/dashboard-locks',
