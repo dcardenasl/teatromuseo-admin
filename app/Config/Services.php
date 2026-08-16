@@ -94,7 +94,7 @@ class Services extends BaseService
         $dashboardConfig = config('Dashboard');
 
         return new DashboardDataService(
-            static::apiClient(),
+            static::bffApiClient(),
             static::domainApiClient(),
             static::catalogDomainApiClient(),
             static::eventDomainApiClient(),

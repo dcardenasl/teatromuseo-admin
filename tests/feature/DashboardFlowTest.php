@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Libraries\ApiClientInterface;
-use App\Libraries\DomainApiClientInterface;
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Analytics\Services\AnalyticsApiService;
 use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Dashboard\Services\HealthApiService;
@@ -69,7 +68,7 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetStatsStillRendersWhenUserSummaryFails(): void
     {
-        $this->injectDashboardSummary(hubStatus: 500, hubOk: false);
+        $this->injectDashboardSummary(hubOk: false);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -351,37 +350,50 @@ final class DashboardFlowTest extends CIUnitTestCase
     private function injectDashboardSummary(
         array $hubSections = [],
         array $cmsSections = [],
-        int $hubStatus = 200,
         bool $hubOk = true,
-        int $cmsStatus = 200,
         bool $cmsOk = true,
         array $catalogSections = [],
         array $eventSections = [],
     ): void {
-        $hub = $this->createMock(ApiClientInterface::class);
-        $hub->method('request')->willReturn($this->aggregateResponse($hubSections, $hubStatus, $hubOk));
-        Services::injectMock('apiClient', $hub);
-
-        $cms = $this->createMock(DomainApiClientInterface::class);
-        $cms->method('request')->willReturn($this->aggregateResponse($cmsSections, $cmsStatus, $cmsOk));
-        Services::injectMock('domainApiClient', $cms);
-
-        $catalog = $this->createMock(DomainApiClientInterface::class);
-        $catalog->method('request')->willReturn($this->aggregateResponse($catalogSections, 200, true));
-        Services::injectMock('catalogDomainApiClient', $catalog);
-
-        $event = $this->createMock(DomainApiClientInterface::class);
-        $event->method('request')->willReturn($this->aggregateResponse($eventSections, 200, true));
-        Services::injectMock('eventDomainApiClient', $event);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->method('getAdminDashboard')->willReturn($this->aggregateResponse(
+            [
+                'hub' => $hubSections,
+                'cms' => $cmsSections,
+                'catalog' => $catalogSections,
+                'event' => $eventSections,
+            ],
+            $hubOk,
+            $cmsOk,
+        ));
+        Services::injectMock('bffApiClient', $bff);
     }
 
-    /** @param array<string, mixed> $sections */
-    private function aggregateResponse(array $sections, int $status, bool $ok): array
+    /**
+     * @param array<string, array<string, mixed>> $sections
+     */
+    private function aggregateResponse(array $sections, bool $hubOk, bool $cmsOk): array
     {
+        $source = [
+            'hub' => $hubOk ? 'ok' : 'unavailable',
+            'cms' => $cmsOk ? 'ok' : 'unavailable',
+            'catalog' => 'ok',
+            'event' => 'ok',
+        ];
+        $source['state'] = in_array('unavailable', $source, true) ? 'partial' : 'ok';
+
         return [
-            'ok'          => $ok,
-            'status'      => $status,
-            'data'        => ['sections' => $sections],
+            'ok'          => true,
+            'status'      => 200,
+            'data'        => [
+                'status' => 'success',
+                'data' => [
+                    'version' => 1,
+                    'generated_at' => date(DATE_ATOM),
+                    'source' => $source,
+                    'sections' => $sections,
+                ],
+            ],
             'raw'         => '',
             'headers'     => [],
             'messages'    => [],

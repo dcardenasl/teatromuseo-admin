@@ -11,6 +11,11 @@
   `/api/v1/me/admin-dashboard`, con `BFF_API_BASE_URL` configurado en local y
   ejemplo; verificado con 1 test y 10 asserts.
 
+- [x] **ADM-DASH-04 — Migrar `DashboardDataService::read()`.** Cerrada
+  2026-08-16. El servicio usa una única lectura BFF, conserva el shape
+  `sections/source.state`, cache/lock/stale/cooldown y sus tests; verificado
+  con 786 tests / 2763 asserts y quality verde.
+
 - [x] **ADM-DASH-02 — Dashboard cross-domain y datos confiables** — cerrada
   2026-08-11. El dashboard ahora consume Hub, CMS, Catálogo y Eventos desde
   una lectura cacheada versionada, muestra actividad cross-domain y representa
@@ -37,12 +42,6 @@ tiene el patrón (`aggregate()`/introspect) pero ningún consumidor real.
 Depende de que `BFF-DASH-01..06` (ver `teatromuseo-bff/TASKS.md`) esté
 operativo en local; la Fase B quedó verificada antes de iniciar `ADM-DASH-03`.
 
-- [ ] **ADM-DASH-04 — Migrar `DashboardDataService::read()`.** Reemplazar
-  las 4 `readUpstream()` (hub/cms/catalog/event) por 1 llamada a
-  `GET /api/v1/me/admin-dashboard`, conservando el mismo shape
-  (`sections`/`source.state`) y la capa de cache/lock/stale/cooldown
-  existente. Actualizar los tests del servicio en el mismo cambio. Depende de
-  `ADM-DASH-03`.
 - [ ] **ADM-DASH-05 — Verificación end-to-end y retiro del código viejo.**
   `start-dev.sh` con las 6 apps arriba, confirmar mismos datos y que apagar
   un dominio solo degrada esa sección. Recién después, retirar

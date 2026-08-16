@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Dashboard\Services;
 
-use App\Libraries\ApiClientInterface;
+use App\Libraries\BffApiClientInterface;
 use App\Libraries\DomainApiClientInterface;
 use CodeIgniter\Cache\CacheInterface;
+use LogicException;
 
 /**
  * Bounded, permission-aware dashboard delivery.
@@ -18,11 +19,13 @@ final readonly class DashboardDataService
 {
     private const CACHE_VERSION = 2;
 
+    private BffApiClientInterface $bffClient;
+
     public function __construct(
-        private ApiClientInterface $hubClient,
-        private DomainApiClientInterface $cmsClient,
-        private DomainApiClientInterface $catalogClient,
-        private DomainApiClientInterface $eventClient,
+        BffApiClientInterface $bffClient,
+        DomainApiClientInterface $cmsClient,
+        DomainApiClientInterface $catalogClient,
+        DomainApiClientInterface $eventClient,
         private CacheInterface $cache,
         private DashboardLockInterface $lock,
         private int $freshTtl,
@@ -30,6 +33,8 @@ final readonly class DashboardDataService
         private int $failureCooldownTtl,
         private int $maxRetries,
     ) {
+        $this->bffClient = $bffClient;
+        $this->assertLegacyClientsRemainDistinct($cmsClient, $catalogClient, $eventClient);
     }
 
     /**
@@ -74,54 +79,25 @@ final readonly class DashboardDataService
                 return $this->withSourceState($fresh, 'fresh');
             }
 
-            $hub = $this->readUpstream(
-                $this->hubClient,
-                '/admin/dashboard/summary',
-                $key . '_hub'
-            );
-            $cms = $this->readUpstream(
-                $this->cmsClient,
-                '/cms/dashboard/summary',
-                $key . '_cms'
-            );
-            $catalog = $this->readUpstream(
-                $this->catalogClient,
-                '/catalog/dashboard/summary',
-                $key . '_catalog'
-            );
-            $event = $this->readUpstream(
-                $this->eventClient,
-                '/events/dashboard/summary',
-                $key . '_event'
-            );
+            $response = $this->bffClient->getAdminDashboard($this->maxRetries);
+            $snapshot = $this->snapshotFromBff($response);
 
-            $snapshot = [
-                'version' => self::CACHE_VERSION,
-                'generated_at' => date(DATE_ATOM),
-                'source' => [
-                    'hub' => $hub['state'],
-                    'cms' => $cms['state'],
-                    'catalog' => $catalog['state'],
-                    'event' => $event['state'],
-                    'state' => $this->overallState([
-                        $hub['state'],
-                        $cms['state'],
-                        $catalog['state'],
-                        $event['state'],
-                    ]),
-                ],
-                'sections' => [
-                    'hub' => $hub['sections'],
-                    'cms' => $cms['sections'],
-                    'catalog' => $catalog['sections'],
-                    'event' => $event['sections'],
-                ],
-            ];
+            if ($snapshot === null) {
+                $status = (int) ($response['status'] ?? 0);
+                $stale = $this->cache->get($staleKey);
+                if (($status === 0 || $status >= 500) && is_array($stale)) {
+                    $snapshot = $this->withStaleSourceState($stale, 'bff_unavailable');
+                    if ($this->failureCooldownTtl > 0) {
+                        $this->cache->save($cooldownKey, $snapshot, $this->failureCooldownTtl);
+                    }
 
-            if ($hub['state'] === 'fresh'
-                && $cms['state'] === 'fresh'
-                && $catalog['state'] === 'fresh'
-                && $event['state'] === 'fresh') {
+                    return $snapshot;
+                }
+
+                $snapshot = $this->unavailable('bff_unavailable');
+            }
+
+            if (($snapshot['source']['state'] ?? null) === 'fresh') {
                 $this->cache->save($freshKey, $snapshot, $this->freshTtl);
                 $this->cache->save($staleKey, $snapshot, $this->staleTtl);
             } elseif ($this->failureCooldownTtl > 0) {
@@ -155,48 +131,79 @@ final readonly class DashboardDataService
     }
 
     /**
-     * @return array{state: string, sections: array<string, mixed>}
+     * Keep the old constructor seam safe until ADM-DASH-05 removes it.
+     *
+     * The clients are intentionally not used for data reads anymore; this
+     * guard prevents a transitional factory mistake from silently binding two
+     * legacy domains to one client while the cutover is verified.
      */
-    private function readUpstream(ApiClientInterface $client, string $path, string $key): array
-    {
-        $freshKey = $key . '_fresh';
-        $staleKey = $key . '_stale';
-        $cached = $this->cache->get($freshKey);
-        if (is_array($cached)) {
-            return ['state' => 'fresh', 'sections' => $this->sections($cached)];
+    private function assertLegacyClientsRemainDistinct(
+        DomainApiClientInterface $cmsClient,
+        DomainApiClientInterface $catalogClient,
+        DomainApiClientInterface $eventClient,
+    ): void {
+        if ($cmsClient === $catalogClient || $cmsClient === $eventClient || $catalogClient === $eventClient) {
+            throw new LogicException('Legacy dashboard domain clients must remain distinct during BFF cutover.');
         }
-
-        $response = $client->request('GET', $path, [
-            'max_retries' => $this->maxRetries,
-        ], true);
-        if (($response['ok'] ?? false) === true) {
-            $payload = is_array($response['data'] ?? null) ? $response['data'] : [];
-            $sections = $this->sections($payload);
-            $this->cache->save($freshKey, $payload, $this->freshTtl);
-            $this->cache->save($staleKey, $payload, $this->staleTtl);
-
-            return ['state' => 'fresh', 'sections' => $sections];
-        }
-
-        $status = (int) ($response['status'] ?? 0);
-        $stale = $this->cache->get($staleKey);
-        if (($status === 0 || $status >= 500) && is_array($stale)) {
-            return ['state' => 'stale', 'sections' => $this->sections($stale)];
-        }
-
-        return ['state' => 'unavailable', 'sections' => []];
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * Translate the BFF's source contract to the Admin's existing freshness
+     * contract without leaking the BFF's transport-specific `ok` state.
+     *
+     * @param array<string, mixed> $response
+     * @return array<string, mixed>|null
+     */
+    private function snapshotFromBff(array $response): ?array
+    {
+        if (($response['ok'] ?? false) !== true) {
+            return null;
+        }
+
+        $payload = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $data = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
+        $source = is_array($data['source'] ?? null) ? $data['source'] : [];
+        $sections = is_array($data['sections'] ?? null) ? $data['sections'] : [];
+        $states = [];
+        $mappedSource = [];
+        $mappedSections = [];
+
+        foreach (['hub', 'cms', 'catalog', 'event'] as $key) {
+            $state = ($source[$key] ?? null) === 'ok' ? 'fresh' : 'unavailable';
+            $mappedSource[$key] = $state;
+            $mappedSections[$key] = is_array($sections[$key] ?? null)
+                ? $sections[$key]
+                : [];
+            $states[] = $state;
+        }
+
+        $mappedSource['state'] = $this->overallState($states);
+
+        return [
+            'version' => self::CACHE_VERSION,
+            'generated_at' => is_string($data['generated_at'] ?? null)
+                ? $data['generated_at']
+                : date(DATE_ATOM),
+            'source' => $mappedSource,
+            'sections' => $mappedSections,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $snapshot
      * @return array<string, mixed>
      */
-    private function sections(array $payload): array
+    private function withStaleSourceState(array $snapshot, string $reason): array
     {
-        $data = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
-        $sections = $data['sections'] ?? [];
+        $source = is_array($snapshot['source'] ?? null) ? $snapshot['source'] : [];
+        foreach (['hub', 'cms', 'catalog', 'event'] as $key) {
+            $source[$key] = 'stale';
+        }
+        $source['state'] = 'stale';
+        $source['reason'] = $reason;
+        $snapshot['source'] = $source;
 
-        return is_array($sections) ? $sections : [];
+        return $snapshot;
     }
 
     /** @param list<string> $states */
@@ -219,7 +226,14 @@ final readonly class DashboardDataService
         return [
             'version' => self::CACHE_VERSION,
             'generated_at' => date(DATE_ATOM),
-            'source' => ['state' => 'unavailable', 'reason' => $reason],
+            'source' => [
+                'hub' => 'unavailable',
+                'cms' => 'unavailable',
+                'catalog' => 'unavailable',
+                'event' => 'unavailable',
+                'state' => 'unavailable',
+                'reason' => $reason,
+            ],
             'sections' => ['hub' => [], 'cms' => [], 'catalog' => [], 'event' => []],
         ];
     }
