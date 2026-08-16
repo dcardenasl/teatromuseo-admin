@@ -26,9 +26,9 @@ foreach ($languages ?? [] as $key => $language) {
     ];
 }
 
-$msgMissing    = (string) (lang('Pages.translation_missing') ?: 'Missing translation');
-$msgComplete   = (string) (lang('Pages.translation_complete') ?: 'Complete');
-$msgIncomplete = (string) (lang('Pages.translation_incomplete') ?: 'Incomplete');
+$msgMissing    = (string) (lang('ContentTranslations.translation_missing') ?: 'Missing translation');
+$msgComplete   = (string) (lang('ContentTranslations.translation_complete') ?: 'Complete');
+$msgIncomplete = (string) (lang('ContentTranslations.translation_incomplete') ?: 'Incomplete');
 ?>
 
 <div class="flex items-center gap-1.5">

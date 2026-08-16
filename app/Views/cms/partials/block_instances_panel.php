@@ -34,23 +34,23 @@ $blockTranslationStatus = $blockTranslationStatus ?? [];
     <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div class="min-w-0">
             <h4 class="text-base font-semibold text-gray-900">
-                <?= esc(lang('Pages.blocks_section_title')) ?>
+                <?= esc(lang('Blocks.blocks_section_title')) ?>
             </h4>
             <p class="text-sm text-gray-500 mt-0.5">
-                <?= esc(lang('Pages.' . $descKey)) ?>
+                <?= esc(lang('Blocks.' . $descKey)) ?>
             </p>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <a href="<?= route_to($routes['index'], $itemId) ?>"
                class="<?= esc(action_button_class('neutral')) ?> w-full justify-center sm:w-auto">
                 <?= ui_icon('layout-template', 'h-3.5 w-3.5') ?>
-                <?= esc(lang('Pages.manage_blocks')) ?>
+                <?= esc(lang('Blocks.manage_blocks')) ?>
             </a>
             <?php if ($canWrite): ?>
             <a href="<?= route_to($routes['create'], $itemId) ?>"
                class="<?= esc(action_button_class('primary')) ?> w-full justify-center sm:w-auto">
                 <?= ui_icon('plus', 'h-3.5 w-3.5') ?>
-                <?= esc(lang('Pages.blocks_add')) ?>
+                <?= esc(lang('Blocks.blocks_add')) ?>
             </a>
             <?php endif; ?>
         </div>
@@ -60,16 +60,16 @@ $blockTranslationStatus = $blockTranslationStatus ?? [];
         <!-- Saving indicator -->
         <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span x-show="saving" x-cloak class="text-xs text-gray-400 italic">
-                <?= esc(lang('Pages.blocks_saving')) ?>
+                <?= esc(lang('Blocks.blocks_saving')) ?>
             </span>
             <span x-show="saved && !saving" x-cloak class="text-xs text-green-600">
-                <?= esc(lang('Pages.blocks_saved')) ?>
+                <?= esc(lang('Blocks.blocks_saved')) ?>
             </span>
             <button x-show="dirty && !saving" x-cloak type="button"
                     @click="saveOrder()"
                     class="<?= esc(action_button_class('primary')) ?> w-full justify-center !text-xs !py-1.5 !px-3 sm:w-auto">
                 <?= ui_icon('save', 'h-3.5 w-3.5') ?>
-                <?= esc(lang('Pages.blocks_save_order')) ?>
+                <?= esc(lang('Blocks.blocks_save_order')) ?>
             </button>
         </div>
 
@@ -77,8 +77,8 @@ $blockTranslationStatus = $blockTranslationStatus ?? [];
             <!-- Empty state -->
             <div class="text-center py-10 border border-dashed border-gray-200 rounded-xl">
                 <?= ui_icon('layout-template', 'h-8 w-8 mx-auto text-gray-300 mb-2') ?>
-                <p class="text-sm font-medium text-gray-500"><?= esc(lang('Pages.' . $emptyTKey)) ?></p>
-                <p class="text-xs text-gray-400 mt-1"><?= esc(lang('Pages.' . $emptyDKey)) ?></p>
+                <p class="text-sm font-medium text-gray-500"><?= esc(lang('Blocks.' . $emptyTKey)) ?></p>
+                <p class="text-xs text-gray-400 mt-1"><?= esc(lang('Blocks.' . $emptyDKey)) ?></p>
             </div>
         <?php else: ?>
             <ul id="block-sortable-list" class="space-y-2">
@@ -103,7 +103,7 @@ $blockTranslationStatus = $blockTranslationStatus ?? [];
                     class="flex flex-col gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2.5 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow xl:flex-row xl:items-center">
                     <!-- Drag handle -->
                     <span data-drag-handle class="hidden flex-shrink-0 cursor-grab text-gray-300 hover:text-gray-500 xl:flex"
-                          title="<?= esc(lang('Pages.blocks_drag_handle_title'), 'attr') ?>">
+                          title="<?= esc(lang('Blocks.blocks_drag_handle_title'), 'attr') ?>">
                         <?= ui_icon('grip-vertical', 'h-4 w-4') ?>
                     </span>
 
@@ -117,7 +117,7 @@ $blockTranslationStatus = $blockTranslationStatus ?? [];
 
                     <!-- Status badge -->
                     <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 <?= $isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' ?>">
-                        <?= esc($isActive ? lang('Pages.blocks_status_active') : lang('Pages.blocks_status_inactive')) ?>
+                        <?= esc($isActive ? lang('Blocks.blocks_status_active') : lang('Blocks.blocks_status_inactive')) ?>
                     </span>
 
                     <!-- Translation status badges -->
@@ -149,13 +149,13 @@ $blockTranslationStatus = $blockTranslationStatus ?? [];
                             <a href="<?= route_to($routes['children'], $itemId, $blockId) ?>"
                                class="<?= esc(action_button_class('neutral')) ?> !text-xs !py-1 !px-2">
                                 <?= ui_icon('layers', 'h-3.5 w-3.5') ?>
-                                <?= esc(lang('Pages.blocks_action_slides')) ?>
+                                <?= esc(lang('Blocks.blocks_action_slides')) ?>
                             </a>
                             <?php endif; ?>
                             <a href="<?= route_to($routes['edit'], $itemId, $blockId) ?>"
                                class="<?= esc(action_button_class('neutral')) ?> !text-xs !py-1 !px-2">
                                 <?= ui_icon('pencil', 'h-3 w-3') ?>
-                                <?= esc(lang('Pages.blocks_action_edit')) ?>
+                                <?= esc(lang('Blocks.blocks_action_edit')) ?>
                             </a>
                             <form method="post" action="<?= route_to($routes['delete'], $itemId, $blockId) ?>"
                                   x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($blockTypeData['name'] ?? $blockTypeData['block_key'] ?? $blockId), 'js') ?>', () => $el.submit())">
@@ -173,10 +173,10 @@ $blockTranslationStatus = $blockTranslationStatus ?? [];
             <!-- Reorder hint -->
             <?php if ($canWrite): ?>
                 <p class="hidden xl:block mt-3 text-xs text-gray-400 text-center">
-                    <?= esc(lang('Pages.blocks_drag_hint')) ?>
+                    <?= esc(lang('Blocks.blocks_drag_hint')) ?>
                 </p>
                 <p class="xl:hidden mt-3 text-xs text-gray-400 text-center">
-                    <?= esc(lang('Pages.blocks_reorder_hint_mobile')) ?>
+                    <?= esc(lang('Blocks.blocks_reorder_hint_mobile')) ?>
                 </p>
             <?php endif; ?>
         <?php endif; ?>

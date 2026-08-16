@@ -20,7 +20,7 @@
                target="_blank"
                rel="noopener noreferrer"
                class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                <?= esc(lang('Pages.blocks_view_page')) ?>
+                <?= esc(lang('Blocks.blocks_view_page')) ?>
             </a>
             <a x-show="ownerEditUrl() && selectedOwnerType === 'entry'"
                :href="ownerEditUrl()"

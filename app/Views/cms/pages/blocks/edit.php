@@ -72,7 +72,7 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
 <div class="mb-4">
     <a href="<?= route_to($ownerBlocksRoute, (string) $page['id']) ?>"
        class="text-sm text-brand-600 hover:text-brand-700">
-        &larr; <?= esc(lang('Pages.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
+        &larr; <?= esc(lang('Blocks.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
     </a>
 </div>
 
@@ -98,7 +98,7 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.963-7.178Z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
             </svg>
-            <?= esc(lang('Pages.block_preview_button')) ?>
+            <?= esc(lang('Blocks.block_preview_button')) ?>
         </button>
     </div>
 
@@ -119,7 +119,7 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
                     <input type="checkbox" name="is_active" value="1"
                            <?= $isActiveValue ? 'checked' : '' ?>
                            class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                    <span class="text-sm font-medium text-gray-700"><?= esc(lang('Pages.block_active_label')) ?></span>
+                    <span class="text-sm font-medium text-gray-700"><?= esc(lang('Blocks.block_active_label')) ?></span>
                 </label>
             </div>
 
@@ -127,11 +127,11 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
             <?php if (! empty($configFields)): ?>
             <div class="border-t border-gray-100 pt-5"
                  x-data="blockInstanceConfig(<?= esc($entryOptionsUrlJs, 'attr') ?>, <?= esc($configJs, 'attr') ?>)">
-                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Pages.block_config_section')) ?></h4>
-                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Pages.block_config_desc')) ?></p>
+                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Blocks.block_config_section')) ?></h4>
+                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Blocks.block_config_desc')) ?></p>
                 <?php if (in_array($blockKey, ['collection_grid', 'collection_listing', 'collection_timeline'], true)): ?>
                     <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-                        <?= esc(lang('Pages.block_navigation_auto_help')) ?>
+                        <?= esc(lang('Blocks.block_navigation_auto_help')) ?>
                     </div>
                 <?php endif; ?>
                 <div class="space-y-4">
@@ -288,8 +288,8 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
             <div class="border-t border-gray-100 pt-5"
                  x-ref="langTabs"
                  x-data="langTabs(<?= $initialTabId ?>, '<?= esc(route_to('admin.cms.translate'), 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>')">
-                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Pages.block_content_section')) ?></h4>
-                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Pages.block_content_desc')) ?></p>
+                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Blocks.block_content_section')) ?></h4>
+                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Blocks.block_content_desc')) ?></p>
 
                 <!-- Tab bar -->
                 <div class="flex items-center justify-between border-b border-gray-200 mb-4">
@@ -832,7 +832,7 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
             <?php endif; ?>
 
             <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Pages.block_update_button')) ?></button>
+                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Blocks.block_update_button')) ?></button>
                 <a href="<?= route_to($ownerBlocksRoute, (string) $page['id']) ?>" class="<?= esc(action_button_class()) ?>"><?= esc(lang('App.cancel')) ?></a>
             </div>
         </form>
@@ -872,8 +872,8 @@ window.openBlockEditPreview = window.openBlockEditPreview || function openBlockE
 <?php $blockEditContent = ob_get_clean(); ?>
 
 <?= view('components/display/form_section', [
-    'title' => 'Pages.block_editor_title',
-    'description' => 'Pages.block_editor_desc',
+    'title' => 'Blocks.block_editor_title',
+    'description' => 'Blocks.block_editor_desc',
     'content' => $blockEditContent,
     'bodyClass' => 'space-y-5',
 ]) ?>

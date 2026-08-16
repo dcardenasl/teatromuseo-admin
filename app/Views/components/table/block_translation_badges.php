@@ -25,7 +25,7 @@ if ($languages === [] || $statusByLanguage === []) {
     return;
 }
 ?>
-<div class="flex items-center gap-1" role="list" aria-label="<?= esc(lang('Pages.blocks_translation_badges_label'), 'attr') ?>">
+<div class="flex items-center gap-1" role="list" aria-label="<?= esc(lang('Blocks.blocks_translation_badges_label'), 'attr') ?>">
     <?php foreach ($languages as $lang):
         $langId = (int) ($lang['id'] ?? 0);
         $langCode = strtolower((string) ($lang['code'] ?? ''));

@@ -41,7 +41,7 @@ $totalLanguages = count($translationStats);
         <?php if ($itemIdStr !== ''): ?>
         <a href="<?= route_to('admin.cms.pages.blocks', $itemIdStr) ?>" class="<?= esc(action_button_class('neutral')) ?>">
             <?= ui_icon('layout-template', 'h-3.5 w-3.5') ?>
-            <?= esc(lang('Pages.manage_blocks')) ?>
+            <?= esc(lang('Blocks.manage_blocks')) ?>
         </a>
         <?php endif; ?>
         <form method="post" action="<?= route_to('admin.cms.pages.delete', $itemIdStr) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['title'] ?? $item['slug'] ?? null), 'js') ?>', () => $el.submit())">
@@ -188,8 +188,8 @@ if (!empty($languages)) {
                         <span x-show="!expandedSections.translations" class="text-gray-400">▶</span>
                         <span x-show="expandedSections.translations" class="text-gray-600">▼</span>
                         <div class="flex-1">
-                            <h3 class="text-sm font-semibold text-gray-900"><?= esc(lang('Pages.translations_title')) ?></h3>
-                            <p class="text-xs text-gray-500 mt-0.5"><?= esc(lang('Pages.translations_help')) ?></p>
+                            <h3 class="text-sm font-semibold text-gray-900"><?= esc(lang('ContentTranslations.translations_title')) ?></h3>
+                            <p class="text-xs text-gray-500 mt-0.5"><?= esc(lang('ContentTranslations.translations_help')) ?></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-1.5 ml-4">
@@ -220,11 +220,11 @@ if (!empty($languages)) {
                                         class="px-3 py-2 text-sm font-medium transition-all rounded-t-lg inline-flex items-center gap-2">
                                         <span><?= esc(strtoupper($lang['code'])) ?></span>
                                         <?php if ($translationStats[$langId]['status'] === 'complete'): ?>
-                                            <span class="inline-block w-2 h-2 rounded-full bg-green-500" title="<?= lang('Pages.translation_complete') ?>"></span>
+                                            <span class="inline-block w-2 h-2 rounded-full bg-green-500" title="<?= lang('ContentTranslations.translation_complete') ?>"></span>
                                         <?php elseif ($translationStats[$langId]['status'] === 'incomplete'): ?>
-                                            <span class="inline-block w-2 h-2 rounded-full bg-yellow-500" title="<?= lang('Pages.translation_incomplete') ?>"></span>
+                                            <span class="inline-block w-2 h-2 rounded-full bg-yellow-500" title="<?= lang('ContentTranslations.translation_incomplete') ?>"></span>
                                         <?php else: ?>
-                                            <span class="inline-block w-2 h-2 rounded-full bg-red-500" title="<?= lang('Pages.translation_missing') ?>"></span>
+                                            <span class="inline-block w-2 h-2 rounded-full bg-red-500" title="<?= lang('ContentTranslations.translation_missing') ?>"></span>
                                         <?php endif; ?>
                                         <?php if (!empty($lang['is_default'])): ?>
                                             <span class="text-brand-500">★</span>

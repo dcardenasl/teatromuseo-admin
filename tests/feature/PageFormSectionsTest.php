@@ -72,7 +72,7 @@ final class PageFormSectionsTest extends CIUnitTestCase
     public function testLanguageFilesHaveTranslationStatuses(): void
     {
         // Verify English language file has translation status strings
-        $enFile = APPPATH . 'Modules/Cms/Language/en/Pages.php';
+        $enFile = APPPATH . 'Language/en/ContentTranslations.php';
         $enContent = include($enFile);
 
         $this->assertArrayHasKey('translation_complete', $enContent);
@@ -80,7 +80,7 @@ final class PageFormSectionsTest extends CIUnitTestCase
         $this->assertArrayHasKey('translation_missing', $enContent);
 
         // Verify Spanish language file has translation status strings
-        $esFile = APPPATH . 'Modules/Cms/Language/es/Pages.php';
+        $esFile = APPPATH . 'Language/es/ContentTranslations.php';
         $esContent = include($esFile);
 
         $this->assertArrayHasKey('translation_complete', $esContent);

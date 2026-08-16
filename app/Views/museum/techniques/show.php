@@ -86,7 +86,7 @@ foreach ($translations as $translation) {
         <!-- Multilingual Content Translations Section -->
         <?php if (!empty($languages)): ?>
             <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
-                <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4"><?= esc(lang('Pages.translations_title')) ?></h3>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4"><?= esc(lang('ContentTranslations.translations_title')) ?></h3>
                 <div class="space-y-4">
                     <?php foreach ($languages as $language):
                         $tLangId = (int) ($language['id'] ?? 0);

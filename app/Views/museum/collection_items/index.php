@@ -5,9 +5,9 @@ $showInTotemOff = lang('Museum.field_show_in_totem_off');
 $isActiveOn = lang('Museum.field_is_active_on');
 $isActiveOff = lang('Museum.field_is_active_off');
 $publicationStatusLabels = [
-    'draft' => lang('Pages.status_draft'),
-    'published' => lang('Pages.status_published'),
-    'archived' => lang('Pages.status_archived'),
+    'draft' => lang('Museum.status_draft'),
+    'published' => lang('Museum.status_published'),
+    'archived' => lang('Museum.status_archived'),
 ];
 $publicationStatusClasses = [
     'draft' => 'bg-amber-50 text-amber-700 ring-amber-200',

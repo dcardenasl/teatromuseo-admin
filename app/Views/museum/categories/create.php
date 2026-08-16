@@ -47,8 +47,8 @@
             <input type="hidden" name="default_language_id" value="<?= esc((string) $defaultLangId) ?>">
             <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div class="mb-4">
-                    <h4 class="text-sm font-semibold text-gray-900"><?= esc(lang('Pages.translations_title')) ?></h4>
-                    <p class="mt-1 text-xs text-gray-500"><?= esc(lang('Pages.translations_help')) ?></p>
+                    <h4 class="text-sm font-semibold text-gray-900"><?= esc(lang('ContentTranslations.translations_title')) ?></h4>
+                    <p class="mt-1 text-xs text-gray-500"><?= esc(lang('ContentTranslations.translations_help')) ?></p>
                 </div>
 
                 <div x-data="langTabs(<?= $defaultLangId ?>, '<?= esc($translateUrl, 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>')">

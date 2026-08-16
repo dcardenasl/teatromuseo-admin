@@ -58,13 +58,13 @@ foreach ($languages as $l) {
                 <a href="<?= esc($previewUrl) ?>" target="_blank" rel="noopener noreferrer"
                    class="<?= esc(action_button_class('neutral')) ?>">
                     <?= ui_icon('external-link', 'h-3.5 w-3.5') ?>
-                    <span><?= esc(lang('Pages.blocks_view_page')) ?></span>
+                    <span><?= esc(lang('Blocks.blocks_view_page')) ?></span>
                 </a>
                 <?php endif; ?>
 
                 <a href="<?= route_to('admin.cms.pages.blocks', $itemId) ?>" class="<?= esc(action_button_class('neutral')) ?>">
                     <?= ui_icon('layout-template', 'h-3.5 w-3.5') ?>
-                    <span><?= esc(lang('Pages.manage_blocks')) ?></span>
+                    <span><?= esc(lang('Blocks.manage_blocks')) ?></span>
                 </a>
 
                 <!-- Separator -->
@@ -163,7 +163,7 @@ foreach ($languages as $l) {
         <!-- Translations -->
         <?php if (! empty($page['translations']) && is_array($page['translations'])): ?>
             <div class="mt-6 border-t border-gray-200 pt-6">
-                <h4 class="text-md font-semibold text-gray-800"><?= esc(lang('Pages.translations_title')) ?></h4>
+                <h4 class="text-md font-semibold text-gray-800"><?= esc(lang('ContentTranslations.translations_title')) ?></h4>
                 <div class="mt-4 space-y-4">
                     <?php foreach ($page['translations'] as $t):
                         $tLangId  = (int) ($t['language_id'] ?? 0);
@@ -182,7 +182,7 @@ foreach ($languages as $l) {
                                     <a href="<?= esc($tPreview) ?>" target="_blank" rel="noopener noreferrer"
                                        class="text-xs text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 whitespace-nowrap">
                                         <?= ui_icon('external-link', 'h-3 w-3') ?>
-                                        <?= esc(lang('Pages.blocks_view_page')) ?>
+                                        <?= esc(lang('Blocks.blocks_view_page')) ?>
                                     </a>
                                     <?php endif; ?>
                                     <a href="<?= esc(\App\Modules\Cms\Support\TranslationStatus::editUrl(route_to('admin.cms.pages.edit', $itemId), $tLangId)) ?>"
@@ -253,7 +253,7 @@ foreach ($languages as $l) {
         <?php if ($previewUrl !== ''): ?>
             <a href="<?= esc($previewUrl) ?>" target="_blank" rel="noopener noreferrer" class="<?= esc(action_button_class()) ?> w-full justify-center text-center">
                 <?= ui_icon('external-link', 'h-3.5 w-3.5') ?>
-                <span><?= esc(lang('Pages.blocks_view_page')) ?></span>
+                <span><?= esc(lang('Blocks.blocks_view_page')) ?></span>
             </a>
         <?php endif; ?>
         <?php if (has_permission('cms.pages.write')): ?>
@@ -263,7 +263,7 @@ foreach ($languages as $l) {
             </a>
             <a href="<?= route_to('admin.cms.pages.blocks', $itemId) ?>" class="<?= esc(action_button_class()) ?> w-full justify-center text-center">
                 <?= ui_icon('layout-template', 'h-3.5 w-3.5') ?>
-                <span><?= esc(lang('Pages.manage_blocks')) ?></span>
+                <span><?= esc(lang('Blocks.manage_blocks')) ?></span>
             </a>
             <?php if ($status !== 'published'): ?>
                 <form method="post" action="<?= route_to('admin.cms.pages.publish', $itemId) ?>">

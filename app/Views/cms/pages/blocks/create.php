@@ -85,11 +85,11 @@ $isImageAccept = static function (string $accept): bool {
 <div class="mb-4">
     <?php if ($parentInstanceId !== null): ?>
         <a href="javascript:history.back()" class="text-sm text-brand-600 hover:text-brand-700">
-            &larr; <?= esc(lang('Pages.block_back_to_blocks')) ?> — <?= esc($ownerChildLabel) ?>
+            &larr; <?= esc(lang('Blocks.block_back_to_blocks')) ?> — <?= esc($ownerChildLabel) ?>
         </a>
     <?php else: ?>
         <a href="<?= route_to($ownerBlocksRoute, (string)$page['id']) ?>" class="text-sm text-brand-600 hover:text-brand-700">
-            &larr; <?= esc(lang('Pages.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
+            &larr; <?= esc(lang('Blocks.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
         </a>
     <?php endif; ?>
 </div>
@@ -102,11 +102,11 @@ $isImageAccept = static function (string $accept): bool {
         </svg>
         <input type="text"
                x-model="blockTypeSearch"
-               placeholder="<?= esc(lang('Pages.block_type_search_placeholder')) ?>"
+               placeholder="<?= esc(lang('Blocks.block_type_search_placeholder')) ?>"
                class="block w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
     </div>
     <p x-show="blockTypeSearch.trim() !== '' && filteredBlockTypes().length === 0" x-cloak class="text-sm text-gray-400 py-6 text-center">
-        <?= esc(lang('Pages.block_type_search_empty')) ?>
+        <?= esc(lang('Blocks.block_type_search_empty')) ?>
     </p>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <template x-for="bt in filteredBlockTypes()" :key="bt.id">
@@ -142,8 +142,8 @@ $isImageAccept = static function (string $accept): bool {
     </div>
     <?php $step1Content = ob_get_clean(); ?>
     <?= view('components/display/form_section', [
-        'title' => 'Pages.block_step1_title',
-        'description' => 'Pages.block_step1_desc',
+        'title' => 'Blocks.block_step1_title',
+        'description' => 'Blocks.block_step1_desc',
         'content' => $step1Content,
         'bodyClass' => 'space-y-4',
     ]) ?>
@@ -158,7 +158,7 @@ $isImageAccept = static function (string $accept): bool {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.963-7.178Z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
                 </svg>
-                <?= esc(lang('Pages.block_preview_button')) ?>
+                <?= esc(lang('Blocks.block_preview_button')) ?>
             </button>
         </div>
 
@@ -173,14 +173,14 @@ $isImageAccept = static function (string $accept): bool {
             <div class="flex items-center pb-4 border-b border-gray-100">
                 <input type="checkbox" name="is_active" id="is_active" value="1" checked
                        class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700"><?= esc(lang('Pages.block_active_label')) ?></label>
+                <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700"><?= esc(lang('Blocks.block_active_label')) ?></label>
             </div>
 
             <div x-show="configFields && Object.keys(configFields).length > 0" x-cloak>
                 <h4 class="text-sm font-semibold text-gray-800 mb-3">Configuración del Diseño</h4>
                 <div x-show="selectedBlockType?.block_key === 'collection_grid' || selectedBlockType?.block_key === 'collection_listing'"
                      class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-                    <?= esc(lang('Pages.block_navigation_auto_help')) ?>
+                    <?= esc(lang('Blocks.block_navigation_auto_help')) ?>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <template x-for="(field, key) in configFields" :key="key">
@@ -967,18 +967,18 @@ $isImageAccept = static function (string $accept): bool {
 
             <div x-show="selectedBlockType && Object.keys(contentFields).length === 0" x-cloak
                  class="p-4 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 text-center">
-                <?= esc(lang('Pages.block_structural_note')) ?>
+                <?= esc(lang('Blocks.block_structural_note')) ?>
             </div>
 
             <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Pages.block_add_button')) ?></button>
+                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Blocks.block_add_button')) ?></button>
                 <a href="<?= route_to($ownerBlocksRoute, (string)$page['id']) ?>" class="<?= esc(action_button_class()) ?>"><?= esc(lang('App.cancel')) ?></a>
             </div>
         </form>
         <?php $step2Content = ob_get_clean(); ?>
         <?= view('components/display/form_section', [
-            'title' => 'Pages.block_step2_title',
-            'description' => 'Pages.block_step2_desc',
+            'title' => 'Blocks.block_step2_title',
+            'description' => 'Blocks.block_step2_desc',
             'content' => $step2Content,
             'bodyClass' => 'space-y-6',
         ]) ?>

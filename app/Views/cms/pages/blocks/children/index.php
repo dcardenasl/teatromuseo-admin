@@ -21,11 +21,11 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
 ?>
 <div class="mb-4 flex items-center justify-between">
     <a href="<?= route_to($ownerBlocksRoute, $pageId) ?>" class="text-sm text-brand-600 hover:text-brand-700">
-        &larr; <?= esc(lang('Pages.children_back_to_blocks', [$page['title'] ?? $ownerLabel])) ?>
+        &larr; <?= esc(lang('Blocks.children_back_to_blocks', [$page['title'] ?? $ownerLabel])) ?>
     </a>
     <a href="<?= route_to($ownerCreateRoute, $pageId) ?>?parent_instance_id=<?= esc($instanceId) ?>"
        class="<?= esc(action_button_class('primary')) ?>">
-        <?= ui_icon('plus', 'h-4 w-4 mr-1') ?> <?= esc(lang('Pages.children_add_button', [$childLabel])) ?>
+        <?= ui_icon('plus', 'h-4 w-4 mr-1') ?> <?= esc(lang('Blocks.children_add_button', [$childLabel])) ?>
     </a>
 </div>
 
@@ -36,7 +36,7 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
         <div class="min-w-0">
                 <h3 class="text-xl font-bold text-gray-900">
                 <?= ui_icon($parentType['icon'] ?? 'gallery-horizontal', 'h-5 w-5 inline-block mr-2 text-brand-600') ?>
-                <?= esc(lang('Pages.children_section_title', [$childLabelPlural, $parentType['name'] ?? lang('Pages.blocks_section_title')])) ?>
+                <?= esc(lang('Blocks.children_section_title', [$childLabelPlural, $parentType['name'] ?? lang('Blocks.blocks_section_title')])) ?>
             </h3>
             <p class="text-sm text-gray-500 mt-1"><?= esc($ownerLabel) ?>: <strong><?= esc($page['title'] ?? '') ?></strong></p>
         </div>
@@ -46,13 +46,13 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                 </svg>
-                <?= esc(lang('Pages.blocks_saving')) ?>
+                <?= esc(lang('Blocks.blocks_saving')) ?>
             </span>
             <span x-show="saved" x-cloak class="flex items-center gap-1 text-xs text-green-600 font-medium">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                 </svg>
-                <?= esc(lang('Pages.blocks_saved')) ?>
+                <?= esc(lang('Blocks.blocks_saved')) ?>
             </span>
             <?php if (!empty($children)): ?>
             <button type="button"
@@ -61,7 +61,7 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                     @click="saveOrder()"
                     class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 transition-colors shadow-sm">
                 <?= ui_icon('save', 'h-3.5 w-3.5') ?>
-                <?= esc(lang('Pages.blocks_save_order')) ?>
+                <?= esc(lang('Blocks.blocks_save_order')) ?>
             </button>
             <?php endif; ?>
         </div>
@@ -70,8 +70,8 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
     <?php if (empty($children)): ?>
         <div class="text-center py-12 border border-dashed border-gray-200 rounded-xl">
             <?= ui_icon('image', 'h-10 w-10 text-gray-300 mx-auto mb-3') ?>
-            <p class="text-sm text-gray-500 font-medium"><?= esc(lang('Pages.children_empty_title', [strtolower($ownerLabel), strtolower($childLabelPlural)])) ?></p>
-            <p class="text-xs text-gray-400 mt-1"><?= esc(lang('Pages.children_empty_desc', [$childLabel])) ?></p>
+            <p class="text-sm text-gray-500 font-medium"><?= esc(lang('Blocks.children_empty_title', [strtolower($ownerLabel), strtolower($childLabelPlural)])) ?></p>
+            <p class="text-xs text-gray-400 mt-1"><?= esc(lang('Blocks.children_empty_desc', [$childLabel])) ?></p>
         </div>
     <?php else: ?>
         <div data-sortable-list class="space-y-3">
@@ -98,7 +98,7 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                 <!-- Drag handle -->
                 <div data-drag-handle
                      class="hidden lg:flex cursor-grab active:cursor-grabbing shrink-0 text-gray-300 hover:text-gray-500 transition-colors select-none"
-                     title="<?= esc(lang('Pages.blocks_drag_handle_title'), 'attr') ?>">
+                     title="<?= esc(lang('Blocks.blocks_drag_handle_title'), 'attr') ?>">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M7 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM7 9a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM7 16a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
                     </svg>
@@ -160,10 +160,10 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                 <!-- Info -->
                 <div class="flex-1 min-w-0">
                     <h4 class="font-semibold text-gray-900 text-sm truncate">
-                        <?= esc($previewText !== '' ? $previewText : lang('Pages.children_untitled', [$childLabel])) ?>
+                        <?= esc($previewText !== '' ? $previewText : lang('Blocks.children_untitled', [$childLabel])) ?>
                     </h4>
                     <p class="text-xs text-gray-500 font-mono mt-0.5">
-                        <?= esc(lang('Pages.children_item_order_label', [strtolower($childLabel), (string) ($child['sort_order'] ?? '')])) ?>
+                        <?= esc(lang('Blocks.children_item_order_label', [strtolower($childLabel), (string) ($child['sort_order'] ?? '')])) ?>
                     </p>
                 </div>
 
@@ -185,9 +185,9 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                 <!-- Status badge -->
                 <div class="shrink-0">
                     <?php if ($isActive): ?>
-                        <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"><?= esc(lang('Pages.blocks_status_active')) ?></span>
+                        <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"><?= esc(lang('Blocks.blocks_status_active')) ?></span>
                     <?php else: ?>
-                        <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"><?= esc(lang('Pages.blocks_status_inactive')) ?></span>
+                        <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"><?= esc(lang('Blocks.blocks_status_inactive')) ?></span>
                     <?php endif; ?>
                 </div>
 
@@ -204,17 +204,17 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                     <a href="<?= route_to('admin.cms.entries') . '?collection_id=' . $matchedCollectionId ?>"
                        class="<?= esc(action_button_class('primary')) ?> py-1 px-2.5 text-xs inline-flex items-center gap-1">
                         <?= ui_icon('list', 'h-3.5 w-3.5') ?>
-                        <?= esc(lang('Pages.blocks_action_collection_entries')) ?>
+                        <?= esc(lang('Blocks.blocks_action_collection_entries')) ?>
                     </a>
                     <a href="<?= route_to('admin.cms.entries.create') . '?collection_id=' . $matchedCollectionId ?>"
                        class="<?= esc(action_button_class('neutral')) ?> py-1 px-2.5 text-xs inline-flex items-center gap-1">
                         <?= ui_icon('plus', 'h-3.5 w-3.5') ?>
-                        <?= esc(lang('Pages.blocks_action_new_entry')) ?>
+                        <?= esc(lang('Blocks.blocks_action_new_entry')) ?>
                     </a>
                     <?php endif; ?>
                     <a href="<?= route_to($ownerType === 'entry' ? 'admin.cms.entries.blocks.edit' : 'admin.cms.pages.blocks.edit', $pageId, $childId) ?>"
                        class="<?= esc(action_button_class('neutral')) ?> py-1 px-2.5 text-xs">
-                        <?= esc(lang('Pages.blocks_action_edit')) ?>
+                        <?= esc(lang('Blocks.blocks_action_edit')) ?>
                     </a>
                     <form method="post"
                           action="<?= route_to($ownerType === 'entry' ? 'admin.cms.entries.blocks.delete' : 'admin.cms.pages.blocks.delete', $pageId, $childId) ?>"
@@ -222,7 +222,7 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
                           @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($previewText !== '' ? $previewText : ($childLabel . ' ' . $childId)), 'js') ?>', () => $el.submit())">
                         <?= csrf_field() ?>
                         <button type="submit" class="<?= esc(action_button_class('danger')) ?> py-1 px-2.5 text-xs">
-                            <?= esc(lang('Pages.blocks_action_delete')) ?>
+                            <?= esc(lang('Blocks.blocks_action_delete')) ?>
                         </button>
                     </form>
                 </div>
@@ -234,11 +234,11 @@ $reorderUrl = route_to($ownerChildrenReorderRoute, $pageId, $instanceId);
             <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"/>
             </svg>
-            <?= esc(lang('Pages.blocks_drag_hint')) ?>
+            <?= esc(lang('Blocks.blocks_drag_hint')) ?>
         </p>
         <p class="lg:hidden text-xs text-gray-400 mt-4 flex items-center gap-1.5">
             <?= ui_icon('arrow-up-down', 'h-3.5 w-3.5 shrink-0') ?>
-            <?= esc(lang('Pages.blocks_reorder_hint_mobile')) ?>
+            <?= esc(lang('Blocks.blocks_reorder_hint_mobile')) ?>
         </p>
     <?php endif; ?>
 </section>

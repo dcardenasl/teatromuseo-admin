@@ -40,6 +40,11 @@
   explícito por endpoint; se retiraron los checks duplicados, se alineó la UI y
   se añadieron regresiones funcionales y una guarda arquitectónica.
 
+- [x] **FRONT-01b — Propiedad de namespaces de idioma.** Cerrada 2026-08-16.
+  Se eliminaron las colisiones entre catálogos raíz y modulares, se separaron
+  `Pages`, `Blocks` y `ContentTranslations`, se normalizaron los consumidores y
+  se añadió una guarda de unicidad de namespaces con paridad `es`/`en`.
+
 ## 🔴 En progreso
 
 _(sin tareas en curso)_
@@ -62,8 +67,6 @@ quedaron cerradas y verificadas; el detalle está en
   `phpunit.xml.dist` frente a warnings/deprecations.
 - [ ] **CFG-06** — Reparar y verificar la instalación de `pre-push` y el
   `core.hooksPath`.
-- [ ] **FRONT-01b** — Resolver la propiedad de los namespaces de idioma
-  duplicados y sus 12 colisiones conocidas.
 - [ ] **FRONT-01c** — Extraer las cadenas incrustadas de las previews a i18n.
 - [ ] **FRONT-01d** — Sacar la lógica de negocio de los `<script>` inline al
   build de frontend.

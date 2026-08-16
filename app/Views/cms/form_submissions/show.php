@@ -27,7 +27,7 @@ unset($actionButtons[$status]);
 
 <div class="mb-4">
     <a href="<?= route_to('admin.cms.form_submissions') ?>" class="text-sm text-brand-600 hover:text-brand-700">
-        &larr; <?= lang('FormSubmissions.title') ?>
+        &larr; <?= lang('FormSubmissions.submissions_title') ?>
     </a>
 </div>
 
@@ -41,7 +41,7 @@ unset($actionButtons[$status]);
 
     <?php /* ── Main: form data ──────────────────────────────────────────── */ ?>
     <section class="lg:col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm p-5">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4"><?= lang('FormSubmissions.detail_title') ?></h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4"><?= lang('FormSubmissions.submissions_details') ?></h3>
 
         <dl class="divide-y divide-gray-100 text-sm">
             <?php if (! empty($formData['name'])): ?>

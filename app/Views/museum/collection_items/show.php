@@ -31,9 +31,9 @@ $inventoryCode = trim((string) ($collectionItem['inventory_code'] ?? ''));
 $categoryLabel = trim((string) ($categories[(string) ($collectionItem['category_id'] ?? '')] ?? ($collectionItem['category_id'] ?? '')));
 $publicationStatus = strtolower((string) ($collectionItem['status'] ?? ''));
 $publicationStatusLabels = [
-    'draft' => lang('Pages.status_draft'),
-    'published' => lang('Pages.status_published'),
-    'archived' => lang('Pages.status_archived'),
+    'draft' => lang('Museum.status_draft'),
+    'published' => lang('Museum.status_published'),
+    'archived' => lang('Museum.status_archived'),
 ];
 $publicationStatusClasses = [
     'draft' => 'bg-amber-50 text-amber-700 ring-amber-200',
@@ -143,7 +143,7 @@ if ($categoryLabel !== '') {
         <!-- Multilingual Content Translations Section -->
         <?php if (!empty($languages)): ?>
             <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
-                <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4"><?= esc(lang('Pages.translations_title')) ?></h3>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4"><?= esc(lang('ContentTranslations.translations_title')) ?></h3>
                 <div class="space-y-4">
                     <?php foreach ($languages as $language):
                         $tLangId = (int) ($language['id'] ?? 0);
