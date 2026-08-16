@@ -363,6 +363,8 @@ if (!empty($languages)) {
 
         </div>
         <aside class="space-y-4">
+            <?= view('cms/pages/partials/quality_panel', ['quality' => $quality ?? []]) ?>
+
             <!-- Action buttons panel -->
             <?php ob_start(); ?>
             <button type="submit" class="<?= esc(action_button_class('primary')) ?> w-full justify-center text-center py-2.5"><?= esc(lang('App.update')) ?></button>

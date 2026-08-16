@@ -232,6 +232,8 @@ foreach ($languages as $l) {
     </section>
 
     <aside class="space-y-6">
+        <?= view('cms/pages/partials/quality_panel', ['quality' => $quality ?? []]) ?>
+
         <?= view('components/display/admin_meta_panel', [
             'title' => 'Pages.pages_details',
             'items' => [

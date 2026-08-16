@@ -64,6 +64,7 @@ class PageController extends BaseWebController
                 'blockTypes' => [],
                 'languages'  => [],
                 'blockTranslationStatus'  => [],
+                'quality'    => [],
             ]);
         }
 
@@ -74,6 +75,7 @@ class PageController extends BaseWebController
         $blocks    = array_values(
             array_filter($allBlocks, static fn (array $b) => empty($b['parent_instance_id']))
         );
+        $qualityResponse = $this->safeApiCall(fn () => $this->pageService->quality($id));
 
         return $this->render('cms/pages/show', [
             'title'         => lang('Pages.pages_details'),
@@ -85,6 +87,7 @@ class PageController extends BaseWebController
             'blockTypes'    => $this->fetchBlockTypesIndexed(),
             'languages'     => $this->getLanguages(),
             'blockTranslationStatus'  => $this->ownerBlockTranslationStatus('page', $id),
+            'quality'       => $qualityResponse['ok'] ? $this->extractData($qualityResponse) : [],
         ]);
     }
 
@@ -166,7 +169,7 @@ class PageController extends BaseWebController
             $this->applyPagePreset($pageId, (string) ($payload['page_type'] ?? 'generic'), $payload);
         }
 
-        return redirect()->to(route_to('admin.cms.pages'))->with('success', lang('Pages.pages_create_success'));
+        return redirect()->to(route_to('admin.cms.pages.show', (string) $pageId))->with('success', lang('Pages.pages_create_success'));
     }
 
     public function edit(string $id): string|RedirectResponse
@@ -189,6 +192,7 @@ class PageController extends BaseWebController
         $translateTargets = ($defaultLangId > 0 && !empty($languages))
             ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
             : [];
+        $qualityResponse = $this->safeApiCall(fn () => $this->pageService->quality($id));
 
         return $this->render('cms/pages/edit', [
             'title' => lang('Pages.pages_edit'),
@@ -203,6 +207,7 @@ class PageController extends BaseWebController
             'translateTargets' => $translateTargets,
             'pageTypes' => $this->pageTypeOptions(),
             'returnTo' => $this->incomingReturnTo(),
+            'quality' => $qualityResponse['ok'] ? $this->extractData($qualityResponse) : [],
         ]);
     }
 

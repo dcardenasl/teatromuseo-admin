@@ -82,16 +82,20 @@ class StructureWizardController extends BaseWebController
         $payload = $this->jsonRequestPayload();
         $result = $this->safeApiCall(fn () => $this->pageService->create($payload));
         $statusCode = $this->normalizeUpstreamStatus($result);
+        $quality = [];
         if ($statusCode >= 200 && $statusCode < 300) {
             $data = $this->extractData($result);
             $pageId = (int) ($data['id'] ?? 0);
             if ($pageId > 0) {
                 PagePresetApplier::fromServices()->apply($pageId, (string) ($payload['page_type'] ?? 'generic'), $payload);
+                $qualityResponse = $this->safeApiCall(fn () => $this->pageService->quality($pageId));
+                $quality = $qualityResponse['ok'] ? $this->extractData($qualityResponse) : [];
             }
         }
         $response = [
             'ok' => $statusCode >= 200 && $statusCode < 300,
             'data' => $statusCode >= 200 && $statusCode < 300 ? $this->extractData($result) : ($result['data'] ?? []),
+            'quality' => $quality,
         ];
 
         if ($response['ok'] === false) {
