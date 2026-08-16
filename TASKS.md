@@ -46,14 +46,14 @@ _(sin tareas en curso)_
 
 ## 🟡 Próximo
 
-### Dashboard vía BFF (propuesta 2026-08-16) — ver `../docs/plan/2026-08-16-plan-admin-dashboard-via-bff.md`
+### Dashboard vía BFF — cerrado 2026-08-16
 
-El dashboard ya es un agregador resiliente (`ADM-DASH-01`/`02`) que hace 4
-llamadas de dominio por su cuenta (hub/cms/catalog/event) con caché, lock y
-degradación por fuente. Este bloque mueve esa orquestación al BFF, que hoy
-tiene el patrón (`aggregate()`/introspect) pero ningún consumidor real.
-Depende de que `BFF-DASH-01..06` (ver `teatromuseo-bff/TASKS.md`) esté
-operativo en local; la Fase B quedó verificada antes de iniciar `ADM-DASH-03`.
+El dashboard conserva su caché, lock y degradación por fuente en el Admin,
+pero ahora hace una sola lectura autenticada a
+`/api/v1/me/admin-dashboard`; el BFF concentra el fan-out secuencial a Hub,
+CMS, Catálogo y Eventos. Las tareas `BFF-DASH-01..06` y `ADM-DASH-03..06`
+quedaron cerradas y verificadas; el detalle está en
+`../docs/plan/2026-08-16-plan-admin-dashboard-via-bff.md`.
 ### Saneamiento arquitectónico heredado (prioridad 2)
 
 - [ ] **CFG-02** — Reconstruir `.env.example` desde las variables realmente
