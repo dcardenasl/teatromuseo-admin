@@ -22,8 +22,9 @@
   el proceso y se retiró el wiring legacy del dashboard en commit separado.
 
 - [x] **ADM-DASH-06 — Documentación.** Cerrada 2026-08-16. `CLAUDE.md`
-  documenta `BFF_API_BASE_URL`, `/me/admin-dashboard`, responsabilidades BFF /
-  Admin y el comportamiento stale/unavailable.
+  documenta `BFF_API_BASE_URL`, `/me/admin-dashboard`, el seam administrativo
+  `AdminRead` SELECT-only del BFF, responsabilidades BFF / Admin y el
+  comportamiento stale/unavailable.
 
 - [x] **ADM-DASH-02 — Dashboard cross-domain y datos confiables** — cerrada
   2026-08-11. El dashboard ahora consume Hub, CMS, Catálogo y Eventos desde
@@ -55,9 +56,10 @@ _(sin tareas en curso)_
 
 El dashboard conserva su caché, lock y degradación por fuente en el Admin,
 pero ahora hace una sola lectura autenticada a
-`/api/v1/me/admin-dashboard`; el BFF concentra el fan-out secuencial a Hub,
-CMS, Catálogo y Eventos. Las tareas `BFF-DASH-01..06` y `ADM-DASH-03..06`
-quedaron cerradas y verificadas; el detalle está en
+`/api/v1/me/admin-dashboard`; el BFF concentra el resumen del Hub y las
+lecturas directas, permission-aware y SELECT-only de CMS, Catálogo y Eventos.
+Las tareas `BFF-DASH-01..06` y `ADM-DASH-03..06` quedaron cerradas y
+verificadas; el detalle está en
 `../docs/plan/2026-08-16-plan-admin-dashboard-via-bff.md`.
 ### Saneamiento arquitectónico heredado (prioridad 2)
 

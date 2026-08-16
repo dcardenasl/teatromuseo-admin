@@ -182,9 +182,11 @@ authenticated BFF endpoint `GET /api/v1/me/admin-dashboard`. Configure
 `BFF_API_BASE_URL` (local default: `http://localhost:8188`) in the Admin
 environment before expecting fresh dashboard data.
 
-- `BffApiClient` makes the single authenticated request; the BFF owns the
-  sequential fan-out to Hub, CMS, Catalog, and Event and returns `sections`
-  plus per-source `source` states.
+- `BffApiClient` makes the single authenticated request. The BFF keeps the Hub
+  summary behind its authenticated client and serves CMS, Catalog, and Event
+  through its permission-aware, SELECT-only `AdminRead` seam; it returns
+  `sections` plus per-source `source` states without exposing domain HTTP
+  fan-out to the Admin.
 - `DashboardDataService` owns only the Admin-side permission-aware cache,
   lock, stale snapshot, and failure cooldown. It preserves unavailable sources
   as unavailable instead of converting them to zero values.
