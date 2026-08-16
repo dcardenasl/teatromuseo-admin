@@ -6,6 +6,11 @@
 
 ## ✅ Completadas
 
+- [x] **ADM-DASH-03 — Cliente BFF autenticado.** Cerrada 2026-08-16.
+  `BffApiClient::getAdminDashboard()` reenvía el bearer a
+  `/api/v1/me/admin-dashboard`, con `BFF_API_BASE_URL` configurado en local y
+  ejemplo; verificado con 1 test y 10 asserts.
+
 - [x] **ADM-DASH-02 — Dashboard cross-domain y datos confiables** — cerrada
   2026-08-11. El dashboard ahora consume Hub, CMS, Catálogo y Eventos desde
   una lectura cacheada versionada, muestra actividad cross-domain y representa
@@ -22,6 +27,31 @@
   se añadieron regresiones funcionales y una guarda arquitectónica.
 
 ## 🟡 Próximo
+
+### Dashboard vía BFF (propuesta 2026-08-16) — ver `../docs/plan/2026-08-16-plan-admin-dashboard-via-bff.md`
+
+El dashboard ya es un agregador resiliente (`ADM-DASH-01`/`02`) que hace 4
+llamadas de dominio por su cuenta (hub/cms/catalog/event) con caché, lock y
+degradación por fuente. Este bloque mueve esa orquestación al BFF, que hoy
+tiene el patrón (`aggregate()`/introspect) pero ningún consumidor real.
+Depende de que `BFF-DASH-01..06` (ver `teatromuseo-bff/TASKS.md`) esté
+operativo en local; la Fase B quedó verificada antes de iniciar `ADM-DASH-03`.
+
+- [ ] **ADM-DASH-04 — Migrar `DashboardDataService::read()`.** Reemplazar
+  las 4 `readUpstream()` (hub/cms/catalog/event) por 1 llamada a
+  `GET /api/v1/me/admin-dashboard`, conservando el mismo shape
+  (`sections`/`source.state`) y la capa de cache/lock/stale/cooldown
+  existente. Actualizar los tests del servicio en el mismo cambio. Depende de
+  `ADM-DASH-03`.
+- [ ] **ADM-DASH-05 — Verificación end-to-end y retiro del código viejo.**
+  `start-dev.sh` con las 6 apps arriba, confirmar mismos datos y que apagar
+  un dominio solo degrada esa sección. Recién después, retirar
+  `cmsClient`/`catalogClient`/`eventClient` y sus factories en
+  `Services.php` si quedan sin otro uso (confirmar con `grep`). Depende de
+  `ADM-DASH-04`.
+- [ ] **ADM-DASH-06 — Documentación.** Registrar en `CLAUDE.md` (sección
+  dashboard) la nueva dependencia operativa del BFF. Depende de
+  `ADM-DASH-05`.
 
 ### Saneamiento arquitectónico heredado (prioridad 2)
 

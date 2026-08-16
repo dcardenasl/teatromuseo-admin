@@ -22,4 +22,19 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     {
         parent::__construct($config ?? config(BffApiClientConfig::class), $hubClient ?? service('apiClient'));
     }
+
+    /**
+     * Read the authenticated Admin dashboard aggregate from the BFF.
+     *
+     * The BFF owns the fan-out to Hub and the three domain applications. The
+     * Admin still owns the outer cache and stale/cooldown policy.
+     *
+     * @return array<string, mixed>
+     */
+    public function getAdminDashboard(int $maxRetries = 2): array
+    {
+        return $this->request('GET', '/me/admin-dashboard', [
+            'max_retries' => $maxRetries,
+        ], true);
+    }
 }

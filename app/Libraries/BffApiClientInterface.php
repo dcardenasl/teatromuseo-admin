@@ -13,4 +13,8 @@ namespace App\Libraries;
  */
 interface BffApiClientInterface extends ApiClientInterface
 {
+    /**
+     * @return array<string, mixed>
+     */
+    public function getAdminDashboard(int $maxRetries = 2): array;
 }
