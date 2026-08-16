@@ -17,6 +17,15 @@ $statusClass = match ($status) {
     default => 'bg-gray-50 border-gray-200 text-gray-700',
 };
 $actionChecks = array_values(array_filter($checks, static fn (mixed $check): bool => is_array($check) && ($check['status'] ?? '') !== 'pass'));
+$headingCheck = null;
+foreach ($checks as $check) {
+    if (is_array($check) && ($check['key'] ?? '') === 'page_heading_owner') {
+        $headingCheck = $check;
+        break;
+    }
+}
+$headingOwners = is_array($headingCheck['heading_owners'] ?? null) ? $headingCheck['heading_owners'] : [];
+$headingOwnerCount = count($headingOwners);
 ?>
 
 <section class="rounded-xl border <?= esc($statusClass) ?> p-4 shadow-sm" aria-labelledby="page-quality-title">
@@ -36,6 +45,24 @@ $actionChecks = array_values(array_filter($checks, static fn (mixed $check): boo
             <div class="rounded-lg bg-white/70 px-2 py-2"><strong class="block text-base"><?= (int) ($summary['warnings'] ?? 0) ?></strong>avisos</div>
             <div class="rounded-lg bg-white/70 px-2 py-2"><strong class="block text-base"><?= (int) ($summary['passed'] ?? 0) ?></strong>correctos</div>
         </div>
+    <?php endif; ?>
+
+    <?php if (is_array($headingCheck)): ?>
+        <?php if (($headingCheck['status'] ?? '') === 'pass'): ?>
+            <p class="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+                <strong>H1 configurado:</strong> el CMS tiene un único bloque declarado como dueño del encabezado principal.
+            </p>
+        <?php elseif ($headingOwnerCount === 0): ?>
+            <div class="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-3 text-xs text-red-800" role="alert">
+                <strong>Falta el H1.</strong>
+                <p class="mt-1">Agrega exactamente un bloque cuya configuración del CMS declare que es dueño del encabezado principal. El sitio no generará un H1 automáticamente.</p>
+            </div>
+        <?php else: ?>
+            <div class="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-3 text-xs text-red-800" role="alert">
+                <strong>Hay más de un H1 configurado.</strong>
+                <p class="mt-1">Deja exactamente un bloque declarado como dueño del encabezado principal en el CMS. El sitio no elegirá uno automáticamente.</p>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <?php if ($actionChecks !== []): ?>
