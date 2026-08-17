@@ -170,6 +170,59 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
+    public function getAdminCmsEntryFormOptions(?int $entryId = null, int $maxRetries = 2): array
+    {
+        $path = '/me/admin-cms/entry-form-options';
+        if ($entryId !== null) {
+            if ($entryId < 1) {
+                return $this->unavailableResponse();
+            }
+            $path .= '/' . $entryId;
+        }
+
+        return $this->adminCmsRequest('entry form options', $path, $maxRetries);
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCmsPageFormOptions(?int $pageId = null, int $maxRetries = 2): array
+    {
+        $path = '/me/admin-cms/page-form-options';
+        if ($pageId !== null) {
+            if ($pageId < 1) {
+                return $this->unavailableResponse();
+            }
+            $path .= '/' . $pageId;
+        }
+
+        return $this->adminCmsRequest('page form options', $path, $maxRetries);
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCmsMenuEditorBootstrap(int $menuId, ?int $itemId = null, int $maxRetries = 2): array
+    {
+        if ($menuId < 1 || ($itemId !== null && $itemId < 1)) {
+            return $this->unavailableResponse();
+        }
+
+        $path = '/me/admin-cms/menus/' . $menuId . '/editor-bootstrap';
+        if ($itemId !== null) {
+            $path .= '/' . $itemId;
+        }
+
+        return $this->adminCmsRequest('menu editor bootstrap', $path, $maxRetries);
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCmsSiteIdentityBootstrap(int $maxRetries = 2): array
+    {
+        return $this->adminCmsRequest(
+            'site identity bootstrap',
+            '/me/admin-cms/site-identity-bootstrap',
+            $maxRetries,
+        );
+    }
+
+    /** @return ApiResponse */
     private function unavailableResponse(): array
     {
         return [
@@ -181,6 +234,36 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
             'messages'    => [],
             'fieldErrors' => [],
         ];
+    }
+
+    /** @return ApiResponse */
+    private function adminCmsRequest(string $label, string $path, int $maxRetries): array
+    {
+        try {
+            $response = $this->request('GET', $path, [
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin CMS %s BFF transport failure: %s: %s',
+                $label,
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin CMS %s BFF returned HTTP %d (access_token=%s).',
+                $label,
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
     }
 
     private function hasAccessToken(): bool

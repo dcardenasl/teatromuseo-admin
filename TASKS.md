@@ -183,10 +183,11 @@ directas a su dominio propietario en todos los casos.
 
 **Feature 5 — Bootstrap de editores CMS**
 
-- [ ] **ADM-BFF-10 — A definir tras `BFF-ADMINREAD-14`.** Solo se crea un
-  adapter/consumo por pantalla (Entry, Page, Menu, BlockInstance, Wizard,
-  SiteIdentity) para las proyecciones que la medición apruebe según el
-  umbral de §7 del plan. No numerar sub-tareas de antemano.
+- [x] **ADM-BFF-10 — Consumo de bootstraps CMS aprobados.** Cerrada
+  2026-08-17 tras la medición runtime de `BFF-ADMINREAD-14`. Entry, Page, Menu
+  e Identity consumen un adapter BFF por pantalla con fallback directo; las
+  escrituras no cambiaron. BlockInstance y Wizard permanecen fuera de alcance
+  hasta definir contratos específicos para sus opciones dinámicas.
 
 ### Dashboard vía BFF — cerrado 2026-08-16
 

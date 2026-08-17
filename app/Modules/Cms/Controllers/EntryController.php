@@ -8,6 +8,7 @@ use App\Controllers\BaseWebController;
 use App\Modules\Cms\Requests\EntryStoreRequest;
 use App\Modules\Cms\Requests\EntryUpdateRequest;
 use App\Modules\Cms\Services\CategoryApiService;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
 use App\Modules\Cms\Services\CollectionApiService;
 use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\TagApiService;
@@ -24,6 +25,7 @@ class EntryController extends BaseWebController
     protected CategoryApiService $categoryService;
     protected TagApiService $tagService;
     protected TranslationAuditApiService $translationAuditService;
+    protected CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
@@ -33,6 +35,7 @@ class EntryController extends BaseWebController
         $this->categoryService   = service('categoryApiService');
         $this->tagService        = service('tagApiService');
         $this->translationAuditService = service('translationAuditApiService');
+        $this->cmsBootstrap      = service('cmsBootstrapBffAdapter');
     }
 
     public function index(): string
@@ -157,7 +160,10 @@ class EntryController extends BaseWebController
             $item['collection_id'] = (int) $collectionId;
         }
 
-        $languages = $this->getLanguages();
+        $bootstrap = $this->cmsBootstrap->entryFormOptions();
+        $languages = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : $this->getLanguages();
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
@@ -167,7 +173,9 @@ class EntryController extends BaseWebController
 
         return $this->render('cms/entries/create', [
             'title'            => lang('Entries.entries_create'),
-            'collections'      => $this->collectionsOptions(),
+            'collections'      => is_array($bootstrap['collections'] ?? null)
+                ? $this->optionMap($bootstrap['collections'], 'collection_key')
+                : $this->collectionsOptions(),
             'languages'        => $languages,
             'defaultLangId'    => $languageContext['defaultLangId'],
             'defaultLangCode'  => $languageContext['defaultLangCode'],
@@ -206,7 +214,10 @@ class EntryController extends BaseWebController
 
         $item           = $this->extractData($response);
         $blockTemplate  = $this->resolveBlockTemplate($item);
-        $languages      = $this->getLanguages();
+        $bootstrap      = $this->cmsBootstrap->entryFormOptions((int) $id);
+        $languages      = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : $this->getLanguages();
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId  = $languageContext['defaultLangId'];
         $fieldMap       = ['title', 'excerpt', 'meta_title', 'meta_description'];
@@ -222,7 +233,9 @@ class EntryController extends BaseWebController
         return $this->render('cms/entries/edit', [
             'title'            => lang('Entries.entries_edit'),
             'item'             => $item,
-            'collections'      => $this->collectionsOptions(),
+            'collections'      => is_array($bootstrap['collections'] ?? null)
+                ? $this->optionMap($bootstrap['collections'], 'collection_key')
+                : $this->collectionsOptions(),
             'languages'        => $languages,
             'focusLangId'      => $focusLangId,
             'defaultLangId'    => $languageContext['defaultLangId'],
@@ -231,7 +244,7 @@ class EntryController extends BaseWebController
             'blockTemplate'    => $blockTemplate,
             'translateTargets' => $translateTargets,
             'returnTo'         => $this->incomingReturnTo(),
-            ...$this->taxonomyOptions($item),
+            ...$this->taxonomyOptions($item, $bootstrap),
         ]);
     }
 
@@ -290,9 +303,10 @@ class EntryController extends BaseWebController
 
     /**
      * @param array<string, mixed> $entry
+     * @param array<string, mixed>|null $bootstrap
      * @return array{categoryOptions: array<string, string>, tagOptions: array<string, string>, selectedCategoryIds: list<int>, selectedTagIds: list<int>}
      */
-    private function taxonomyOptions(array $entry): array
+    private function taxonomyOptions(array $entry, ?array $bootstrap = null): array
     {
         $selectedCategoryIds = $this->taxonomyIds($entry['categories'] ?? []);
         $selectedTagIds = $this->taxonomyIds($entry['tags'] ?? []);
@@ -301,6 +315,22 @@ class EntryController extends BaseWebController
         $categoryOptions = $this->taxonomyLabels($entry['categories'] ?? []);
         /** @var array<string, string> $tagOptions */
         $tagOptions = $this->taxonomyLabels($entry['tags'] ?? []);
+
+        if ($bootstrap !== null) {
+            foreach (['categories' => 'categoryOptions', 'tags' => 'tagOptions'] as $section => $target) {
+                $items = $bootstrap[$section] ?? [];
+                if (! is_array($items)) {
+                    continue;
+                }
+                foreach ($items as $item) {
+                    if (is_array($item) && isset($item['id'])) {
+                        ${$target}[(string) $item['id']] = $this->taxonomyLabel($item);
+                    }
+                }
+            }
+
+            return compact('categoryOptions', 'tagOptions', 'selectedCategoryIds', 'selectedTagIds');
+        }
 
         $collectionId = isset($entry['collection_id']) ? (int) $entry['collection_id'] : 0;
         $categories = $this->safeApiCall(fn () => $this->categoryService->list([
@@ -335,6 +365,24 @@ class EntryController extends BaseWebController
         }
 
         return compact('categoryOptions', 'tagOptions', 'selectedCategoryIds', 'selectedTagIds');
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function optionMap(array $items, string $preferredKey): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+            $label = $item[$preferredKey] ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
+            $options[(string) $item['id']] = (string) $label;
+        }
+
+        return $options;
     }
 
     /**

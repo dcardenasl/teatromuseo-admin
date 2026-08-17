@@ -9,6 +9,7 @@ use App\Modules\Cms\Requests\MenuItemStoreRequest;
 use App\Modules\Cms\Requests\MenuItemUpdateRequest;
 use App\Modules\Cms\Requests\MenuStoreRequest;
 use App\Modules\Cms\Requests\MenuUpdateRequest;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
 use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\MenuApiService;
 use CodeIgniter\HTTP\RedirectResponse;
@@ -20,12 +21,14 @@ class MenuController extends BaseWebController
 {
     protected MenuApiService $menuService;
     protected EntryApiService $entryService;
+    protected CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->menuService = service('menuApiService');
         $this->entryService = service('entryApiService');
+        $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
     }
 
     public function index(): string
@@ -173,12 +176,18 @@ class MenuController extends BaseWebController
     // MenuItem operations
     public function createItem(string $menuId): string
     {
-        $menuResponse = $this->safeApiCall(fn () => $this->menuService->get($menuId));
+        $bootstrap = $this->cmsBootstrap->menuEditorBootstrap((int) $menuId);
+        $menuResponse = null;
+        if ($bootstrap === null) {
+            $menuResponse = $this->safeApiCall(fn () => $this->menuService->get($menuId));
+        }
 
-        $itemsResponse = $this->menuService->listItems(['menu_id' => $menuId, 'limit' => 1000]);
-        $items = $this->extractItems($itemsResponse);
-
-        $languages = $this->getLanguages();
+        $items = is_array($bootstrap['items'] ?? null)
+            ? $bootstrap['items']
+            : $this->extractItems($this->menuService->listItems(['menu_id' => $menuId, 'limit' => 1000]));
+        $languages = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : $this->getLanguages();
         $defaultLangId = $this->resolveLanguageContext($languages)['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && !empty($languages))
             ? $this->buildTranslateTargets($languages, ['label', 'custom_url'], $defaultLangId, 'translations', true)
@@ -187,11 +196,11 @@ class MenuController extends BaseWebController
         return $this->render('cms/menus/items/create', [
             'title'     => lang('Menus.menus_items_create') ?? 'Add Menu Item',
             'menuId'    => $menuId,
-            'menu'      => $this->extractData($menuResponse),
+            'menu'      => is_array($bootstrap['menu'] ?? null) ? $bootstrap['menu'] : $this->extractData($menuResponse ?? []),
             'items'     => $items,
-            'pages'     => $this->pagesOptions(),
-            'entries'   => $this->entriesOptions(),
-            'collections' => $this->collectionsOptions(),
+            'pages'     => is_array($bootstrap['pages'] ?? null) ? $this->pagesOptionsFromItems($bootstrap['pages']) : $this->pagesOptions(),
+            'entries'   => is_array($bootstrap['entries'] ?? null) ? $this->entriesOptionsFromItems($bootstrap['entries']) : $this->entriesOptions(),
+            'collections' => is_array($bootstrap['collections'] ?? null) ? $this->collectionsOptionsFromItems($bootstrap['collections']) : $this->collectionsOptions(),
             'languages' => $languages,
             'translateTargets' => $translateTargets,
         ]);
@@ -223,16 +232,23 @@ class MenuController extends BaseWebController
 
     public function editItem(string $menuId, string $itemId): string|RedirectResponse
     {
-        $menuResponse = $this->safeApiCall(fn () => $this->menuService->get($menuId));
-        $itemResponse = $this->safeApiCall(fn () => $this->menuService->getItem($itemId));
-        if (! $itemResponse['ok']) {
-            return $this->withError(lang('Menus.menus_items_not_found') ?? 'Menu item not found.', route_to('admin.cms.menus.show', $menuId));
+        $bootstrap = $this->cmsBootstrap->menuEditorBootstrap((int) $menuId, (int) $itemId);
+        $menuResponse = null;
+        $itemResponse = null;
+        if ($bootstrap === null) {
+            $menuResponse = $this->safeApiCall(fn () => $this->menuService->get($menuId));
+            $itemResponse = $this->safeApiCall(fn () => $this->menuService->getItem($itemId));
+            if (! $itemResponse['ok']) {
+                return $this->withError(lang('Menus.menus_items_not_found') ?? 'Menu item not found.', route_to('admin.cms.menus.show', $menuId));
+            }
         }
 
-        $itemsResponse = $this->menuService->listItems(['menu_id' => $menuId, 'limit' => 1000]);
-        $items = $this->extractItems($itemsResponse);
-
-        $languages = $this->getLanguages();
+        $items = is_array($bootstrap['items'] ?? null)
+            ? $bootstrap['items']
+            : $this->extractItems($this->menuService->listItems(['menu_id' => $menuId, 'limit' => 1000]));
+        $languages = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : $this->getLanguages();
         $defaultLangId = $this->resolveLanguageContext($languages)['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && !empty($languages))
             ? $this->buildTranslateTargets($languages, ['label', 'custom_url'], $defaultLangId, 'translations', true)
@@ -242,12 +258,12 @@ class MenuController extends BaseWebController
             'title'     => lang('Menus.menus_items_edit') ?? 'Edit Menu Item',
             'menuId'    => $menuId,
             'itemId'    => $itemId,
-            'menu'      => $this->extractData($menuResponse),
-            'item'      => $this->extractData($itemResponse),
+            'menu'      => is_array($bootstrap['menu'] ?? null) ? $bootstrap['menu'] : $this->extractData($menuResponse ?? []),
+            'item'      => is_array($bootstrap['item'] ?? null) ? $bootstrap['item'] : $this->extractData($itemResponse ?? []),
             'items'     => $items,
-            'pages'     => $this->pagesOptions(),
-            'entries'   => $this->entriesOptions(),
-            'collections' => $this->collectionsOptions(),
+            'pages'     => is_array($bootstrap['pages'] ?? null) ? $this->pagesOptionsFromItems($bootstrap['pages']) : $this->pagesOptions(),
+            'entries'   => is_array($bootstrap['entries'] ?? null) ? $this->entriesOptionsFromItems($bootstrap['entries']) : $this->entriesOptions(),
+            'collections' => is_array($bootstrap['collections'] ?? null) ? $this->collectionsOptionsFromItems($bootstrap['collections']) : $this->collectionsOptions(),
             'languages' => $languages,
             'translateTargets' => $translateTargets,
             'returnTo' => $this->incomingReturnTo(),
@@ -380,6 +396,72 @@ class MenuController extends BaseWebController
 
             $label = $item['collection_key'] ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
             $options[(string) $item['id']] = (string) $label;
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function pagesOptionsFromItems(array $items): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+            $label = null;
+            $translations = is_array($item['translations'] ?? null) ? $item['translations'] : [];
+            foreach ($translations as $translation) {
+                if (is_array($translation) && ! empty($translation['title'])) {
+                    $label = (string) $translation['title'];
+                    break;
+                }
+            }
+            $options[(string) $item['id']] = $label ?? (string) ($item['name'] ?? $item['title'] ?? $item['id']);
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function entriesOptionsFromItems(array $items): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+            $label = null;
+            $translations = is_array($item['translations'] ?? null) ? $item['translations'] : [];
+            foreach ($translations as $translation) {
+                if (is_array($translation) && ! empty($translation['title'])) {
+                    $label = (string) $translation['title'];
+                    break;
+                }
+            }
+            $options[(string) $item['id']] = $label ?? (string) ($item['title'] ?? $item['name'] ?? $item['slug'] ?? $item['id']);
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function collectionsOptionsFromItems(array $items): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (is_array($item) && isset($item['id'])) {
+                $options[(string) $item['id']] = (string) ($item['collection_key'] ?? $item['name'] ?? $item['title'] ?? $item['id']);
+            }
         }
 
         return $options;

@@ -7,6 +7,7 @@ namespace App\Modules\Cms\Controllers;
 use App\Controllers\BaseWebController;
 use App\Modules\Cms\Requests\PageStoreRequest;
 use App\Modules\Cms\Requests\PageUpdateRequest;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
 use App\Modules\Cms\Services\PageApiService;
 use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Cms\Support\CmsPresetCatalog;
@@ -21,6 +22,7 @@ class PageController extends BaseWebController
     protected PageApiService $pageService;
     protected \App\Modules\Cms\Services\CollectionApiService $collectionService;
     protected TranslationAuditApiService $translationAuditService;
+    protected CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
@@ -28,6 +30,7 @@ class PageController extends BaseWebController
         $this->pageService = service('pageApiService');
         $this->collectionService = service('collectionApiService');
         $this->translationAuditService = service('translationAuditApiService');
+        $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
     }
 
     public function index(): string
@@ -127,7 +130,10 @@ class PageController extends BaseWebController
 
     public function create(): string
     {
-        $languages = $this->getLanguages();
+        $bootstrap = $this->cmsBootstrap->pageFormOptions();
+        $languages = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : $this->getLanguages();
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
@@ -137,9 +143,13 @@ class PageController extends BaseWebController
 
         return $this->render('cms/pages/create', [
             'title' => lang('Pages.pages_create'),
-            'pages' => $this->pagesOptions(),
+            'pages' => is_array($bootstrap['pages'] ?? null)
+                ? $this->pageOptionsFromBootstrap($bootstrap['pages'])
+                : $this->pagesOptions(),
             'languages' => $languages,
-            'collections' => $this->collectionsOptions(),
+            'collections' => is_array($bootstrap['collections'] ?? null)
+                ? $this->collectionOptionsFromBootstrap($bootstrap['collections'])
+                : $this->collectionsOptions(),
             'defaultLangId' => $languageContext['defaultLangId'],
             'defaultLangCode' => $languageContext['defaultLangCode'],
             'defaultLangIndex' => $languageContext['defaultLangIndex'],
@@ -185,7 +195,10 @@ class PageController extends BaseWebController
             ? (int) $focusLangRaw
             : 0;
 
-        $languages = $this->getLanguages();
+        $bootstrap = $this->cmsBootstrap->pageFormOptions((int) $id);
+        $languages = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : $this->getLanguages();
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
@@ -197,9 +210,13 @@ class PageController extends BaseWebController
         return $this->render('cms/pages/edit', [
             'title' => lang('Pages.pages_edit'),
             'item' => $this->extractData($response),
-            'pages' => $this->pagesOptions($id),
+            'pages' => is_array($bootstrap['pages'] ?? null)
+                ? $this->pageOptionsFromBootstrap($bootstrap['pages'], $id)
+                : $this->pagesOptions($id),
             'languages' => $languages,
-            'collections' => $this->collectionsOptions(),
+            'collections' => is_array($bootstrap['collections'] ?? null)
+                ? $this->collectionOptionsFromBootstrap($bootstrap['collections'])
+                : $this->collectionsOptions(),
             'focusLangId' => $focusLangId,
             'defaultLangId' => $languageContext['defaultLangId'],
             'defaultLangCode' => $languageContext['defaultLangCode'],
@@ -310,6 +327,48 @@ class PageController extends BaseWebController
             }
 
             $options[$id] = (string) ($item['name'] ?? $item['collection_key'] ?? $id);
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function collectionOptionsFromBootstrap(array $items): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+            $options[(string) $item['id']] = (string) ($item['name'] ?? $item['collection_key'] ?? $item['id']);
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function pageOptionsFromBootstrap(array $items, ?string $excludeId = null): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id']) || ($excludeId !== null && (string) $item['id'] === $excludeId)) {
+                continue;
+            }
+            $title = null;
+            $translations = is_array($item['translations'] ?? null) ? $item['translations'] : [];
+            foreach ($translations as $translation) {
+                if (is_array($translation) && ! empty($translation['title'])) {
+                    $title = (string) $translation['title'];
+                    break;
+                }
+            }
+            $options[(string) $item['id']] = $title ?? (string) ($item['name'] ?? $item['title'] ?? $item['id']);
         }
 
         return $options;

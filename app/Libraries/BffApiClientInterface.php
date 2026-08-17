@@ -29,4 +29,16 @@ interface BffApiClientInterface extends ApiClientInterface
 
     /** @return ApiResponse */
     public function getAdminEventLookups(string $context, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCmsEntryFormOptions(?int $entryId = null, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCmsPageFormOptions(?int $pageId = null, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCmsMenuEditorBootstrap(int $menuId, ?int $itemId = null, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCmsSiteIdentityBootstrap(int $maxRetries = 2): array;
 }

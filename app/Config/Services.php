@@ -25,6 +25,7 @@ use App\Modules\Cms\Services\BlockInstanceApiService;
 use App\Modules\Cms\Services\BlockTypeApiService;
 use App\Modules\Cms\Services\BlockTypeOptionsResolver;
 use App\Modules\Cms\Services\CategoryApiService;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
 use App\Modules\Cms\Services\CollectionApiService;
 use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\FileTranslationApiService;
@@ -523,6 +524,15 @@ class Services extends BaseService
         }
 
         return new EventLookupBffAdapter(static::bffApiClient());
+    }
+
+    public static function cmsBootstrapBffAdapter(bool $getShared = true): CmsBootstrapBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cmsBootstrapBffAdapter');
+        }
+
+        return new CmsBootstrapBffAdapter(static::bffApiClient());
     }
 
     public static function eventTypeApiService(bool $getShared = true): EventTypeApiServiceInterface

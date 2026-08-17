@@ -6,6 +6,7 @@ namespace App\Modules\Cms\Controllers;
 
 use App\Controllers\BaseWebController;
 use App\Modules\Cms\Requests\SiteIdentityUpdateRequest;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
 use App\Modules\Cms\Services\SettingApiService;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -15,11 +16,13 @@ use Psr\Log\LoggerInterface;
 class SiteIdentityController extends BaseWebController
 {
     protected SettingApiService $settingService;
+    protected CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->settingService = service('settingApiService');
+        $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
     }
 
     private function requireWrite(): ?RedirectResponse
@@ -38,32 +41,37 @@ class SiteIdentityController extends BaseWebController
         }
         helper('cms_settings');
 
-        $identityResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('identity'));
-        if (! ($identityResponse['ok'] ?? false)) {
-            return $this->failApi(
-                $identityResponse,
-                lang('SiteIdentity.update_failed'),
-                route_to('admin.cms.site_identity'),
-                false
-            );
+        $bootstrap = $this->cmsBootstrap->siteIdentityBootstrap();
+        if ($bootstrap !== null) {
+            $items = is_array($bootstrap['settings'] ?? null) ? $bootstrap['settings'] : [];
+            $languages = is_array($bootstrap['languages'] ?? null) ? array_values($bootstrap['languages']) : [];
+        } else {
+            $identityResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('identity'));
+            if (! ($identityResponse['ok'] ?? false)) {
+                return $this->failApi(
+                    $identityResponse,
+                    lang('SiteIdentity.update_failed'),
+                    route_to('admin.cms.site_identity'),
+                    false
+                );
+            }
+            $identityItems = $this->extractItems($identityResponse);
+
+            $socialResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('social'));
+            if (! ($socialResponse['ok'] ?? false)) {
+                return $this->failApi(
+                    $socialResponse,
+                    lang('SiteIdentity.update_failed'),
+                    route_to('admin.cms.site_identity'),
+                    false
+                );
+            }
+            $socialItems = $this->extractItems($socialResponse);
+            $items = array_merge($identityItems, $socialItems);
+
+            $langsRes = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
+            $languages = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
         }
-        $identityItems = $this->extractItems($identityResponse);
-
-        $socialResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('social'));
-        if (! ($socialResponse['ok'] ?? false)) {
-            return $this->failApi(
-                $socialResponse,
-                lang('SiteIdentity.update_failed'),
-                route_to('admin.cms.site_identity'),
-                false
-            );
-        }
-        $socialItems = $this->extractItems($socialResponse);
-
-        $items = array_merge($identityItems, $socialItems);
-
-        $langsRes       = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
-        $languages      = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
         $languageContext = $this->resolveLanguageContext($languages);
         $settingsMap    = $this->indexSettingsByKey($items);
         $sortedSettings = $this->sortSettingsByOrder($settingsMap);
