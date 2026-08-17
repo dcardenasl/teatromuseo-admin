@@ -13,6 +13,10 @@ return [
     'status'                 => 'Status',
     'btn_back'               => '← Back',
     'btn_retry'              => 'Retry',
+    'config_preview_title'   => 'Wizard configuration',
+    'config_preview_intro'   => 'The Wizard composite read is available. This view appears when the endpoint is opened directly; the normal screen still consumes it as JSON.',
+    'config_preview_back'    => 'Back to wizard',
+    'config_preview_payload' => 'Configuration response',
 
     // Home
     'home_heading'           => 'What do you want to do today?',

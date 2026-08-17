@@ -108,7 +108,31 @@ class WizardController extends BaseWebController
             'has_active_block_types' => ! empty($config['block_types']),
         ], is_array($config['setup_state'] ?? null) ? $config['setup_state'] : []);
 
+        if ($this->wantsHumanReadableConfig()) {
+            $configJson = json_encode(
+                $config,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE,
+            ) ?: '{}';
+
+            return $this->response
+                ->setContentType('text/html')
+                ->setBody($this->render('cms/wizard/config_preview', [
+                    'title'     => lang('Wizard.config_preview_title'),
+                    'configJson' => $configJson,
+                ]));
+        }
+
         return $this->response->setJSON($config);
+    }
+
+    private function wantsHumanReadableConfig(): bool
+    {
+        $accept = strtolower($this->request->getHeaderLine('Accept'));
+        $requestedWith = strtolower($this->request->getHeaderLine('X-Requested-With'));
+
+        return $requestedWith !== 'xmlhttprequest'
+            && str_contains($accept, 'text/html')
+            && ! str_contains($accept, 'application/json');
     }
 
     public function publish(): ResponseInterface

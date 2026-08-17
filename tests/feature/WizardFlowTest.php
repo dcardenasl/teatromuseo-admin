@@ -345,9 +345,9 @@ final class WizardFlowTest extends CIUnitTestCase
             'fieldErrors' => [],
         ];
 
-        $mock->expects($this->exactly(2))
+        $mock->expects($this->exactly(4))
             ->method('get')
-            ->willReturnOnConsecutiveCalls($configResponse, $blockTypesResponse);
+            ->willReturnOnConsecutiveCalls($configResponse, $blockTypesResponse, $configResponse, $blockTypesResponse);
 
         Services::injectMock('domainApiClient', $mock);
 
@@ -375,6 +375,15 @@ final class WizardFlowTest extends CIUnitTestCase
         $this->assertNotEmpty($body['page_types']);
         $this->assertSame($blockTypeId, $body['block_types']['rich_text']['id']);
         $this->assertTrue($body['block_types']['rich_text']['supports_entries']);
+
+        Services::request()->setHeader('Accept', 'text/html');
+        $previewController = new WizardController();
+        $previewController->initController(Services::request(), Services::response(), Services::logger(true));
+        $preview = $previewController->config();
+
+        $this->assertSame(200, $preview->getStatusCode());
+        $this->assertStringContainsString('Configuración del asistente', (string) $preview->getBody());
+        $this->assertStringContainsString('"block_types"', html_entity_decode((string) $preview->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 
     public function testEntryBlocksUnwrapsDomainPayload(): void

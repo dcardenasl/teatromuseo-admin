@@ -13,6 +13,10 @@ return [
     'status'                 => 'Estado',
     'btn_back'               => '← Atrás',
     'btn_retry'              => 'Reintentar',
+    'config_preview_title'   => 'Configuración del asistente',
+    'config_preview_intro'   => 'La lectura compuesta del Wizard está disponible. Esta vista aparece al abrir el endpoint directamente; la pantalla normal sigue consumiéndolo como JSON.',
+    'config_preview_back'    => 'Volver al asistente',
+    'config_preview_payload' => 'Respuesta de configuración',
 
     // Home
     'home_heading'           => '¿Qué quieres hacer hoy?',
