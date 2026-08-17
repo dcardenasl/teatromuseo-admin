@@ -33,8 +33,49 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
      */
     public function getAdminDashboard(int $maxRetries = 2): array
     {
-        return $this->request('GET', '/me/admin-dashboard', [
-            'max_retries' => $maxRetries,
-        ], true);
+        try {
+            $response = $this->request('GET', '/me/admin-dashboard', [
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin dashboard BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin dashboard BFF returned HTTP %d (access_token=%s).',
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
+    }
+
+    /** @return array<string, mixed> */
+    private function unavailableResponse(): array
+    {
+        return [
+            'ok'          => false,
+            'status'      => 0,
+            'data'        => [],
+            'raw'         => '',
+            'headers'     => [],
+            'messages'    => [],
+            'fieldErrors' => [],
+        ];
+    }
+
+    private function hasAccessToken(): bool
+    {
+        $token = $this->session->get(\App\Support\SessionKeys::ACCESS_TOKEN->value);
+
+        return is_string($token) && $token !== '';
     }
 }

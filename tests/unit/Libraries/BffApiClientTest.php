@@ -80,6 +80,27 @@ final class BffApiClientTest extends CIUnitTestCase
         $this->assertSame(['data' => ['sections' => []]], $result['data']);
     }
 
+    public function testAdminDashboardReadConvertsTransportFailureToUnavailableResponse(): void
+    {
+        $config = new BffApiClientConfig();
+        $config->baseUrl = 'http://localhost:8188';
+        $hubClient = $this->createMock(ApiClientInterface::class);
+        $client = new BffApiClient($config, $hubClient);
+
+        $http = $this->createMock(CURLRequest::class);
+        $http->expects($this->once())
+            ->method('request')
+            ->willThrowException(new \RuntimeException('connection refused'));
+
+        $this->setProtectedProperty($client, 'http', $http);
+
+        $result = $client->getAdminDashboard();
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(0, $result['status']);
+        $this->assertSame([], $result['data']);
+    }
+
     private function setProtectedProperty(object $object, string $property, mixed $value): void
     {
         $reflection = new ReflectionClass($object);
