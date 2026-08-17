@@ -7,13 +7,40 @@ import { bootLucideIcons } from '../utils/lucide.js';
 import { devError } from '../utils/dev.js';
 import { extractListItems, extractListSummary, extractListPagination } from '../utils/listResponse.js';
 
+const VIEW_MODES = new Set(['table', 'grid']);
+const DENSITIES = new Set(['sm', 'md', 'lg']);
+
+const readSessionPreference = (key, allowedValues, fallback) => {
+    try {
+        const storage = typeof window !== 'undefined' ? window.sessionStorage : null;
+        const value = storage?.getItem(key);
+        return allowedValues.has(value) ? value : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
+const writeSessionPreference = (key, value) => {
+    try {
+        const storage = typeof window !== 'undefined' ? window.sessionStorage : null;
+        storage?.setItem(key, value);
+    } catch {
+        // sessionStorage can be unavailable in privacy-restricted contexts.
+    }
+};
+
 export const remoteTableFactory = (config = {}) => {
     const text = uiLabels[localePrefix()] || uiLabels.es;
+    const mode = String(config.mode || 'generic');
+    const viewStorageKey = `admin_table_view_${mode}`;
+    const densityStorageKey = `admin_table_density_${mode}`;
 
     return {
         apiUrl: config.apiUrl || window.location.pathname,
         pageUrl: config.pageUrl || window.location.pathname,
-        mode: config.mode || 'generic',
+        mode,
+        viewMode: readSessionPreference(viewStorageKey, VIEW_MODES, 'table'),
+        density: readSessionPreference(densityStorageKey, DENSITIES, 'md'),
         routes: config.routes || {},
         csrf: config.csrf || { name: '', hash: '' },
         defaultSort: typeof config.defaultSort === 'string' ? config.defaultSort : '',
@@ -33,6 +60,18 @@ export const remoteTableFactory = (config = {}) => {
         requestId: 0,
         debounceTimers: new WeakMap(),
         form: null,
+
+        setViewMode(viewMode) {
+            if (!VIEW_MODES.has(viewMode)) return;
+            this.viewMode = viewMode;
+            writeSessionPreference(viewStorageKey, viewMode);
+        },
+
+        setDensity(density) {
+            if (!DENSITIES.has(density)) return;
+            this.density = density;
+            writeSessionPreference(densityStorageKey, density);
+        },
 
         init() {
             this.form = this.$el.querySelector('form[data-table-filter-form="1"]');
