@@ -20,8 +20,12 @@ class BffApiClient extends ApiClient
     {
         \CodeIgniter\Config\BaseConfig::__construct();
 
-        $baseUrl = env('bffApiClient.baseUrl') ?: env('BFF_API_BASE_URL');
-        if (is_string($baseUrl) && trim($baseUrl) !== '') {
+        // Some shared hosts inject a short process value such as `api` under
+        // the uppercase key and then refuse to let .env override it. Prefer
+        // the dotted application setting when it is a valid URL and only use
+        // the uppercase key as a compatibility fallback.
+        $baseUrl = $this->resolveBaseUrl();
+        if ($baseUrl !== null) {
             $this->baseUrl = $baseUrl;
         }
 
@@ -59,9 +63,29 @@ class BffApiClient extends ApiClient
             }
         }
 
-        $logRequests = env('bffApiClient.logRequests') ?: env('BFF_API_LOG_REQUESTS');
+        $logRequests = env('BFF_API_LOG_REQUESTS') ?: env('bffApiClient.logRequests');
         if ($logRequests !== null && $logRequests !== '') {
             $this->logRequests = filter_var($logRequests, FILTER_VALIDATE_BOOLEAN);
         }
+    }
+
+    private function resolveBaseUrl(): ?string
+    {
+        foreach ([env('bffApiClient.baseUrl'), env('BFF_API_BASE_URL')] as $candidate) {
+            if (! is_string($candidate)) {
+                continue;
+            }
+
+            $candidate = rtrim(trim($candidate), '/');
+            $parts = parse_url($candidate);
+
+            if (in_array($parts['scheme'] ?? null, ['http', 'https'], true)
+                && is_string($parts['host'] ?? null)
+                && $parts['host'] !== '') {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 }

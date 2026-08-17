@@ -18,6 +18,31 @@ use ReflectionClass;
  */
 final class BffApiClientTest extends CIUnitTestCase
 {
+    public function testValidDottedUrlWinsOverInvalidInjectedUppercaseValue(): void
+    {
+        $this->setEnvVar('bffApiClient.baseUrl', 'https://bff.teatromuseo.cl');
+        $this->setEnvVar('BFF_API_BASE_URL', 'api');
+
+        $config = new BffApiClientConfig();
+
+        $this->assertSame('https://bff.teatromuseo.cl', $config->baseUrl);
+
+        $this->unsetEnvVar('bffApiClient.baseUrl');
+        $this->unsetEnvVar('BFF_API_BASE_URL');
+    }
+
+    public function testUppercaseUrlRemainsTheCompatibilityFallback(): void
+    {
+        $this->unsetEnvVar('bffApiClient.baseUrl');
+        $this->setEnvVar('BFF_API_BASE_URL', 'https://bff.teatromuseo.cl');
+
+        $config = new BffApiClientConfig();
+
+        $this->assertSame('https://bff.teatromuseo.cl', $config->baseUrl);
+
+        $this->unsetEnvVar('BFF_API_BASE_URL');
+    }
+
     public function testAdminDashboardReadUsesAuthenticatedBffRouteAndRetryBudget(): void
     {
         session()->set(SessionKeys::ACCESS_TOKEN->value, 'admin-access-token');
@@ -59,5 +84,17 @@ final class BffApiClientTest extends CIUnitTestCase
     {
         $reflection = new ReflectionClass($object);
         $reflection->getParentClass()?->getProperty($property)->setValue($object, $value);
+    }
+
+    private function setEnvVar(string $key, string $value): void
+    {
+        putenv($key . '=' . $value);
+        $_ENV[$key] = $value;
+    }
+
+    private function unsetEnvVar(string $key): void
+    {
+        putenv($key);
+        unset($_ENV[$key], $_SERVER[$key]);
     }
 }
