@@ -8,8 +8,8 @@
     colors="true"
     columns="max"
     failOnRisky="true"
-    failOnWarning="false"
-    failOnDeprecation="false"
+    failOnWarning="true"
+    failOnDeprecation="true"
     cacheDirectory="build/.phpunit.cache">
     <coverage
         includeUncoveredFiles="true"
