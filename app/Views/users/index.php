@@ -13,6 +13,8 @@
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('Users.title'),
         'actionsView' => 'users/partials/toolbar_actions',
+        'showViewToggle' => true,
+        'showDensityToggle' => true,
     ]) ?>
 
     <?= view('layouts/partials/filter_panel', [
@@ -45,7 +47,7 @@
             'actionLabel' => 'App.create',
         ]) ?>
     </template>
-    <template x-if="!error && rows.length > 0">
+    <template x-if="!error && rows.length > 0 && viewMode === 'table'">
         <div class="<?= esc(table_wrapper_class()) ?> relative">
             <div x-show="loading" class="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center transition-all duration-200" x-cloak>
                 <div class="flex items-center gap-2 rounded-lg bg-white/95 px-4 py-2 shadow-sm border border-gray-100">
@@ -54,7 +56,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('first_name')">
@@ -104,6 +106,41 @@
                 </tbody>
             </table>
             </div>
+        </div>
+    </template>
+
+    <template x-if="!error && rows.length > 0 && viewMode === 'grid'">
+        <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <template x-for="row in rows" :key="String(row.id ?? Math.random())">
+                <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <h4 class="min-w-0 truncate text-base font-semibold text-gray-900" x-text="fullName(row)"></h4>
+                        <span class="inline-flex shrink-0 rounded-full px-2 py-1 text-xs"
+                              :class="statusBadgeClass(row.status)"
+                              x-text="statusLabel(row.status)"></span>
+                    </div>
+                    <dl class="mt-4 space-y-3 text-sm">
+                        <div>
+                            <dt class="text-xs font-medium uppercase tracking-wide text-gray-500"><?= esc(lang('Users.email')) ?></dt>
+                            <dd class="mt-1 break-all text-gray-900" x-text="String(row.email ?? '-')"></dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium uppercase tracking-wide text-gray-500"><?= esc(lang('Users.roles')) ?></dt>
+                            <dd class="mt-1 text-gray-900"
+                                x-text="Array.isArray(row.roles) && row.roles.length > 0 ? row.roles.map(role => String(role.name ?? role.code ?? '-')).join(', ') : '-'">
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium uppercase tracking-wide text-gray-500"><?= esc(lang('Users.created_at')) ?></dt>
+                            <dd class="mt-1 text-gray-900" x-text="formatDate(row.created_at)"></dd>
+                        </div>
+                    </dl>
+                    <div class="mt-5 flex items-center gap-2 border-t border-gray-100 pt-4">
+                        <a :href="userShowUrl(row.id)" class="<?= esc(action_button_class()) ?> flex-1 justify-center"><?= esc(lang('Users.view')) ?></a>
+                        <a :href="userEditUrl(row.id)" class="<?= esc(action_button_class('primary')) ?> flex-1 justify-center"><?= esc(lang('App.edit')) ?></a>
+                    </div>
+                </article>
+            </template>
         </div>
     </template>
 
