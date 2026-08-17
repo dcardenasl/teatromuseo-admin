@@ -25,6 +25,7 @@ import { langTabs } from './components/langTabs.js';
 import { jsonEditor } from './components/jsonEditor.js';
 import { blockPreview } from './components/blockPreview.js';
 import { bootBlockEditPreview, openBlockEditPreview } from './components/blockEditPreview.js';
+import { bootEventTranslationSync } from './components/eventTranslationSync.js';
 import { blockTypeDesigner } from './components/blockTypeDesigner.js';
 import { blockInstanceConfig } from './components/blockInstanceConfig.js';
 import { collectionBlockTemplateBuilder } from './components/collectionBlockTemplateBuilder.js';
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!lucideBootstrapped) { bootLucideIcons(); lucideBootstrapped = true; }
     bootSlugFields();
     bootBlockEditPreview();
+    bootEventTranslationSync();
     bootGlobalSubmitGuard();
     const config = window.__componentConfig || {};
     bootSessionExpiryWatcher({ expiringMessage: config.sessionExpiringMessage });

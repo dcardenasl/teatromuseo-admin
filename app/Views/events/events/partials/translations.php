@@ -106,25 +106,3 @@ $translationLabel = static function (string $key, string $fallback): string {
         <input type="hidden" name="description" value="<?= esc((string) ($defaultTranslation['description'] ?? ($item['description'] ?? '')), 'attr') ?>">
     </div>
 </section>
-
-<script <?= csp_script_nonce() ?>>
-document.addEventListener('submit', function (event) {
-    const form = event.target;
-    if (!(form instanceof HTMLFormElement)) return;
-
-    const wrapper = form.querySelector('[data-default-translation-index]');
-    if (!wrapper) return;
-
-    const index = wrapper.dataset.defaultTranslationIndex;
-    const title = form.querySelector(`[name="translations[${index}][title]"]`);
-    const slug = form.querySelector(`[name="translations[${index}][slug]"]`);
-    const description = form.querySelector(`[name="translations[${index}][description]"]`);
-    const rootTitle = form.querySelector('[name="title"]');
-    const rootSlug = form.querySelector('[name="slug"]');
-    const rootDescription = form.querySelector('[name="description"]');
-
-    if (title && rootTitle) rootTitle.value = title.value;
-    if (slug && rootSlug) rootSlug.value = slug.value;
-    if (description && rootDescription) rootDescription.value = description.value;
-}, true);
-</script>
