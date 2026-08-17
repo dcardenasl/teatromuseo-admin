@@ -20,6 +20,7 @@ $publicationStatusClasses = [
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.museum.collection_items.data') ?>',
         pageUrl: '<?= route_to('admin.museum.collection_items') ?>',
+        mode: 'museum_collection_items',
         routes: {
             showBase: '<?= route_to('admin.museum.collection_items') ?>',
             editBase: '<?= route_to('admin.museum.collection_items') ?>'
@@ -30,6 +31,7 @@ $publicationStatusClasses = [
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('Museum.collection_items_title'),
         'actionsView' => 'museum/collection_items/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
 
     <?= view('layouts/partials/filter_panel', [
@@ -63,7 +65,7 @@ $publicationStatusClasses = [
     <template x-if="!loading && !error && rows.length > 0">
         <div class="<?= esc(table_wrapper_class()) ?>">
             <div class="<?= esc(table_scroll_class()) ?>">
-                <table class="<?= esc(table_class()) ?>">
+                <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                     <thead class="<?= esc(table_head_class()) ?>">
                         <tr>
                             <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('name')">

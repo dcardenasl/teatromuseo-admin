@@ -13,6 +13,7 @@ $occurrenceVenueLabels = array_map('strval', $venues ?? []);
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.occurrences.occurrences.data') ?>',
         pageUrl: '<?= route_to('admin.occurrences.occurrences') ?>',
+        mode: 'occurrences',
         routes: {
             showBase: '<?= route_to('admin.occurrences.occurrences') ?>',
             editBase: '<?= route_to('admin.occurrences.occurrences') ?>'
@@ -23,6 +24,7 @@ $occurrenceVenueLabels = array_map('strval', $venues ?? []);
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Occurrences.occurrences_title'),
         'actionsView' => 'occurrences/occurrences/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
 
 
@@ -57,7 +59,7 @@ $occurrenceVenueLabels = array_map('strval', $venues ?? []);
     <template x-if="!loading && !error && rows.length > 0">
         <div class="<?= esc(table_wrapper_class()) ?>">
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('event_id')">

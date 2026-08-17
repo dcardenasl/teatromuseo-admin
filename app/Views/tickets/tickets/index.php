@@ -8,6 +8,7 @@ $ticketTypeLabels = array_map('strval', $ticketTypes ?? []);
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.tickets.tickets.data') ?>',
         pageUrl: '<?= route_to('admin.tickets.tickets') ?>',
+        mode: 'tickets',
         routes: {
             showBase: '<?= route_to('admin.tickets.tickets') ?>',
             editBase: '<?= route_to('admin.tickets.tickets') ?>'
@@ -18,6 +19,7 @@ $ticketTypeLabels = array_map('strval', $ticketTypes ?? []);
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Tickets.tickets_title'),
         'actionsView' => 'tickets/tickets/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
 
 
@@ -52,7 +54,7 @@ $ticketTypeLabels = array_map('strval', $ticketTypes ?? []);
     <template x-if="!loading && !error && rows.length > 0">
         <div class="<?= esc(table_wrapper_class()) ?>">
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('booking_id')">

@@ -52,6 +52,7 @@ $dataUrl = route_to('admin.cms.form_submissions.data') . ($activeStatus !== '' ?
     x-data="remoteTable({
         apiUrl: '<?= esc($dataUrl) ?>',
         pageUrl: '<?= route_to('admin.cms.form_submissions') ?>',
+        mode: 'cms_form_submissions',
         defaultSort: '-created_at',
         routes: { showBase: '<?= route_to('admin.cms.form_submissions') ?>' },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50]))) ?>
@@ -59,6 +60,7 @@ $dataUrl = route_to('admin.cms.form_submissions.data') . ($activeStatus !== '' ?
 
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('FormSubmissions.submissions_title'),
+        'showDensityToggle' => true,
     ]) ?>
 
     <template x-if="loading && rows.length === 0">
@@ -86,7 +88,7 @@ $dataUrl = route_to('admin.cms.form_submissions.data') . ($activeStatus !== '' ?
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>"><?= lang('FormSubmissions.field_name') ?></th>

@@ -4,6 +4,7 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.cms.tags.data') ?>',
         pageUrl: '<?= route_to('admin.cms.tags') ?>',
+        mode: 'cms_tags',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.cms.tags') ?>',
@@ -15,6 +16,7 @@
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Tags.tags_title'),
         'actionsView' => 'cms/tags/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     
 
@@ -58,7 +60,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>">

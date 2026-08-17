@@ -4,6 +4,7 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.iam.applications.data') ?>',
         pageUrl: '<?= route_to('admin.iam.applications') ?>',
+        mode: 'iam_applications',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.iam.applications') ?>'
@@ -13,6 +14,7 @@
 
     <?= view('layouts/partials/table_toolbar', [
         'title' => lang('Iam.applications_title'),
+        'showDensityToggle' => true,
     ]) ?>
 
     <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
@@ -58,7 +60,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('code')">

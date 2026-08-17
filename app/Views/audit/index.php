@@ -11,6 +11,7 @@
     })">
     <?= view('layouts/partials/table_toolbar', [
         'title' => esc($title),
+        'showDensityToggle' => true,
     ]) ?>
 
     <?= view('layouts/partials/filter_panel', [
@@ -48,7 +49,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>"><?= lang('TableColumns.id') ?></th>

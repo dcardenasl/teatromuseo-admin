@@ -8,6 +8,7 @@ $ticketTypeOccurrenceLabels = array_map('strval', $occurrences ?? []);
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.tickettypes.ticket_types.data') ?>',
         pageUrl: '<?= route_to('admin.tickettypes.ticket_types') ?>',
+        mode: 'ticket_types',
         routes: {
             showBase: '<?= route_to('admin.tickettypes.ticket_types') ?>',
             editBase: '<?= route_to('admin.tickettypes.ticket_types') ?>'
@@ -18,6 +19,7 @@ $ticketTypeOccurrenceLabels = array_map('strval', $occurrences ?? []);
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('TicketTypes.ticket_types_title'),
         'actionsView' => 'tickettypes/ticket_types/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
 
 
@@ -52,7 +54,7 @@ $ticketTypeOccurrenceLabels = array_map('strval', $occurrences ?? []);
     <template x-if="!loading && !error && rows.length > 0">
         <div class="<?= esc(table_wrapper_class()) ?>">
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('event_id')">

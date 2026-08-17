@@ -4,6 +4,7 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.cms.redirects.data') ?>',
         pageUrl: '<?= route_to('admin.cms.redirects') ?>',
+        mode: 'cms_redirects',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.cms.redirects') ?>',
@@ -15,6 +16,7 @@
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Redirects.redirects_title'),
         'actionsView' => 'cms/redirects/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     <?php /* CSV scaffold hooks: components/table/export_button, components/form/export_import, components/form/import_preview */ ?>
 
@@ -58,7 +60,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('old_path')">

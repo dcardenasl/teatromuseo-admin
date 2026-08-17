@@ -4,6 +4,7 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.museum.techniques.data') ?>',
         pageUrl: '<?= route_to('admin.museum.techniques') ?>',
+        mode: 'museum_techniques',
         routes: {
             showBase: '<?= route_to('admin.museum.techniques') ?>',
             editBase: '<?= route_to('admin.museum.techniques') ?>'
@@ -14,6 +15,7 @@
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Museum.techniques_title'),
         'actionsView' => 'museum/techniques/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     
 
@@ -47,7 +49,7 @@
     <template x-if="!loading && !error && rows.length > 0">
         <div class="<?= esc(table_wrapper_class()) ?>">
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('name')">

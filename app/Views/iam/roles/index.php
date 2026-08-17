@@ -4,6 +4,7 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.iam.roles.data') ?>',
         pageUrl: '<?= route_to('admin.iam.roles') ?>',
+        mode: 'iam_roles',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.iam.roles') ?>',
@@ -15,6 +16,7 @@
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Iam.roles_title'),
         'actionsView' => 'iam/roles/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
 
     <?= view('layouts/partials/filter_panel', [
@@ -55,7 +57,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('name')">

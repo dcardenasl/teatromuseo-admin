@@ -12,6 +12,7 @@ $eventStatusLabels = [
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.events.events.data') ?>',
         pageUrl: '<?= route_to('admin.events.events') ?>',
+        mode: 'events',
         routes: {
             showBase: '<?= route_to('admin.events.events') ?>',
             editBase: '<?= route_to('admin.events.events') ?>'
@@ -22,6 +23,7 @@ $eventStatusLabels = [
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Events.events_title'),
         'actionsView' => 'events/events/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
 
 
@@ -55,7 +57,7 @@ $eventStatusLabels = [
     <template x-if="!loading && !error && rows.length > 0">
         <div class="<?= esc(table_wrapper_class()) ?>">
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('title')">

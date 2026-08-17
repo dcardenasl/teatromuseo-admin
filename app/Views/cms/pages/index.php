@@ -24,6 +24,7 @@ foreach ($languages ?? [] as $key => $language) {
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.cms.pages.data') ?>',
         pageUrl: '<?= route_to('admin.cms.pages') ?>',
+        mode: 'cms_pages',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.cms.pages') ?>',
@@ -35,6 +36,7 @@ foreach ($languages ?? [] as $key => $language) {
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Pages.pages_title'),
         'actionsView' => 'cms/pages/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     
 
@@ -78,7 +80,7 @@ foreach ($languages ?? [] as $key => $language) {
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>">
