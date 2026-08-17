@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\LanguageApiService;
 use App\Modules\Cms\Services\PageApiService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -22,6 +23,25 @@ final class PageFlowTest extends CIUnitTestCase
     {
         Services::reset();
         parent::tearDown();
+    }
+
+    /** @param array<string, mixed> $sections */
+    private function injectPageFormOptions(array $sections): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsPageFormOptions')
+            ->with(null)
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => ['status' => 'success', 'sections' => $sections],
+                'raw' => '',
+                'headers' => [],
+                'messages' => [],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $bff);
     }
 
     public function testAdminRoutesRequireAuth(): void
@@ -49,6 +69,7 @@ final class PageFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
         Services::injectMock('pageApiService', $mock);
+        $this->injectPageFormOptions(['pages' => [], 'languages' => [], 'collections' => []]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -88,6 +109,11 @@ final class PageFlowTest extends CIUnitTestCase
         $languageMock->method('list')
             ->willReturn($fixtures->response([$language]));
         Services::injectMock('languageApiService', $languageMock);
+        $this->injectPageFormOptions([
+            'pages' => [],
+            'languages' => [$language],
+            'collections' => [],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',

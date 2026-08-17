@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\BlockInstanceApiService;
 use App\Modules\Cms\Services\BlockTypeApiService;
 use App\Modules\Cms\Services\EntryApiService;
@@ -25,6 +26,28 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
     {
         Services::reset();
         parent::tearDown();
+    }
+
+    /** @param array<string, mixed> $sections */
+    private function injectPageWorkspace(array $sections, int $pageId = 1, ?int $instanceId = null): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsPageWorkspace')
+            ->with($pageId, $instanceId)
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => [
+                    'status' => 'success',
+                    'sections' => $sections,
+                ],
+                'raw' => '',
+                'headers' => [],
+                'messages' => [],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $bff);
     }
 
     public function testIndexRequiresAuth(): void
@@ -60,6 +83,15 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
         Services::injectMock('blockTypeApiService', $typeMock);
+
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Test Page'],
+            'blocks' => [],
+            'blockTypes' => [],
+            'collectionsMap' => [],
+            'languages' => [],
+            'blockTranslationStatus' => [],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -105,6 +137,48 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
         $result->assertStatus(200);
     }
 
+    public function testChildrenUsesSelectedWorkspaceBlockAsParent(): void
+    {
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Quiénes somos'],
+            'block' => [
+                'id' => 3024,
+                'block_id' => 5,
+                'owner_type' => 'page',
+                'owner_id' => 1,
+                'parent_instance_id' => null,
+            ],
+            'blockType' => [
+                'id' => 5,
+                'block_key' => 'hero_slider',
+                'name' => 'Carrusel Hero',
+                'icon' => 'gallery-horizontal',
+                'is_container' => true,
+                'schema_definition' => ['allowed_children' => ['team_member']],
+            ],
+            'blockTypes' => [
+                5 => [
+                    'id' => 5,
+                    'block_key' => 'hero_slider',
+                    'name' => 'Carrusel Hero',
+                    'is_container' => true,
+                ],
+            ],
+            'children' => [],
+            'collectionsMap' => [],
+            'languages' => [],
+            'blockTranslationStatus' => [],
+        ], 1, 3024);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['cms.pages.read']],
+        ])->get('/admin/cms/pages/1/blocks/3024/children');
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString('Carrusel Hero', (string) $result->getBody());
+    }
+
     public function testCreateRendersForAdmin(): void
     {
         $pageMock = $this->createMock(PageApiService::class);
@@ -131,6 +205,12 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
         Services::injectMock('languageApiService', $langMock);
+
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Test Page'],
+            'blockTypes' => [],
+            'languages' => [],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -167,6 +247,12 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
         $langMock = $this->createMock(LanguageApiService::class);
         $langMock->expects($this->never())->method('list');
         Services::injectMock('languageApiService', $langMock);
+
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Cached Page'],
+            'blockTypes' => [],
+            'languages' => [['id' => 1, 'code' => 'es', 'is_default' => 1]],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -343,6 +429,38 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
             ]);
         Services::injectMock('languageApiService', $langMock);
 
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Test Page'],
+            'block' => [
+                'id' => 10,
+                'block_id' => 2,
+                'is_active' => true,
+                'sort_order' => 1,
+                'translations' => [
+                    [
+                        'language_id' => 1,
+                        'block_data' => [
+                            'cta_url' => '/nosotros',
+                            'heading' => 'Bienvenidos',
+                            'subtitle' => 'Texto',
+                            'cta_label' => 'Conocer más',
+                        ],
+                        'is_published' => true,
+                    ],
+                ],
+            ],
+            'blockType' => [
+                'id' => 2,
+                'block_key' => 'slide_banner',
+                'fields' => [
+                    'cta_url' => ['type' => 'url', 'label' => 'URL del botón'],
+                    'heading' => ['type' => 'text', 'label' => 'Título', 'required' => true],
+                ],
+            ],
+            'languages' => [['id' => 1, 'code' => 'es', 'is_default' => true]],
+            'blockTranslationStatus' => [],
+        ], 1, 10);
+
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['permissions' => ['cms.pages.write', 'cms.pages.read']],
@@ -404,17 +522,6 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
         Services::injectMock('pageApiService', $pageMock);
 
         $blockMock = $this->createMock(BlockInstanceApiService::class);
-        $blockMock->expects($this->once())
-            ->method('get')
-            ->with('1', 'page', '10')
-            ->willReturn([
-                'ok' => true, 'status' => 200, 'data' => [
-                    'id' => 10,
-                    'block_id' => 5,
-                    'parent_instance_id' => null,
-                ],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
         $blockMock->expects($this->once())
             ->method('update')
             ->with('1', 'page', '10', $this->callback(static fn (array $payload): bool => ($payload['sort_order'] ?? null) === 2))
@@ -539,6 +646,39 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
             ]);
         Services::injectMock('collectionApiService', $collectionMock);
 
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Test Page'],
+            'block' => [
+                'id' => 10,
+                'block_id' => 5,
+                'parent_instance_id' => null,
+                'block_config' => ['collection_key' => 'noticias_custom'],
+                'translations' => [],
+            ],
+            'blockType' => [
+                'id' => 5,
+                'block_key' => 'collection_grid',
+                'config_fields' => [
+                    'collection_key' => [
+                        'type' => 'select',
+                        'label' => 'Clave de Colección (CMS)',
+                        'required' => true,
+                        'default' => 'noticias',
+                        'options' => [
+                            'noticias_active',
+                            'noticias_custom',
+                        ],
+                    ],
+                ],
+            ],
+            'languages' => [['id' => 1, 'code' => 'es', 'is_default' => 1, 'is_active' => true]],
+            'collectionsMap' => [
+                'noticias_active' => 42,
+                'noticias_custom' => 43,
+            ],
+            'blockTranslationStatus' => [],
+        ], 1, 10);
+
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['permissions' => ['cms.pages.write', 'cms.pages.read']],
@@ -607,6 +747,29 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
         Services::injectMock('collectionApiService', $collectionMock);
+
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Test Page'],
+            'blocks' => [[
+                'id' => 10,
+                'block_id' => 5,
+                'parent_instance_id' => null,
+                'block_config' => ['collection_key' => 'noticias_active'],
+                'is_active' => true,
+                'translations' => [],
+            ]],
+            'blockTypes' => [[
+                'id' => 5,
+                'block_key' => 'collection_grid',
+                'name' => 'Grilla de Colección',
+                'icon' => 'layout-grid',
+            ]],
+            'collectionsMap' => [
+                'noticias_active' => 42,
+            ],
+            'languages' => [],
+            'blockTranslationStatus' => [],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -678,6 +841,29 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
         Services::injectMock('translationAuditApiService', $auditMock);
+
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Test Page'],
+            'blocks' => [[
+                'id' => 10,
+                'block_id' => 5,
+                'parent_instance_id' => null,
+                'is_active' => true,
+                'translations' => [],
+            ]],
+            'blockTypes' => [],
+            'collectionsMap' => [],
+            'languages' => [
+                ['id' => 1, 'code' => 'es', 'is_default' => true],
+                ['id' => 2, 'code' => 'en', 'is_default' => false],
+            ],
+            'blockTranslationStatus' => [
+                10 => [
+                    'es' => ['language_id' => 1, 'status' => 'complete', 'detail' => ''],
+                    'en' => ['language_id' => 2, 'status' => 'missing', 'detail' => 'Translation is missing completely'],
+                ],
+            ],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -757,6 +943,32 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
         Services::injectMock('translationAuditApiService', $auditMock);
+
+        $this->injectPageWorkspace([
+            'page' => ['id' => 1, 'title' => 'Test Page'],
+            'block' => [
+                'id' => 10,
+                'block_id' => 2,
+                'is_active' => true,
+                'sort_order' => 1,
+                'translations' => [],
+            ],
+            'blockType' => [
+                'id' => 2,
+                'block_key' => 'rich_text',
+                'fields' => [
+                    'heading' => ['type' => 'text', 'label' => 'Título', 'required' => true],
+                ],
+            ],
+            'languages' => [
+                ['id' => 1, 'code' => 'es', 'is_default' => true],
+                ['id' => 2, 'code' => 'en', 'is_default' => false],
+            ],
+            'blockTranslationStatus' => [
+                'es' => ['language_id' => 1, 'status' => 'complete', 'detail' => ''],
+                'en' => ['language_id' => 2, 'status' => 'missing', 'detail' => 'Translation is missing completely'],
+            ],
+        ], 1, 10);
 
         $result = $this->withSession([
             'access_token' => 'token',

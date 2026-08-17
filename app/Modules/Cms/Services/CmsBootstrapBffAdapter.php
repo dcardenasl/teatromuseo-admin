@@ -37,6 +37,12 @@ final class CmsBootstrapBffAdapter
         return $this->sections($this->bffApiClient->getAdminCmsSiteIdentityBootstrap());
     }
 
+    /** @return array<string, mixed>|null */
+    public function wizardBootstrap(): ?array
+    {
+        return $this->sections($this->bffApiClient->getAdminCmsWizardBootstrap());
+    }
+
     /**
      * @param array<string, mixed> $response
      * @return array<string, mixed>|null

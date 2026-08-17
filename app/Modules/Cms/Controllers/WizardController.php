@@ -21,6 +21,7 @@ class WizardController extends BaseWebController
     protected MenuApiService $menuService;
     protected EntryApiService $entryService;
     protected FileApiService $fileService;
+    protected \App\Modules\Cms\Services\CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
@@ -29,6 +30,7 @@ class WizardController extends BaseWebController
         $this->menuService = service('menuApiService');
         $this->entryService = service('entryApiService');
         $this->fileService = service('fileApiService');
+        $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
     }
 
     public function index(): string
@@ -42,25 +44,27 @@ class WizardController extends BaseWebController
 
     public function config(): ResponseInterface
     {
-        $domainClient = service('domainApiClient');
-
-        $wizardResult = $this->safeApiCall(static fn () => $domainClient->get('/cms/wizard/config'));
-        if (isset($wizardResult['ok']) && $wizardResult['ok'] === false) {
-            return $this->response
-                ->setStatusCode(502)
-                ->setJSON(['ok' => false, 'message' => 'Could not load wizard config from domain API']);
+        $bootstrap = $this->cmsBootstrap->wizardBootstrap();
+        if ($bootstrap !== null) {
+            $config = is_array($bootstrap['config'] ?? null) ? $bootstrap['config'] : [];
+            $btList = is_array($bootstrap['blockTypes'] ?? null) ? $bootstrap['blockTypes'] : [];
+        } else {
+            $domainClient = service('domainApiClient');
+            $wizardResult = $this->safeApiCall(static fn () => $domainClient->get('/cms/wizard/config'));
+            if (isset($wizardResult['ok']) && $wizardResult['ok'] === false) {
+                return $this->response
+                    ->setStatusCode(502)
+                    ->setJSON(['ok' => false, 'message' => 'Could not load wizard config from domain API']);
+            }
+            $config = $this->extractData($wizardResult);
+            $blockTypesResult = $this->safeApiCall(
+                static fn () => $domainClient->get('/cms/block-types', ['limit' => 200, 'is_active' => 1])
+            );
+            $btRaw = $this->extractData($blockTypesResult);
+            $btList = $btRaw['items'] ?? $btRaw['data'] ?? [];
         }
 
-        $config = $this->extractData($wizardResult);
-
-        // Enrich block_types with id, is_container, allowed_children, icon, category
-        $blockTypesResult = $this->safeApiCall(
-            static fn () => $domainClient->get('/cms/block-types', ['limit' => 200, 'is_active' => 1])
-        );
-
-        if (! isset($blockTypesResult['ok']) || $blockTypesResult['ok'] !== false) {
-            $btRaw  = $this->extractData($blockTypesResult);
-            $btList = $btRaw['items'] ?? $btRaw['data'] ?? [];
+        if (is_array($btList)) {
 
             foreach ($btList as $bt) {
                 $key = $bt['block_key'] ?? null;

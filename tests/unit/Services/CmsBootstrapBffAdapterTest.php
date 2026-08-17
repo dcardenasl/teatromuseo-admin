@@ -55,4 +55,24 @@ final class CmsBootstrapBffAdapterTest extends CIUnitTestCase
 
         $this->assertNull((new CmsBootstrapBffAdapter($bff))->siteIdentityBootstrap());
     }
+
+    public function testNormalizesWizardBootstrapSections(): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsWizardBootstrap')
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => ['sections' => ['config' => ['languages' => []], 'blockTypes' => []]],
+                'raw' => '',
+                'headers' => [],
+                'messages' => [],
+                'fieldErrors' => [],
+            ]);
+
+        $result = (new CmsBootstrapBffAdapter($bff))->wizardBootstrap();
+
+        $this->assertSame([], $result['blockTypes']);
+    }
 }

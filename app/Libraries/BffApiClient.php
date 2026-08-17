@@ -223,6 +223,78 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
+    public function getAdminCmsPageWorkspace(int|string $pageId, ?int $instanceId = null, int $maxRetries = 2): array
+    {
+        $normalizedPageId = (string) $pageId;
+        if ($normalizedPageId === '' || ! ctype_digit($normalizedPageId) || (int) $normalizedPageId < 1) {
+            return $this->unavailableResponse();
+        }
+        if ($instanceId !== null && $instanceId < 1) {
+            return $this->unavailableResponse();
+        }
+
+        $query = $instanceId === null ? [] : ['instance_id' => $instanceId];
+
+        try {
+            $response = $this->request('GET', '/me/admin-cms/pages/' . $normalizedPageId . '/workspace', [
+                'query' => $query,
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin CMS page workspace BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin CMS page workspace BFF returned HTTP %d (access_token=%s).',
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCmsEntryWorkspace(int|string $entryId, ?int $instanceId = null, int $maxRetries = 2): array
+    {
+        $normalizedEntryId = (string) $entryId;
+        if ($normalizedEntryId === '' || ! ctype_digit($normalizedEntryId) || (int) $normalizedEntryId < 1) {
+            return $this->unavailableResponse();
+        }
+        if ($instanceId !== null && $instanceId < 1) {
+            return $this->unavailableResponse();
+        }
+
+        try {
+            return $this->request('GET', '/me/admin-cms/entries/' . $normalizedEntryId . '/workspace', [
+                'query' => $instanceId === null ? [] : ['instance_id' => $instanceId],
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin CMS entry workspace BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCmsWizardBootstrap(int $maxRetries = 2): array
+    {
+        return $this->adminCmsRequest('wizard bootstrap', '/me/admin-cms/wizard-bootstrap', $maxRetries);
+    }
+
+    /** @return ApiResponse */
     private function unavailableResponse(): array
     {
         return [

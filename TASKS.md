@@ -186,8 +186,9 @@ directas a su dominio propietario en todos los casos.
 - [x] **ADM-BFF-10 — Consumo de bootstraps CMS aprobados.** Cerrada
   2026-08-17 tras la medición runtime de `BFF-ADMINREAD-14`. Entry, Page, Menu
   e Identity consumen un adapter BFF por pantalla con fallback directo; las
-  escrituras no cambiaron. BlockInstance y Wizard permanecen fuera de alcance
-  hasta definir contratos específicos para sus opciones dinámicas.
+  escrituras no cambiaron. BlockInstance consume el workspace BFF para páginas
+  y entradas en sus pantallas de lectura; Wizard consume `wizard-bootstrap`
+  con fallback directo.
 
 ### Dashboard vía BFF — cerrado 2026-08-16
 

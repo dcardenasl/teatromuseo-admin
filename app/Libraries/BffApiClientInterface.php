@@ -41,4 +41,13 @@ interface BffApiClientInterface extends ApiClientInterface
 
     /** @return ApiResponse */
     public function getAdminCmsSiteIdentityBootstrap(int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCmsPageWorkspace(int|string $pageId, ?int $instanceId = null, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCmsEntryWorkspace(int|string $entryId, ?int $instanceId = null, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCmsWizardBootstrap(int $maxRetries = 2): array;
 }

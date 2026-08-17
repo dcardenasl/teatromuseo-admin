@@ -111,6 +111,7 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
             <?= csrf_field() ?>
             <input type="hidden" name="return_to" value="<?= esc($returnTo ?? '', 'attr') ?>">
             <input type="hidden" name="block_id" value="<?= esc((string) $blockIdValue) ?>">
+            <input type="hidden" name="parent_instance_id" value="<?= esc((string) ($block['parent_instance_id'] ?? '')) ?>">
 
             <!-- Hidden sort order and active checkbox -->
             <input type="hidden" name="sort_order" value="<?= esc((string) $sortOrderValue) ?>">
