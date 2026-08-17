@@ -161,10 +161,15 @@ directas a su dominio propietario en todos los casos.
 **Feature 4 — Lookups administrativos de Event**
 (depende de `BFF-ADMINREAD-12/13`)
 
-- [ ] **ADM-BFF-07 — Adapter BFF de lookups + migrar Occurrence.** Nuevo
-  adapter; `OccurrenceController` consume `admin-event-lookups/occurrence`
-  en vez de `eventsOptions()`/`venuesOptions()` separados. Las escrituras
-  (`create/update/delete`) siguen directas al Event domain.
+- [x] **ADM-BFF-07 — Adapter BFF de lookups + migrar Occurrence.** Cerrada
+  2026-08-17. Se añadió `EventLookupBffAdapter`; Occurrence carga `events` y
+  `venues` en un único bundle BFF por request y conserva `create/update/delete`
+  directos al Event domain. `composer quality` quedó verde (809 tests, 3.371
+  assertions, 1 skipped; PHPStan, CS-Fixer, i18n y fixture policy verdes).
+
+- [ ] **ADM-BFF-08 — Migrar `ticket_type`, `ticket`, `booking`,
+  `event_reference`.** 🔴 En progreso. Mismo patrón BFF para cada bundle; las
+  escrituras permanecen directas al Event domain.
 - [ ] **ADM-BFF-08 — Migrar `ticket_type`, `ticket`, `booking`,
   `event_reference`.** Mismo patrón en `TicketTypeController`,
   `TicketController`, `BookingController`, `EventReferenceController`.

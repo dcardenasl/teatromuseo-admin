@@ -26,4 +26,7 @@ interface BffApiClientInterface extends ApiClientInterface
      * @return ApiResponse
      */
     public function getAdminFileUsages(int|string $fileId, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminEventLookups(string $context, int $maxRetries = 2): array;
 }

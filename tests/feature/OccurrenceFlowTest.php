@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Occurrences\Services\OccurrenceApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -46,6 +47,45 @@ final class OccurrenceFlowTest extends CIUnitTestCase
         ])->get('/admin/occurrences/occurrences');
 
         $result->assertStatus(200);
+    }
+
+    public function testIndexLoadsBothLookupCatalogsThroughOneBffBundle(): void
+    {
+        $response = [
+            'ok' => true,
+            'status' => 200,
+            'data' => [
+                'status' => 'success',
+                'data' => [
+                    'context' => 'occurrence',
+                    'source' => ['event' => 'ok', 'state' => 'ok'],
+                    'sections' => [
+                        'events' => [['id' => 1, 'title' => 'Opening night']],
+                        'venues' => [['id' => 2, 'name' => 'Main hall']],
+                    ],
+                ],
+            ],
+            'raw' => '',
+            'headers' => [],
+            'messages' => [],
+            'fieldErrors' => [],
+        ];
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminEventLookups')
+            ->with('occurrence')
+            ->willReturn($response);
+        Services::injectMock('bffApiClient', $bff);
+        Services::resetSingle('eventLookupBffAdapter');
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['event.occurrences.read']],
+        ])->get('/admin/occurrences/occurrences');
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString('Opening night', $result->getBody());
+        $this->assertStringContainsString('Main hall', $result->getBody());
     }
 
     public function testStoreValidationFailureRedirectsBack(): void

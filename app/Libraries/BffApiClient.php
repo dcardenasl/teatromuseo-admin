@@ -20,6 +20,9 @@ use Config\BffApiClient as BffApiClientConfig;
  */
 class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
 {
+    /** @var list<string> */
+    private const ADMIN_EVENT_LOOKUP_CONTEXTS = ['occurrence', 'ticket_type', 'ticket', 'booking', 'event_reference'];
+
     public function __construct(?BffApiClientConfig $config = null, ?ApiClientInterface $hubClient = null)
     {
         parent::__construct($config ?? config(BffApiClientConfig::class), $hubClient ?? service('apiClient'));
@@ -126,6 +129,38 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
         if (($response['ok'] ?? false) !== true) {
             log_message('error', sprintf(
                 'Admin file usages BFF returned HTTP %d (access_token=%s).',
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
+    }
+
+    /** @return ApiResponse */
+    public function getAdminEventLookups(string $context, int $maxRetries = 2): array
+    {
+        if (! in_array($context, self::ADMIN_EVENT_LOOKUP_CONTEXTS, true)) {
+            return $this->unavailableResponse();
+        }
+
+        try {
+            $response = $this->request('GET', '/me/admin-event-lookups/' . $context, [
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin Event lookup BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin Event lookup BFF returned HTTP %d (access_token=%s).',
                 (int) ($response['status'] ?? 0),
                 $this->hasAccessToken() ? 'present' : 'missing',
             ));

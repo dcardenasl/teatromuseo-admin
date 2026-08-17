@@ -42,6 +42,7 @@ use App\Modules\EventReferences\Services\EventReferenceApiService;
 use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
 use App\Modules\Events\Services\EventApiService;
 use App\Modules\Events\Services\EventApiServiceInterface;
+use App\Modules\Events\Services\EventLookupBffAdapter;
 use App\Modules\Events\Services\EventTypeApiService;
 use App\Modules\Events\Services\EventTypeApiServiceInterface;
 use App\Modules\Files\Services\FileApiService;
@@ -512,6 +513,16 @@ class Services extends BaseService
             return static::getSharedInstance('eventApiService');
         }
         return new EventApiService(static::eventDomainApiClient());
+    }
+
+    public static function eventLookupBffAdapter(bool $getShared = true): EventLookupBffAdapter
+    {
+        if ($getShared) {
+            /** @var EventLookupBffAdapter */
+            return static::getSharedInstance('eventLookupBffAdapter');
+        }
+
+        return new EventLookupBffAdapter(static::bffApiClient());
     }
 
     public static function eventTypeApiService(bool $getShared = true): EventTypeApiServiceInterface

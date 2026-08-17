@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Occurrences\Controllers;
 
 use App\Controllers\BaseWebController;
+use App\Modules\Events\Services\EventLookupBffAdapter;
 use App\Modules\Occurrences\Requests\OccurrenceStoreRequest;
 use App\Modules\Occurrences\Requests\OccurrenceUpdateRequest;
 use App\Modules\Occurrences\Services\OccurrenceApiServiceInterface;
@@ -16,11 +17,15 @@ use Psr\Log\LoggerInterface;
 class OccurrenceController extends BaseWebController
 {
     protected OccurrenceApiServiceInterface $occurrenceService;
+    protected EventLookupBffAdapter $eventLookupAdapter;
+    /** @var array<string, mixed>|null */
+    private ?array $lookupResponse = null;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->occurrenceService = service('occurrenceApiService');
+        $this->eventLookupAdapter = service('eventLookupBffAdapter');
     }
 
     public function index(): string
@@ -142,10 +147,10 @@ class OccurrenceController extends BaseWebController
     /** @return array<string, string> */
     private function eventsOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->occurrenceService->events(['limit' => 100]));
+        $response = $this->lookupResponse();
         $options = [];
 
-        foreach ($this->extractItems($response) as $item) {
+        foreach ($this->eventLookupAdapter->section($response, 'events') as $item) {
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
@@ -159,10 +164,10 @@ class OccurrenceController extends BaseWebController
     /** @return array<string, string> */
     private function venuesOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->occurrenceService->venues(['limit' => 100]));
+        $response = $this->lookupResponse();
         $options = [];
 
-        foreach ($this->extractItems($response) as $item) {
+        foreach ($this->eventLookupAdapter->section($response, 'venues') as $item) {
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
@@ -171,5 +176,13 @@ class OccurrenceController extends BaseWebController
         }
 
         return $options;
+    }
+
+    /** @return array<string, mixed> */
+    private function lookupResponse(): array
+    {
+        return $this->lookupResponse ??= $this->safeApiCall(
+            fn (): array => $this->eventLookupAdapter->read('occurrence'),
+        );
     }
 }
