@@ -6,6 +6,8 @@
     'title' => 'TicketTypes.ticket_types_edit',
 ]) ?>
 
+<?= view('layouts/partials/event_lookup_status', ['available' => $lookupAvailable ?? true]) ?>
+
 <?php if (has_permission('event.ticket-types.delete')): ?>
     <form id="delete-item-form" method="post" action="<?= route_to('admin.tickettypes.ticket_types.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['title'] ?? $item['id'] ?? null), 'js') ?>', () => $el.submit())">
         <?= csrf_field() ?>

@@ -36,9 +36,4 @@ interface EventReferenceApiServiceInterface
 
 
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function events(array $filters = []): array;
 }

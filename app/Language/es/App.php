@@ -78,6 +78,8 @@ return [
     'relation_missing_options' => 'Esta relación no tiene opciones seleccionables.',
     'relation_missing_options_desc' => 'Crea primero los registros relacionados y luego vuelve para seleccionar uno aquí.',
     'relation_no_options' => 'No hay opciones disponibles.',
+    'lookup_unavailable_title' => 'No se pudieron cargar las opciones relacionadas.',
+    'lookup_unavailable_body' => 'La fuente de Event no está disponible. Una lista vacía puede ser un catálogo vacío o un error de disponibilidad; vuelve a intentarlo antes de guardar.',
     'reorder' => 'Reordenar',
     'move_up' => 'Subir',
     'move_down' => 'Bajar',

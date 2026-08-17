@@ -10,6 +10,8 @@ $eventReferenceLabel = trim($eventReferenceEventLabel . (! empty($item['source_i
     'title' => 'EventReferences.event_references_edit',
 ]) ?>
 
+<?= view('layouts/partials/event_lookup_status', ['available' => $lookupAvailable ?? true]) ?>
+
 <?php if (has_permission('event.event-references.delete')): ?>
     <form id="delete-item-form" method="post" action="<?= route_to('admin.eventreferences.event_references.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($eventReferenceLabel), 'js') ?>', () => $el.submit())">
         <?= csrf_field() ?>

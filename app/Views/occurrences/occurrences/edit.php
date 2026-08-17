@@ -10,6 +10,8 @@ $occurrenceLabel = trim($occurrenceEventLabel . (! empty($item['start_time']) ? 
     'title' => 'Occurrences.occurrences_edit',
 ]) ?>
 
+<?= view('layouts/partials/event_lookup_status', ['available' => $lookupAvailable ?? true]) ?>
+
 <?php if (has_permission('event.occurrences.delete')): ?>
     <form id="delete-item-form" method="post" action="<?= route_to('admin.occurrences.occurrences.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($occurrenceLabel), 'js') ?>', () => $el.submit())">
         <?= csrf_field() ?>

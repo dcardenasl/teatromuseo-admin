@@ -86,6 +86,48 @@ final class OccurrenceFlowTest extends CIUnitTestCase
         $result->assertStatus(200);
         $this->assertStringContainsString('Opening night', $result->getBody());
         $this->assertStringContainsString('Main hall', $result->getBody());
+        $this->assertStringNotContainsString(
+            lang('App.lookup_unavailable_body'),
+            html_entity_decode($result->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+        );
+    }
+
+    public function testIndexShowsWarningWhenLookupSourceIsUnavailable(): void
+    {
+        $response = [
+            'ok' => true,
+            'status' => 200,
+            'data' => [
+                'status' => 'success',
+                'data' => [
+                    'context' => 'occurrence',
+                    'source' => ['event' => 'unavailable', 'state' => 'unavailable'],
+                    'sections' => ['events' => [], 'venues' => []],
+                ],
+            ],
+            'raw' => '',
+            'headers' => [],
+            'messages' => [],
+            'fieldErrors' => [],
+        ];
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminEventLookups')
+            ->with('occurrence')
+            ->willReturn($response);
+        Services::injectMock('bffApiClient', $bff);
+        Services::resetSingle('eventLookupBffAdapter');
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['event.occurrences.read']],
+        ])->get('/admin/occurrences/occurrences');
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString(
+            lang('App.lookup_unavailable_body'),
+            html_entity_decode($result->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+        );
     }
 
     public function testStoreValidationFailureRedirectsBack(): void

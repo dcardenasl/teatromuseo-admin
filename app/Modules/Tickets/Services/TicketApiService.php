@@ -16,21 +16,4 @@ class TicketApiService extends ResourceApiService implements TicketApiServiceInt
 
 
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return array<string, mixed>
-     */
-    public function bookings(array $filters = []): array
-    {
-        return $this->apiClient->get('/events/bookings', $filters);
-    }
-
-    /**
-     * @param array<string, mixed> $filters
-     * @return array<string, mixed>
-     */
-    public function ticketTypes(array $filters = []): array
-    {
-        return $this->apiClient->get('/events/ticket-types', $filters);
-    }
 }

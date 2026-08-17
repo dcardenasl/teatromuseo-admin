@@ -35,6 +35,7 @@ class OccurrenceController extends BaseWebController
             'limitOptions' => [10, 25, 50, 100],
             'events' => $this->eventsOptions(),
             'venues' => $this->venuesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -58,6 +59,7 @@ class OccurrenceController extends BaseWebController
                 'error' => $this->firstMessage($response, lang('Occurrences.occurrences_not_found')),
             'events' => $this->eventsOptions(),
             'venues' => $this->venuesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
             ]);
         }
 
@@ -66,6 +68,7 @@ class OccurrenceController extends BaseWebController
             'occurrence' => $this->extractData($response),
             'events' => $this->eventsOptions(),
             'venues' => $this->venuesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -75,6 +78,7 @@ class OccurrenceController extends BaseWebController
             'title' => lang('Occurrences.occurrences_create'),
             'events' => $this->eventsOptions(),
             'venues' => $this->venuesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -108,6 +112,7 @@ class OccurrenceController extends BaseWebController
             'item'  => $this->extractData($response),
             'events' => $this->eventsOptions(),
             'venues' => $this->venuesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -184,5 +189,10 @@ class OccurrenceController extends BaseWebController
         return $this->lookupResponse ??= $this->safeApiCall(
             fn (): array => $this->eventLookupAdapter->read('occurrence'),
         );
+    }
+
+    private function lookupAvailable(): bool
+    {
+        return $this->eventLookupAdapter->sourceAvailable($this->lookupResponse());
     }
 }

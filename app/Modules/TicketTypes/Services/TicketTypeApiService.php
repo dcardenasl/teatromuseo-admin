@@ -16,21 +16,4 @@ class TicketTypeApiService extends ResourceApiService implements TicketTypeApiSe
 
 
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return array<string, mixed>
-     */
-    public function events(array $filters = []): array
-    {
-        return $this->apiClient->get('/events/events', $filters);
-    }
-
-    /**
-     * @param array<string, mixed> $filters
-     * @return array<string, mixed>
-     */
-    public function occurrences(array $filters = []): array
-    {
-        return $this->apiClient->get('/events/occurrences', $filters);
-    }
 }

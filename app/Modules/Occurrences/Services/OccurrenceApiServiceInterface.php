@@ -36,15 +36,4 @@ interface OccurrenceApiServiceInterface
 
 
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function events(array $filters = []): array;
-
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function venues(array $filters = []): array;
 }

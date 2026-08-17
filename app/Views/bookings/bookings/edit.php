@@ -7,6 +7,8 @@
     'title' => 'Bookings.bookings_edit',
 ]) ?>
 
+<?= view('layouts/partials/event_lookup_status', ['available' => $lookupAvailable ?? true]) ?>
+
 <?php if (has_permission('event.bookings.delete')): ?>
     <form id="delete-item-form" method="post" action="<?= route_to('admin.bookings.bookings.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($bookingLabel), 'js') ?>', () => $el.submit())">
         <?= csrf_field() ?>

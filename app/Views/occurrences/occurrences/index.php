@@ -43,6 +43,8 @@ $occurrenceVenueLabels = array_map('strval', $venues ?? []);
         'submitLabel' => lang('App.search'),
     ]) ?>
 
+    <?= view('layouts/partials/event_lookup_status', ['available' => $lookupAvailable ?? true]) ?>
+
     <div class="mt-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600" x-show="loading">
         <?= lang('Occurrences.occurrences_loading') ?>
     </div>

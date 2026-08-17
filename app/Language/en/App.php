@@ -78,6 +78,8 @@ return [
     'relation_missing_options' => 'This relation has no selectable options.',
     'relation_missing_options_desc' => 'Create the related records first, then return to select one here.',
     'relation_no_options' => 'No options available.',
+    'lookup_unavailable_title' => 'Related options could not be loaded.',
+    'lookup_unavailable_body' => 'The Event source is unavailable. An empty list can mean an empty catalog or an availability error; retry before saving.',
     'reorder' => 'Reorder',
     'move_up' => 'Move up',
     'move_down' => 'Move down',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tickets\Controllers;
 
 use App\Controllers\BaseWebController;
+use App\Modules\Events\Services\EventLookupBffAdapter;
 use App\Modules\Tickets\Requests\TicketStoreRequest;
 use App\Modules\Tickets\Requests\TicketUpdateRequest;
 use App\Modules\Tickets\Services\TicketApiServiceInterface;
@@ -16,11 +17,15 @@ use Psr\Log\LoggerInterface;
 class TicketController extends BaseWebController
 {
     protected TicketApiServiceInterface $ticketService;
+    protected EventLookupBffAdapter $eventLookupAdapter;
+    /** @var array<string, mixed>|null */
+    private ?array $lookupResponse = null;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->ticketService = service('ticketApiService');
+        $this->eventLookupAdapter = service('eventLookupBffAdapter');
     }
 
     public function index(): string
@@ -30,6 +35,7 @@ class TicketController extends BaseWebController
             'limitOptions' => [10, 25, 50, 100],
             'bookings' => $this->bookingsOptions(),
             'ticketTypes' => $this->ticketTypesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -53,6 +59,7 @@ class TicketController extends BaseWebController
                 'error' => $this->firstMessage($response, lang('Tickets.tickets_not_found')),
             'bookings' => $this->bookingsOptions(),
             'ticketTypes' => $this->ticketTypesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
             ]);
         }
 
@@ -61,6 +68,7 @@ class TicketController extends BaseWebController
             'ticket' => $this->extractData($response),
             'bookings' => $this->bookingsOptions(),
             'ticketTypes' => $this->ticketTypesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -70,6 +78,7 @@ class TicketController extends BaseWebController
             'title' => lang('Tickets.tickets_create'),
             'bookings' => $this->bookingsOptions(),
             'ticketTypes' => $this->ticketTypesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -103,6 +112,7 @@ class TicketController extends BaseWebController
             'item'  => $this->extractData($response),
             'bookings' => $this->bookingsOptions(),
             'ticketTypes' => $this->ticketTypesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -142,10 +152,10 @@ class TicketController extends BaseWebController
     /** @return array<string, string> */
     private function bookingsOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->ticketService->bookings(['limit' => 100]));
+        $response = $this->lookupResponse();
         $options = [];
 
-        foreach ($this->extractItems($response) as $item) {
+        foreach ($this->eventLookupAdapter->section($response, 'bookings') as $item) {
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
@@ -162,10 +172,10 @@ class TicketController extends BaseWebController
     /** @return array<string, string> */
     private function ticketTypesOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->ticketService->ticketTypes(['limit' => 100]));
+        $response = $this->lookupResponse();
         $options = [];
 
-        foreach ($this->extractItems($response) as $item) {
+        foreach ($this->eventLookupAdapter->section($response, 'ticket_types') as $item) {
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
@@ -174,5 +184,18 @@ class TicketController extends BaseWebController
         }
 
         return $options;
+    }
+
+    /** @return array<string, mixed> */
+    private function lookupResponse(): array
+    {
+        return $this->lookupResponse ??= $this->safeApiCall(
+            fn (): array => $this->eventLookupAdapter->read('ticket'),
+        );
+    }
+
+    private function lookupAvailable(): bool
+    {
+        return $this->eventLookupAdapter->sourceAvailable($this->lookupResponse());
     }
 }

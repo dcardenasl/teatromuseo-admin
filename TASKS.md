@@ -167,17 +167,19 @@ directas a su dominio propietario en todos los casos.
   directos al Event domain. `composer quality` quedó verde (809 tests, 3.371
   assertions, 1 skipped; PHPStan, CS-Fixer, i18n y fixture policy verdes).
 
-- [ ] **ADM-BFF-08 — Migrar `ticket_type`, `ticket`, `booking`,
-  `event_reference`.** 🔴 En progreso. Mismo patrón BFF para cada bundle; las
-  escrituras permanecen directas al Event domain.
-- [ ] **ADM-BFF-08 — Migrar `ticket_type`, `ticket`, `booking`,
-  `event_reference`.** Mismo patrón en `TicketTypeController`,
-  `TicketController`, `BookingController`, `EventReferenceController`.
-- [ ] **ADM-BFF-09 — Retiro + verificación.** `rg` confirma que
-  `events()`/`venues()`/`occurrences()`/`bookings()`/`ticketTypes()` de los
-  adapters directos no tienen otros consumidores antes de retirarlos;
-  confirmar que cada pantalla distingue catálogo vacío de fuente no
-  disponible; documentar.
+- [x] **ADM-BFF-08 — Migrar `ticket_type`, `ticket`, `booking`,
+  `event_reference`.** Cerrada 2026-08-17. Los cuatro controladores consumen
+  sus bundles BFF (`ticket_type`, `ticket`, `booking`, `event_reference`) con
+  una lectura por pantalla; las escrituras permanecen directas al Event
+  domain.
+- [x] **ADM-BFF-09 — Retiro + verificación.** Cerrada 2026-08-17. `rg` confirma
+  cero consumidores y se retiraron `events()`/`venues()`/`occurrences()`/
+  `bookings()`/`ticketTypes()` de los servicios y contratos directos. La UI
+  distingue catálogo vacío exitoso (sin alerta) de fuente BFF no disponible
+  (alerta ámbar); la diferencia está cubierta por `OccurrenceFlowTest`.
+  `composer quality` quedó verde (810 tests, 3.376 assertions, 1 skipped;
+  PHPStan, CS-Fixer, i18n y fixture policy verdes). El smoke visual real en
+  `localhost:8182` se intentó, pero el entorno aislado bloqueó la conexión.
 
 **Feature 5 — Bootstrap de editores CMS**
 

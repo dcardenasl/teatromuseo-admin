@@ -8,6 +8,7 @@ use App\Controllers\BaseWebController;
 use App\Modules\Bookings\Requests\BookingStoreRequest;
 use App\Modules\Bookings\Requests\BookingUpdateRequest;
 use App\Modules\Bookings\Services\BookingApiServiceInterface;
+use App\Modules\Events\Services\EventLookupBffAdapter;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -16,11 +17,15 @@ use Psr\Log\LoggerInterface;
 class BookingController extends BaseWebController
 {
     protected BookingApiServiceInterface $bookingService;
+    protected EventLookupBffAdapter $eventLookupAdapter;
+    /** @var array<string, mixed>|null */
+    private ?array $lookupResponse = null;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->bookingService = service('bookingApiService');
+        $this->eventLookupAdapter = service('eventLookupBffAdapter');
     }
 
     public function index(): string
@@ -66,6 +71,7 @@ class BookingController extends BaseWebController
         return $this->render('bookings/bookings/create', [
             'title' => lang('Bookings.bookings_create'),
             'ticketTypes' => $this->ticketTypesOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
 
         ]);
     }
@@ -98,6 +104,7 @@ class BookingController extends BaseWebController
         return $this->render('bookings/bookings/edit', [
             'title' => lang('Bookings.bookings_edit'),
             'item'  => $this->extractData($response),
+            'lookupAvailable' => $this->lookupAvailable(),
 
         ]);
     }
@@ -134,10 +141,10 @@ class BookingController extends BaseWebController
     /** @return array<string, string> */
     private function ticketTypesOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->bookingService->ticketTypes(['limit' => 100]));
+        $response = $this->lookupResponse();
         $options = [];
 
-        foreach ($this->extractItems($response) as $item) {
+        foreach ($this->eventLookupAdapter->section($response, 'ticket_types') as $item) {
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
@@ -147,6 +154,19 @@ class BookingController extends BaseWebController
         }
 
         return $options;
+    }
+
+    /** @return array<string, mixed> */
+    private function lookupResponse(): array
+    {
+        return $this->lookupResponse ??= $this->safeApiCall(
+            fn (): array => $this->eventLookupAdapter->read('booking'),
+        );
+    }
+
+    private function lookupAvailable(): bool
+    {
+        return $this->eventLookupAdapter->sourceAvailable($this->lookupResponse());
     }
 
 

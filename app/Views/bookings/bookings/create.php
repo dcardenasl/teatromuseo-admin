@@ -5,6 +5,8 @@
     'title' => 'Bookings.bookings_create',
 ]) ?>
 
+<?= view('layouts/partials/event_lookup_status', ['available' => $lookupAvailable ?? true]) ?>
+
 <form method="post" action="<?= route_to('admin.bookings.bookings.store') ?>" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <?= csrf_field() ?>
 

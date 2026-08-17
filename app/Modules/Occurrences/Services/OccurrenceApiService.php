@@ -16,21 +16,4 @@ class OccurrenceApiService extends ResourceApiService implements OccurrenceApiSe
 
 
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return array<string, mixed>
-     */
-    public function events(array $filters = []): array
-    {
-        return $this->apiClient->get('/events/events', $filters);
-    }
-
-    /**
-     * @param array<string, mixed> $filters
-     * @return array<string, mixed>
-     */
-    public function venues(array $filters = []): array
-    {
-        return $this->apiClient->get('/events/venues', $filters);
-    }
 }

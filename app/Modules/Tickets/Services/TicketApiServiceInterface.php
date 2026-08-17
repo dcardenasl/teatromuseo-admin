@@ -36,15 +36,4 @@ interface TicketApiServiceInterface
 
 
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function bookings(array $filters = []): array;
-
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function ticketTypes(array $filters = []): array;
 }

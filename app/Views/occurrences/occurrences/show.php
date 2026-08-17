@@ -18,6 +18,8 @@
             'title' => $occurrenceLabel,
         ]) ?>
 
+    <?= view('layouts/partials/event_lookup_status', ['available' => $lookupAvailable ?? true]) ?>
+
     <?php ob_start(); ?>
     <section class="bg-white border border-gray-200 rounded-xl shadow-sm">
         <div class="border-b border-gray-100 px-5 py-4">

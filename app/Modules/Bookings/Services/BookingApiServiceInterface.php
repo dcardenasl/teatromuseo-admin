@@ -33,12 +33,4 @@ interface BookingApiServiceInterface
     /** @return ApiResponse */
     public function delete(int|string $id): array;
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function ticketTypes(array $filters = []): array;
-
-
-
 }

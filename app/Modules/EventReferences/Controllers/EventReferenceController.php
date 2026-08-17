@@ -8,6 +8,7 @@ use App\Controllers\BaseWebController;
 use App\Modules\EventReferences\Requests\EventReferenceStoreRequest;
 use App\Modules\EventReferences\Requests\EventReferenceUpdateRequest;
 use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
+use App\Modules\Events\Services\EventLookupBffAdapter;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -16,11 +17,15 @@ use Psr\Log\LoggerInterface;
 class EventReferenceController extends BaseWebController
 {
     protected EventReferenceApiServiceInterface $eventReferenceService;
+    protected EventLookupBffAdapter $eventLookupAdapter;
+    /** @var array<string, mixed>|null */
+    private ?array $lookupResponse = null;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->eventReferenceService = service('eventReferenceApiService');
+        $this->eventLookupAdapter = service('eventLookupBffAdapter');
     }
 
     public function index(): string
@@ -29,6 +34,7 @@ class EventReferenceController extends BaseWebController
             'title'        => lang('EventReferences.event_references_title'),
             'limitOptions' => [10, 25, 50, 100],
             'events' => $this->eventsOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -51,6 +57,7 @@ class EventReferenceController extends BaseWebController
                 'eventReference' => [],
                 'error' => $this->firstMessage($response, lang('EventReferences.event_references_not_found')),
             'events' => $this->eventsOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
             ]);
         }
 
@@ -58,6 +65,7 @@ class EventReferenceController extends BaseWebController
             'title' => lang('EventReferences.event_references_details'),
             'eventReference' => $this->extractData($response),
             'events' => $this->eventsOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -66,6 +74,7 @@ class EventReferenceController extends BaseWebController
         return $this->render('eventreferences/event_references/create', [
             'title' => lang('EventReferences.event_references_create'),
             'events' => $this->eventsOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -98,6 +107,7 @@ class EventReferenceController extends BaseWebController
             'title' => lang('EventReferences.event_references_edit'),
             'item'  => $this->extractData($response),
             'events' => $this->eventsOptions(),
+            'lookupAvailable' => $this->lookupAvailable(),
         ]);
     }
 
@@ -137,10 +147,10 @@ class EventReferenceController extends BaseWebController
     /** @return array<string, string> */
     private function eventsOptions(): array
     {
-        $response = $this->safeApiCall(fn () => $this->eventReferenceService->events(['limit' => 100]));
+        $response = $this->lookupResponse();
         $options = [];
 
-        foreach ($this->extractItems($response) as $item) {
+        foreach ($this->eventLookupAdapter->section($response, 'events') as $item) {
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
@@ -149,5 +159,18 @@ class EventReferenceController extends BaseWebController
         }
 
         return $options;
+    }
+
+    /** @return array<string, mixed> */
+    private function lookupResponse(): array
+    {
+        return $this->lookupResponse ??= $this->safeApiCall(
+            fn (): array => $this->eventLookupAdapter->read('event_reference'),
+        );
+    }
+
+    private function lookupAvailable(): bool
+    {
+        return $this->eventLookupAdapter->sourceAvailable($this->lookupResponse());
     }
 }
