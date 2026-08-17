@@ -204,7 +204,7 @@ class Services extends BaseService
             return static::getSharedInstance('fileApiService');
         }
 
-        return new FileApiService(static::apiClient(), static::domainApiClient());
+        return new FileApiService(static::apiClient(), static::bffApiClient());
     }
 
     public static function userApiService(bool $getShared = true): UserApiService

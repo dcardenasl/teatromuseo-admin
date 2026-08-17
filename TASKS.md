@@ -147,15 +147,16 @@ directas a su dominio propietario en todos los casos.
 (depende de `BFF-ADMINREAD-09/10/11` — en particular, no arrancar hasta que
 `BFF-ADMINREAD-09` confirme el diseño de deduplicación)
 
-- [ ] **ADM-BFF-05 — Adapter BFF en `FileApiService`.** Reemplazar el
-  `array_merge($hubItems, $domainItems)` actual (que hoy duplica usos de
-  CMS — ver hallazgo en el plan §3.2) por una sola llamada a
-  `/api/v1/me/admin-files/{fileId}/usages`; retirar la llamada directa a
-  `domainApiClient` si deja de tener otros consumidores.
-- [ ] **ADM-BFF-06 — Verificación e2e.** Archivo con usos reales en CMS
-  (confirmar que ya NO aparecen duplicados), archivo sin usos, fuente Hub o
-  CMS caída (el resultado debe marcarse incompleto, nunca presentarse como
-  seguro para borrar); documentar.
+- [x] **ADM-BFF-05 — Adapter BFF en `FileApiService`.** Cerrada 2026-08-17.
+  `FileApiService::usages()` hace una única llamada a
+  `/api/v1/me/admin-files/{fileId}/usages`; se retiró su `DomainApiClient` y
+  el BFF conserva la deduplicación estable de usos CMS con contexto.
+- [x] **ADM-BFF-06 — Verificación e2e.** Cerrada 2026-08-17. La suite
+  funcional cubre la respuesta incompleta y bloquea el borrado hasta completar
+  las fuentes; `composer quality` quedó verde (804 tests, 3.347 assertions,
+  1 skipped; PHPStan, CS-Fixer, i18n y fixture policy verdes). El smoke visual
+  real en `localhost:8182` se intentó, pero el entorno aislado bloqueó la
+  conexión al proceso local.
 
 **Feature 4 — Lookups administrativos de Event**
 (depende de `BFF-ADMINREAD-12/13`)

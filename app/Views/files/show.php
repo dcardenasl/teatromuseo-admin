@@ -1,8 +1,10 @@
 <?php
 /** @var array<string, mixed> $file */
 /** @var list<array{resource:string, resource_id:int, role:string, label:string}> $usages */
+/** @var bool $usagesComplete */
 $file     = $file ?? [];
 $usages   = $usages ?? [];
+$usagesComplete = $usagesComplete ?? false;
 $id       = (string) ($file['id'] ?? '');
 $variants = is_array($file['variants'] ?? null) ? $file['variants'] : [];
 $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url'] ?? '') : '';
@@ -20,7 +22,7 @@ $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url']
                 <?= ui_icon('languages', 'h-3.5 w-3.5') ?> <?= esc(lang('FileTranslations.sidebar_label')) ?>
             </a>
         <?php endif; ?>
-        <?php if ($usages === []): ?>
+        <?php if ($usagesComplete && $usages === []): ?>
             <form method="post" action="<?= route_to('files') ?>/<?= esc($id) ?>/delete"
                   x-data @submit.prevent="$store.confirm.show(window.confirmDeleteMessage('<?= esc($file['original_name'] ?? $file['name'] ?? $id, 'js') ?>'), () => $el.submit())">
                 <?= csrf_field() ?>
@@ -29,7 +31,7 @@ $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url']
                 </button>
             </form>
         <?php else: ?>
-            <button type="button" class="<?= esc(action_button_class('danger')) ?> opacity-50 cursor-not-allowed" disabled title="<?= esc(lang('Files.cannot_delete_in_use')) ?>">
+            <button type="button" class="<?= esc(action_button_class('danger')) ?> opacity-50 cursor-not-allowed" disabled title="<?= esc($usagesComplete ? lang('Files.cannot_delete_in_use') : lang('Files.usages_unavailable_body')) ?>">
                 <?= ui_icon('trash', 'h-3.5 w-3.5') ?> <?= esc(lang('App.delete')) ?>
             </button>
         <?php endif; ?>
@@ -42,6 +44,16 @@ $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url']
     <div>
         <strong><?= esc(lang('Files.in_use_warning_title')) ?></strong>
         <?= esc(lang('Files.in_use_warning_body', [count($usages)])) ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (! $usagesComplete): ?>
+<div class="mb-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+    <?= ui_icon('triangle-alert', 'mt-0.5 h-4 w-4 shrink-0 text-amber-600') ?>
+    <div>
+        <strong><?= esc(lang('Files.usages_unavailable_title')) ?></strong>
+        <?= esc(lang('Files.usages_unavailable_body')) ?>
     </div>
 </div>
 <?php endif; ?>
@@ -181,7 +193,9 @@ $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url']
 
         <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <h3 class="text-lg font-semibold text-gray-900"><?= esc(lang('Files.where_used')) ?></h3>
-            <?php if ($usages === []): ?>
+            <?php if (! $usagesComplete): ?>
+                <p class="mt-3 text-sm text-amber-800"><?= esc(lang('Files.usages_unavailable_body')) ?></p>
+            <?php elseif ($usages === []): ?>
                 <p class="mt-3 text-sm text-gray-500"><?= esc(lang('Files.where_used_empty')) ?></p>
             <?php else: ?>
                 <ul class="mt-3 divide-y divide-gray-100">

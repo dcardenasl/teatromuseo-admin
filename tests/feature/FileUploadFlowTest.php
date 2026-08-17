@@ -137,14 +137,45 @@ final class FileUploadFlowTest extends CIUnitTestCase
             )
             ->willReturn($this->apiOkResponse(['id' => 1], 201));
 
-        $mockDomainClient = $this->createMock(\App\Libraries\DomainApiClientInterface::class);
-        $mockDomainClient->method('get')->willReturn($this->apiOkResponse([]));
+        $mockDomainClient = $this->createMock(\App\Libraries\BffApiClientInterface::class);
+        $mockDomainClient->method('getAdminFileUsages')->willReturn($this->apiOkResponse([]));
 
         $service = new FileApiService($mockClient, $mockDomainClient);
         $result = $service->upload('file', $tmpFile, 'test.txt', 'text/plain', []);
 
         $this->assertTrue($result['ok']);
         @unlink($tmpFile);
+    }
+
+    public function testFileDetailsShowsIncompleteUsageWarningAndNoDeleteAction(): void
+    {
+        $mock = $this->createMock(FileApiService::class);
+        $mock->method('getInfo')->willReturn($this->apiOkResponse([
+            'id' => 7,
+            'original_name' => 'image.jpg',
+            'variants' => [],
+        ]));
+        $mock->method('usages')->willReturn([
+            'ok' => true,
+            'status' => 200,
+            'data' => [
+                'complete' => false,
+                'data' => [],
+            ],
+            'raw' => '',
+            'headers' => [],
+            'messages' => [],
+            'fieldErrors' => [],
+        ]);
+        Services::injectMock('fileApiService', $mock);
+
+        $result = $this->withSession($this->authSession)->get('/files/7/show');
+
+        $result->assertStatus(200);
+        $body = html_entity_decode($result->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $this->assertStringContainsString(lang('Files.usages_unavailable_body'), $body);
+        $this->assertStringNotContainsString('action="/files/7/delete"', $body);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────

@@ -152,8 +152,9 @@ class FileController extends BaseWebController
             return redirect()->to(route_to('files'))->with('error', lang('Files.file_not_found'));
         }
 
-        $usages    = $this->safeApiCall(fn () => $this->fileService->usages($id));
-        $usageData = ($usages['ok'] ?? false) ? $this->extractData($usages) : [];
+        $usages         = $this->safeApiCall(fn () => $this->fileService->usages($id));
+        $usagesComplete = $this->isCompleteUsageResponse($usages);
+        $usageData       = ($usages['ok'] ?? false) ? $this->extractData($usages) : [];
         if (isset($usageData['data']) && is_array($usageData['data'])) {
             $usageData = $usageData['data'];
         }
@@ -170,6 +171,7 @@ class FileController extends BaseWebController
             'title'  => lang('Files.detail_title'),
             'file'   => $this->extractData($info),
             'usages' => $usageData,
+            'usagesComplete' => $usagesComplete,
         ]);
     }
 
@@ -334,8 +336,12 @@ class FileController extends BaseWebController
 
     public function delete(string $id): RedirectResponse
     {
-        $usages    = $this->safeApiCall(fn () => $this->fileService->usages($id));
-        $usageData = ($usages['ok'] ?? false) ? $this->extractData($usages) : [];
+        $usages = $this->safeApiCall(fn () => $this->fileService->usages($id));
+        if (! $this->isCompleteUsageResponse($usages)) {
+            return redirect()->to(route_to('files'))->with('error', lang('Files.usages_unavailable_body'));
+        }
+
+        $usageData = $this->extractData($usages);
         if (isset($usageData['data']) && is_array($usageData['data'])) {
             $usageData = $usageData['data'];
         }
@@ -499,6 +505,24 @@ class FileController extends BaseWebController
         ];
 
         return isset($map[$resource]) ? $map[$resource]($resourceId) : null;
+    }
+
+    /**
+     * The file service keeps the BFF projection metadata inside the typed
+     * response payload so it remains compatible with the shared ApiResponse
+     * contract.
+     *
+     * @param array<string, mixed> $response
+     */
+    private function isCompleteUsageResponse(array $response): bool
+    {
+        if (($response['ok'] ?? false) !== true) {
+            return false;
+        }
+
+        $payload = is_array($response['data'] ?? null) ? $response['data'] : [];
+
+        return ($payload['complete'] ?? false) === true;
     }
 
     /**

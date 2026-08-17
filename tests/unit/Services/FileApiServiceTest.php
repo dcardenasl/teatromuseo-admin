@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Libraries\ApiClientInterface;
-use App\Libraries\DomainApiClientInterface;
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Files\Services\FileApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 
@@ -26,9 +26,9 @@ final class FileApiServiceTest extends CIUnitTestCase
         return $mock;
     }
 
-    private function createMockDomainClient(array $returnValue): DomainApiClientInterface
+    private function createMockDomainClient(array $returnValue): BffApiClientInterface
     {
-        $mock = $this->createMock(DomainApiClientInterface::class);
+        $mock = $this->createMock(BffApiClientInterface::class);
 
         $mock->method('get')->willReturn($returnValue);
         $mock->method('post')->willReturn($returnValue);
@@ -36,6 +36,34 @@ final class FileApiServiceTest extends CIUnitTestCase
         $mock->method('delete')->willReturn($returnValue);
 
         return $mock;
+    }
+
+    public function testUsagesUseSingleBffProjectionAndExposeCompleteness(): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminFileUsages')
+            ->with('7')
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => [
+                    'status' => 'success',
+                    'data' => [
+                        'complete' => true,
+                        'source' => ['hub' => 'ok', 'cms' => 'ok', 'state' => 'ok'],
+                        'sections' => ['usages' => [['resource' => 'pages', 'resource_id' => 2, 'role' => 'hero', 'label' => 'Home']]],
+                    ],
+                ],
+            ]);
+
+        $result = (new FileApiService($this->createMockClient([]), $bff))->usages('7');
+
+        $this->assertTrue($result['data']['complete']);
+        $this->assertSame(
+            ['resource' => 'pages', 'resource_id' => 2, 'role' => 'hero', 'label' => 'Home'],
+            $result['data']['data'][0],
+        );
     }
 
     public function testListReturnsFiles(): void

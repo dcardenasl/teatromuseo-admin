@@ -15,6 +15,8 @@ use Config\BffApiClient as BffApiClientConfig;
  * delegated to the Hub client — see {@see SecondaryApiClient} — because
  * the BFF never issues or refreshes JWTs itself (it only introspects them
  * against the Hub).
+ *
+ * @phpstan-import-type ApiResponse from \App\Libraries\ApiClientInterface
  */
 class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
 {
@@ -29,7 +31,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
      * The BFF owns the fan-out to Hub and the three domain applications. The
      * Admin still owns the outer cache and stale/cooldown policy.
      *
-     * @return array<string, mixed>
+     * @return ApiResponse
      */
     public function getAdminDashboard(int $maxRetries = 2): array
     {
@@ -64,7 +66,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
      * The BFF owns the bounded CMS projection so the Analytics page does not
      * fan out into five individual CMS requests.
      *
-     * @return array<string, mixed>
+     * @return ApiResponse
      */
     public function getAdminAnalytics(string $period = '7d', int $maxRetries = 2): array
     {
@@ -94,7 +96,45 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
         return $response;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Read complete-or-incomplete cross-domain file usages from the BFF.
+     *
+     * @param int|string $fileId
+     * @return ApiResponse
+     */
+    public function getAdminFileUsages(int|string $fileId, int $maxRetries = 2): array
+    {
+        $normalizedId = (string) $fileId;
+        if ($normalizedId === '' || ! ctype_digit($normalizedId) || (int) $normalizedId < 1) {
+            return $this->unavailableResponse();
+        }
+
+        try {
+            $response = $this->request('GET', '/me/admin-files/' . $normalizedId . '/usages', [
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin file usages BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin file usages BFF returned HTTP %d (access_token=%s).',
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
+    }
+
+    /** @return ApiResponse */
     private function unavailableResponse(): array
     {
         return [

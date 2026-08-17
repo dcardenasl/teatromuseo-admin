@@ -65,6 +65,8 @@ return [
     'metadata_update_failed'   => 'No se pudo actualizar la metadata.',
     'where_used'               => 'Usado en',
     'where_used_empty'         => 'Este archivo no está referenciado en ninguna parte.',
+    'usages_unavailable_title' => 'La verificación de usos está incompleta.',
+    'usages_unavailable_body'  => 'No se pudieron verificar algunas fuentes de uso. El archivo no se puede considerar seguro para eliminar hasta completar la verificación.',
 
     'trash_title'              => 'Papelera',
     'trash_empty'              => 'No hay archivos en la papelera.',
