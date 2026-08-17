@@ -31,6 +31,7 @@ import { collectionBlockTemplateBuilder } from './components/collectionBlockTemp
 import { menuItemForm } from './components/menuItemForm.js';
 import { listingProjectionEditor } from './components/listingProjectionEditor.js';
 import { blockInstanceBuilder } from './components/blockInstanceBuilder.js';
+import { bootAdminFormFieldErrors, adminFormFieldErrors } from './components/serverFieldErrors.js';
 import { schemaEditor } from './components/schemaEditor.js';
 import { blockSorter } from './components/blockSorter.js';
 import { bootSessionExpiryWatcher } from './components/sessionWatcher.js';
@@ -95,6 +96,7 @@ document.addEventListener('alpine:init', () => {
     window.blockInstanceConfigFactory = blockInstanceConfig;
     window.listingProjectionEditor = listingProjectionEditor;
     window.openBlockEditPreview = openBlockEditPreview;
+    window.AdminFormFieldErrors = adminFormFieldErrors;
 });
 
 // Must be on window before the Google GSI script fires
@@ -113,6 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const config = window.__componentConfig || {};
     bootSessionExpiryWatcher({ expiringMessage: config.sessionExpiringMessage });
 });
+
+bootAdminFormFieldErrors();
 
 window.addEventListener('load', () => {
     if (!lucideBootstrapped) { bootLucideIcons(); lucideBootstrapped = true; }
