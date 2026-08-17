@@ -26,6 +26,7 @@ import { jsonEditor } from './components/jsonEditor.js';
 import { blockPreview } from './components/blockPreview.js';
 import { bootBlockEditPreview, openBlockEditPreview } from './components/blockEditPreview.js';
 import { bootEventTranslationSync } from './components/eventTranslationSync.js';
+import { bootPermissionGroupToggle, togglePermissionGroup } from './components/permissionGroupToggle.js';
 import { blockTypeDesigner } from './components/blockTypeDesigner.js';
 import { blockInstanceConfig } from './components/blockInstanceConfig.js';
 import { collectionBlockTemplateBuilder } from './components/collectionBlockTemplateBuilder.js';
@@ -98,6 +99,7 @@ document.addEventListener('alpine:init', () => {
     window.listingProjectionEditor = listingProjectionEditor;
     window.openBlockEditPreview = openBlockEditPreview;
     window.AdminFormFieldErrors = adminFormFieldErrors;
+    window.togglePermissionGroup = togglePermissionGroup;
 });
 
 // Must be on window before the Google GSI script fires
@@ -113,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bootSlugFields();
     bootBlockEditPreview();
     bootEventTranslationSync();
+    bootPermissionGroupToggle();
     bootGlobalSubmitGuard();
     const config = window.__componentConfig || {};
     bootSessionExpiryWatcher({ expiringMessage: config.sessionExpiringMessage });
