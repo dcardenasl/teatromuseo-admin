@@ -468,6 +468,7 @@ The project uses a **modular architecture** where each feature is self-contained
 - Language: `app/Language/{en,es}/` (global strings, app-wide messages)
 - Config: `app/Config/` (`Routes.php`, `Filters.php`, `Autoload.php`, `ApiClient.php`, `Services.php`)
 - Tests: `tests/unit/` (libraries, filters, helpers, services, views) and `tests/feature/` (controller flows)
+- Remote tables: new `remoteTable` views must declare a unique `mode`, bind the table with `:class="'density-' + density`, and use `table_toolbar.php` flags explicitly. `showViewToggle` and `showDensityToggle` default to false; enable view cards only when the resource has an explicit field mapping. Keep UI preferences in per-tab `sessionStorage` through `remoteTable` (`table`/`grid`, `sm`/`md`/`lg`), never `localStorage`.
 
 ## Security Considerations
 
