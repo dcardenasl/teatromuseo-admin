@@ -190,6 +190,26 @@ directas a su dominio propietario en todos los casos.
   y entradas en sus pantallas de lectura; Wizard consume `wizard-bootstrap`
   con fallback directo.
 
+### Saneamiento arquitectónico — cierres 2026-08-17
+
+- [x] **CFG-02 — `.env.example` alineado con el runtime.** Se reconstruyó el
+  ejemplo desde las variables realmente leídas por los clientes Hub, dominio,
+  BFF, Web, sesión, caché, CSP y límites operativos; se conservaron aliases
+  legacy explícitos como compatibilidad.
+- [x] **CFG-05 — Quality gate endurecido.** `composer quality` conserva el
+  test suite, `phpunit.xml.dist` falla ante warnings y deprecations, y el gate
+  completo quedó verde con 814 tests, 3.386 aserciones y 1 skip.
+- [x] **CFG-06 — Pre-push verificable.** El hook activo usa `.husky`, delega en
+  `scripts/check-pre-push.sh` y ejecuta quality, lint JS y tests JS; el hook
+  alternativo `pre-push` quedó alineado.
+- [x] **FRONT-01c — Previews con i18n.** Las cadenas visibles de las previews
+  se movieron a `BlockPreview` con paridad `es`/`en`; `i18n-check` quedó verde.
+- [x] **FRONT-01d — Lógica frontend fuera de vistas.** Builders, formularios,
+  timers, errores y preview de bloques viven en módulos ES registrados en el
+  bundle; las vistas conservan solo datos declarativos y no agregan scripts
+  inline nuevos. Lint, 21 archivos/104 tests JS, build y contratos de vistas
+  quedaron verdes.
+
 ### Dashboard vía BFF — cerrado 2026-08-16
 
 El dashboard conserva su caché, lock y degradación por fuente en el Admin,
@@ -201,15 +221,6 @@ verificadas; el detalle está en
 `../docs/plan/2026-08-16-plan-admin-dashboard-via-bff.md`.
 ### Saneamiento arquitectónico heredado (prioridad 2)
 
-- [ ] **CFG-02** — Reconstruir `.env.example` desde las variables realmente
-  leídas por `ApiClient`, `DomainApiClient`, BFF y sesión.
-- [ ] **CFG-05** — Hacer que `composer quality` ejecute tests y endurecer
-  `phpunit.xml.dist` frente a warnings/deprecations.
-- [ ] **CFG-06** — Reparar y verificar la instalación de `pre-push` y el
-  `core.hooksPath`.
-- [ ] **FRONT-01c** — Extraer las cadenas incrustadas de las previews a i18n.
-- [ ] **FRONT-01d** — Sacar la lógica de negocio de los `<script>` inline al
-  build de frontend.
 - [ ] **FRONT-01e** — Unificar los modismos de autorización de los módulos.
 - [ ] **FRONT-01f** — Unificar rutas de vistas y parciales repetidos.
 - [ ] **FRONT-01g** — Migrar Alpine/CSP sin dejar un estado mixto ni relajar
