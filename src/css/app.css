@@ -77,6 +77,22 @@
     }
 }
 
+/* Table density preferences are applied after the server-rendered utility
+   classes. Keeping these rules outside a cascade layer lets the client-side
+   preference override the default table padding without an emergency
+   specificity escape hatch. */
+.density-sm th,
+.density-sm td {
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+}
+
+.density-lg th,
+.density-lg td {
+    padding-block: 1.25rem;
+    padding-inline: 1.5rem;
+}
+
 /* ─── Rich Text Editor (Tiptap) ─────────────────────────────────────────── */
 
 /* Remove browser outline — the wrapper div handles focus ring */
