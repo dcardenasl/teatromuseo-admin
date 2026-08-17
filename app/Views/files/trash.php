@@ -31,6 +31,7 @@ $csrfHash = csrf_hash();
     }, remoteTable({
         apiUrl: '<?= site_url('files/trash/data') ?>',
         pageUrl: '<?= route_to('files.trash') ?>',
+        mode: 'files_trash',
         defaultSort: '-uploaded_at',
         routes: {},
         csrf: { name: '<?= esc($csrfName) ?>', hash: '<?= esc($csrfHash) ?>' },

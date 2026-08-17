@@ -12,12 +12,6 @@ $currentCategory = (string) request()->getGet('category');
 ?>
 <section class="mt-6 bg-white border border-gray-200 rounded-xl shadow-sm p-5"
     x-data="Object.assign({
-        // viewMode is a UI preference scoped to the current tab; sessionStorage
-        // (not localStorage) keeps it out of cross-user persistence on shared
-        // machines and aligns with the architecture rule of not stashing state
-        // outside the server-side session.
-        viewMode: sessionStorage.getItem('filesViewMode') || 'table',
-        setViewMode(mode) { this.viewMode = mode; sessionStorage.setItem('filesViewMode', mode); },
         selectedIds: [],
         isSelected(id) { return this.selectedIds.includes(String(id)); },
         toggleSelect(id) {
@@ -35,6 +29,7 @@ $currentCategory = (string) request()->getGet('category');
     }, remoteTable({
         apiUrl: '<?= site_url('files/data') ?>',
         pageUrl: '<?= route_to('files') ?>',
+        mode: 'files',
         defaultSort: '-uploaded_at',
         routes: {
             downloadBase: '<?= route_to('files') ?>',
@@ -56,12 +51,27 @@ $currentCategory = (string) request()->getGet('category');
                 <span class="hidden md:inline"><?= esc(lang('Files.trash_title')) ?></span>
             </a>
             <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
-                <button type="button" @click="setViewMode('table')" :class="viewMode === 'table' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'" class="px-3 py-1.5 text-sm transition-colors">
+                <button type="button" @click="setViewMode('table')" :class="viewMode === 'table' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'" :aria-pressed="viewMode === 'table'" class="px-3 py-1.5 text-sm transition-colors">
+                    <span class="sr-only"><?= esc(lang('App.view_table')) ?></span>
                     <?= ui_icon('list', 'h-4 w-4') ?>
                 </button>
-                <button type="button" @click="setViewMode('grid')" :class="viewMode === 'grid' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'" class="px-3 py-1.5 text-sm transition-colors">
+                <button type="button" @click="setViewMode('grid')" :class="viewMode === 'grid' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'" :aria-pressed="viewMode === 'grid'" class="px-3 py-1.5 text-sm transition-colors">
+                    <span class="sr-only"><?= esc(lang('App.view_grid')) ?></span>
                     <?= ui_icon('grid', 'h-4 w-4') ?>
                 </button>
+            </div>
+            <div class="inline-flex items-center gap-1" role="group" aria-label="<?= esc(lang('App.table_density')) ?>">
+                <?php foreach (['sm' => 'App.density_sm', 'md' => 'App.density_md', 'lg' => 'App.density_lg'] as $density => $labelKey): ?>
+                    <button type="button"
+                            @click="setDensity('<?= esc($density) ?>')"
+                            :class="density === '<?= esc($density) ?>' ? 'border-brand-600 bg-brand-600 text-white' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'"
+                            :aria-pressed="density === '<?= esc($density) ?>'"
+                            class="inline-flex items-center justify-center rounded-md border px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            title="<?= esc(lang($labelKey)) ?>"
+                            aria-label="<?= esc(lang($labelKey)) ?>">
+                        <?= esc(strtoupper($density)) ?>
+                    </button>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>
@@ -157,7 +167,7 @@ unset($tabsBaseQuery['page'], $tabsBaseQuery['cursor'], $tabsBaseQuery['category
     <template x-if="!loading && !error && rows.length > 0 && viewMode === 'table'">
         <div class="<?= esc(table_wrapper_class()) ?>">
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?> w-10">
