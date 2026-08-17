@@ -24,7 +24,7 @@ $scopes = is_array($status['last_invalidation_scopes'] ?? null) ? $status['last_
     <?php endif; ?>
 
     <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <article class="rounded-xl border border-gray-200 bg-gray-50 p-4" x-data="cacheElapsed('<?= esc((string) ($lastAutomatic ?? ''), 'attr') ?>')" x-init="start()">
+        <article class="rounded-xl border border-gray-200 bg-gray-50 p-4" x-data="cacheElapsed('<?= esc((string) ($lastAutomatic ?? ''), 'attr') ?>', <?= esc(json_encode(['calculating' => lang('System.cache_calculating'), 'elapsedPrefix' => lang('System.cache_elapsed_prefix')], JSON_THROW_ON_ERROR), 'attr') ?>)" x-init="start()">
             <p class="text-sm text-gray-500"><?= esc(lang('System.cache_last_automatic')) ?></p>
             <p class="mt-2 text-lg font-semibold text-gray-900">
                 <?= $lastAutomatic !== null ? esc(format_date($lastAutomatic)) : esc(lang('System.cache_not_available')) ?>
@@ -66,7 +66,9 @@ $scopes = is_array($status['last_invalidation_scopes'] ?? null) ? $status['last_
         <?php if (has_permission('system.public-cache.invalidate')): ?>
             <form method="post" action="<?= esc(route_to('admin.system.cache.invalidate')) ?>" class="shrink-0">
                 <?= csrf_field() ?>
-                <button type="submit" class="<?= esc(action_button_class('primary')) ?>" onclick="return confirm('<?= esc(lang('System.cache_confirm'), 'attr') ?>')">
+                <button type="submit"
+                        class="<?= esc(action_button_class('primary')) ?>"
+                        data-confirm-message="<?= esc(lang('System.cache_confirm'), 'attr') ?>">
                     <?= ui_icon('refresh-cw', 'h-4 w-4') ?>
                     <?= esc(lang('System.cache_invalidate_button')) ?>
                 </button>
@@ -74,40 +76,3 @@ $scopes = is_array($status['last_invalidation_scopes'] ?? null) ? $status['last_
         <?php endif; ?>
     </div>
 </section>
-
-<script <?= csp_script_nonce() ?>>
-// This tag needs csp_script_nonce(): ContentSecurityPolicy.php's scriptSrc has
-// no 'unsafe-inline' (only 'unsafe-eval', for Alpine's expression evaluation),
-// so any inline <script> without a matching nonce is silently dropped by the
-// browser — the block never runs and every reference to it below evaluates as
-// undefined. This was the actual cause of the ReferenceErrors on this page,
-// not a script/element ordering issue. See head.php:50 and
-// cms/wizard/{index,structure}.php for the same pattern.
-//
-// Registered via the `alpine:init` event (rather than a bare global function)
-// per Alpine's own recommended registration pattern, so it's also immune to
-// any future DOM-order changes on this page.
-document.addEventListener('alpine:init', () => {
-    Alpine.data('cacheElapsed', (timestamp) => ({
-        label: timestamp ? '<?= esc(lang('System.cache_calculating'), 'js') ?>' : '',
-        start() {
-            if (!timestamp) return;
-            const update = () => {
-                const seconds = Math.max(0, Math.floor((Date.now() - Date.parse(timestamp)) / 1000));
-                const days = Math.floor(seconds / 86400);
-                const hours = Math.floor((seconds % 86400) / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                const secs = seconds % 60;
-                const parts = [];
-                if (days) parts.push(`${days}d`);
-                if (hours || days) parts.push(`${hours}h`);
-                if (minutes || hours || days) parts.push(`${minutes}m`);
-                parts.push(`${secs}s`);
-                this.label = '<?= esc(lang('System.cache_elapsed_prefix'), 'js') ?> ' + parts.join(' ');
-            };
-            update();
-            window.setInterval(update, 1000);
-        }
-    }));
-});
-</script>
