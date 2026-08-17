@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Table view and density preferences** — `remoteTable` list views can now expose a table/grid
+  view toggle and a compact/default/spacious density toggle via `table_toolbar.php` flags, backed
+  by per-module `sessionStorage` state. `Users` gained a card view; `Files` and 30 other list
+  screens gained a density toggle.
 - **Accessible password visibility toggle** — login, register, and reset-password forms now use a
   shared `components/form/password` field with a labeled show/hide button (`passwordToggle` Alpine
   component), keeping visibility state independent per field.
@@ -61,6 +65,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`BffApiClient` could get stuck on a broken uppercase `BFF_API_BASE_URL`** — some hosts inject a
+  short process value (e.g. `api`) under that key and refuse to let `.env` override it. `Config\BffApiClient`
+  now validates each candidate URL and prefers the dotted `bffApiClient.baseUrl` setting whenever it
+  parses to a real `http(s)` URL, falling back to the uppercase key only for compatibility.
+- **Admin dashboard surfaced a 500 when the BFF was unreachable** — `BffApiClient::getAdminDashboard()`
+  now catches transport failures and returns an explicit unavailable response instead of letting the
+  exception bubble up, so `DashboardDataService` can degrade the affected sections instead of failing
+  the whole page.
 - **`Museum` category/technique reorder routes were shadowed by the dynamic `:id` route** —
   `categories/reorder` and `techniques/reorder` were declared after `categories/(:segment)` /
   `techniques/(:segment)`, so CI4 matched them against `show()` (and `catalog.*.read`) instead
