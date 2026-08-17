@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Libraries\BffApiClientInterface;
-use App\Modules\Analytics\Services\AnalyticsApiService;
-use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Dashboard\Services\HealthApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -168,15 +166,11 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetTranslationsRendersLanguageBarsWhenPermitted(): void
     {
-        $translationService = $this->createMock(TranslationAuditApiService::class);
-        $translationService->expects($this->once())
-            ->method('getStats')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => [['code' => 'fr', 'name' => 'French', 'percentage' => 1, 'is_default' => false]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('translationAuditApiService', $translationService);
+        $this->injectDashboardSummary(
+            translationsSections: [
+                'translations' => [['code' => 'fr', 'name' => 'French', 'percentage' => 1, 'is_default' => false]],
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -192,9 +186,7 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetTranslationsSkipsTheApiCallWithoutPermission(): void
     {
-        $translationService = $this->createMock(TranslationAuditApiService::class);
-        $translationService->expects($this->never())->method('getStats');
-        Services::injectMock('translationAuditApiService', $translationService);
+        $this->injectDashboardSummary();
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -206,13 +198,9 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetAnalyticsRendersTrafficOverviewWhenPermitted(): void
     {
-        $analyticsService = $this->createMock(AnalyticsApiService::class);
-        $analyticsService->expects($this->once())
-            ->method('overview')
-            ->with(['period' => '7d'])
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => [
+        $this->injectDashboardSummary(
+            analyticsSections: [
+                'analytics' => [
                     'total_views'     => 1234,
                     'unique_visitors' => 567,
                     'top_page'        => '/inicio',
@@ -220,9 +208,8 @@ final class DashboardFlowTest extends CIUnitTestCase
                     'top_referrer'    => 'google.com',
                     'period'          => '7d',
                 ],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('analyticsApiService', $analyticsService);
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -239,9 +226,7 @@ final class DashboardFlowTest extends CIUnitTestCase
 
     public function testWidgetAnalyticsSkipsTheApiCallWithoutPermission(): void
     {
-        $analyticsService = $this->createMock(AnalyticsApiService::class);
-        $analyticsService->expects($this->never())->method('overview');
-        Services::injectMock('analyticsApiService', $analyticsService);
+        $this->injectDashboardSummary();
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -346,6 +331,8 @@ final class DashboardFlowTest extends CIUnitTestCase
      * @param array<string, mixed> $cmsSections
      * @param array<string, mixed> $catalogSections
      * @param array<string, mixed> $eventSections
+     * @param array<string, mixed> $analyticsSections
+     * @param array<string, mixed> $translationsSections
      */
     private function injectDashboardSummary(
         array $hubSections = [],
@@ -354,12 +341,16 @@ final class DashboardFlowTest extends CIUnitTestCase
         bool $cmsOk = true,
         array $catalogSections = [],
         array $eventSections = [],
+        array $analyticsSections = [],
+        array $translationsSections = [],
     ): void {
         $bff = $this->createMock(BffApiClientInterface::class);
         $bff->method('getAdminDashboard')->willReturn($this->aggregateResponse(
             [
                 'hub' => $hubSections,
                 'cms' => $cmsSections,
+                'analytics' => $analyticsSections,
+                'translations' => $translationsSections,
                 'catalog' => $catalogSections,
                 'event' => $eventSections,
             ],
@@ -377,6 +368,8 @@ final class DashboardFlowTest extends CIUnitTestCase
         $source = [
             'hub' => $hubOk ? 'ok' : 'unavailable',
             'cms' => $cmsOk ? 'ok' : 'unavailable',
+            'analytics' => 'ok',
+            'translations' => 'ok',
             'catalog' => 'ok',
             'event' => 'ok',
         ];

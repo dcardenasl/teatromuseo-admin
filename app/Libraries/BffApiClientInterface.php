@@ -17,4 +17,9 @@ interface BffApiClientInterface extends ApiClientInterface
      * @return array<string, mixed>
      */
     public function getAdminDashboard(int $maxRetries = 2): array;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getAdminAnalytics(string $period = '7d', int $maxRetries = 2): array;
 }

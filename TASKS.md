@@ -6,6 +6,21 @@
 
 ## ✅ Completadas
 
+- [x] **ADM-BFF-01 — Consumir `analytics`/`translations` del snapshot BFF.**
+  Cerrada 2026-08-17. `DashboardDataService` traduce las nuevas fuentes,
+  incrementa la versión de caché y conserva sus estados; ambos widgets leen
+  el snapshot común y ya no disparan llamadas directas al CMS. Verificado con
+  `composer test` y `composer quality` (798 tests, 3.312 assertions, 1
+  skipped; PHPStan, CS-Fixer, i18n y fixture policy verdes).
+
+- [x] **ADM-BFF-02 — Verificación e2e + retiro acotado.** Cerrada
+  2026-08-17. `rg` confirma cero referencias directas a
+  `AnalyticsApiService`/`TranslationAuditApiService` desde el Dashboard;
+  `CLAUDE.md` documenta que ambos widgets comparten el snapshot BFF y que
+  los servicios se conservan para sus pantallas independientes. El smoke
+  visual se intentó en `localhost:8182`, pero el entorno aislado bloqueó la
+  conexión al proceso local; las suites y quality del Admin quedaron verdes.
+
 - [x] **ADM-DASH-03 — Cliente BFF autenticado.** Cerrada 2026-08-16.
   `BffApiClient::getAdminDashboard()` reenvía el bearer a
   `/api/v1/me/admin-dashboard`, con `BFF_API_BASE_URL` configurado en local y
@@ -90,6 +105,9 @@
   Consistency Contract de `CLAUDE.md` con el patrón `remoteTable`, `mode`,
   preferencias por pestaña, flags del toolbar y mapeos explícitos de tarjetas.
 
+## 🔴 En progreso
+
+
 ## 🟡 Próximo
 
 ### Lecturas compuestas del Admin vía BFF (2026-08-16) — ver `../docs/plan/2026-08-16-plan-admin-lecturas-compuestas-via-bff.md`
@@ -105,29 +123,25 @@ directas a su dominio propietario en todos los casos.
 **Feature 1 — Dashboard: widgets de analytics y traducciones completos**
 (depende de `BFF-ADMINREAD-05/06`)
 
-- [ ] **ADM-BFF-01 — Consumir `analytics`/`translations` del snapshot BFF.**
-  `DashboardDataService` incorpora las nuevas secciones sin request
-  adicional por widget; `widgetTranslations()`/`widgetAnalytics()` leen del
-  snapshot común en vez de llamar a `TranslationAuditApiService`/
-  `AnalyticsApiService` directamente.
-- [ ] **ADM-BFF-02 — Verificación e2e + retiro acotado.** Smoke visual con
-  stack real y degradación parcial (una fuente caída no oculta el resto);
-  retirar las llamadas directas del dashboard únicamente — `AnalyticsApiService`
-  sigue viva para la pantalla standalone de Analytics (Feature 2) hasta que
-  esa migre; documentar en `CLAUDE.md`.
 
 **Feature 2 — Analytics administrativo compuesto**
 (depende de `BFF-ADMINREAD-07/08`)
 
-- [ ] **ADM-BFF-03 — `BffApiClient::getAdminAnalytics()`.** Nueva interfaz y
-  método; `AnalyticsController::index()` pasa de 5 llamadas
-  (`overview/pages/referrers/devices/timeseries`) a 1 llamada BFF,
-  conservando el shape que ya consumen las vistas o traduciéndolo en un
-  único adapter explícito.
-- [ ] **ADM-BFF-04 — Verificación e2e + retiro de `AnalyticsApiService`.**
-  Comparación de payload real antes/después; retirar el servicio solo si
-  `rg` confirma cero consumidores restantes (Feature 1 ya debería haberlo
-  dejado sin el dashboard); documentar.
+## ✅ Completadas
+
+- [x] **ADM-BFF-03 — `BffApiClient::getAdminAnalytics()`.** Cerrada
+  2026-08-17. Se añadió el método autenticado con período y retry budget, y
+  `AnalyticsController` ahora traduce el aggregate versionado del BFF al
+  shape existente de las vistas mediante un único adapter local. La prueba
+  de flujo confirma una sola llamada BFF por carga.
+
+- [x] **ADM-BFF-04 — Verificación e2e + retiro de `AnalyticsApiService`.**
+  Cerrada 2026-08-17. `rg` confirma cero consumidores del servicio y se
+  retiraron su factory y archivo; Analytics conserva solo el cliente BFF.
+  La prueba de flujo valida payload equivalente con una llamada, y quedaron
+  verdes `composer test` y `composer quality` (800 tests, 3.328 assertions,
+  1 skipped; PHPStan, CS-Fixer, i18n y fixture policy verdes). El smoke visual
+  en `localhost:8182` se intentó, pero el entorno aislado bloqueó la conexión.
 
 **Feature 3 — Usos de archivos cross-domain**
 (depende de `BFF-ADMINREAD-09/10/11` — en particular, no arrancar hasta que

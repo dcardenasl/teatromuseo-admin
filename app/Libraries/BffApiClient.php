@@ -58,6 +58,42 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
         return $response;
     }
 
+    /**
+     * Read the complete authenticated Admin analytics projection from the BFF.
+     *
+     * The BFF owns the bounded CMS projection so the Analytics page does not
+     * fan out into five individual CMS requests.
+     *
+     * @return array<string, mixed>
+     */
+    public function getAdminAnalytics(string $period = '7d', int $maxRetries = 2): array
+    {
+        try {
+            $response = $this->request('GET', '/me/admin-analytics', [
+                'query'      => ['period' => $period],
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin analytics BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin analytics BFF returned HTTP %d (access_token=%s).',
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
+    }
+
     /** @return array<string, mixed> */
     private function unavailableResponse(): array
     {

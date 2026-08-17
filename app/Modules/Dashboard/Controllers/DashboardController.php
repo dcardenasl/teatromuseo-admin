@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Dashboard\Controllers;
 
 use App\Controllers\BaseWebController;
-use App\Modules\Analytics\Services\AnalyticsApiService;
-use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Dashboard\Services\DashboardDataService;
 use App\Modules\Dashboard\Services\HealthApiService;
 use CodeIgniter\Cache\CacheInterface;
@@ -18,16 +16,12 @@ class DashboardController extends BaseWebController
 {
     protected DashboardDataService $dashboardDataService;
     protected HealthApiService $healthService;
-    protected TranslationAuditApiService $translationAuditService;
-    protected AnalyticsApiService $analyticsService;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->dashboardDataService     = service('dashboardDataService');
-        $this->healthService           = service('healthApiService');
-        $this->translationAuditService = service('translationAuditApiService');
-        $this->analyticsService         = service('analyticsApiService');
+        $this->healthService = service('healthApiService');
     }
 
     public function index(): string
@@ -148,25 +142,17 @@ class DashboardController extends BaseWebController
      */
     public function widgetTranslations(): ResponseInterface
     {
-        if (! has_permission('cms.languages.read')) {
-            $this->closeSessionSafely();
-
-            return $this->response->setBody(view('dashboard/partials/widget_translations', ['stats' => null]));
-        }
-
-        $cache    = service('cache');
-        $response = $cache->get('dashboard_translation_stats');
-        if (!is_array($response)) {
-            $response = $this->safeApiCall(fn () => $this->translationAuditService->getStats());
-            if ($response['ok'] ?? false) {
-                $cache->save('dashboard_translation_stats', $response, 300);
-            }
-        }
+        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
+        $section  = $this->dashboardSection($dashboard, 'translations');
+        $state    = $this->dashboardSourceState($dashboard, 'translations');
+        $stats    = $state === 'unavailable'
+            ? null
+            : (is_array($section['translations'] ?? null) ? $section['translations'] : []);
 
         $this->closeSessionSafely();
 
-        return $this->response->setBody($this->renderDevApiErrorPanel($response) . view('dashboard/partials/widget_translations', [
-            'stats' => $this->extractItems($response),
+        return $this->response->setBody(view('dashboard/partials/widget_translations', [
+            'stats' => $stats,
         ]));
     }
 
@@ -178,25 +164,17 @@ class DashboardController extends BaseWebController
      */
     public function widgetAnalytics(): ResponseInterface
     {
-        if (! has_permission('cms.analytics.read')) {
-            $this->closeSessionSafely();
-
-            return $this->response->setBody(view('dashboard/partials/widget_analytics', ['overview' => null]));
-        }
-
-        $cache    = service('cache');
-        $response = $cache->get('dashboard_analytics_overview');
-        if (!is_array($response)) {
-            $response = $this->safeApiCall(fn () => $this->analyticsService->overview(['period' => '7d']));
-            if ($response['ok'] ?? false) {
-                $cache->save('dashboard_analytics_overview', $response, 300);
-            }
-        }
+        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
+        $section  = $this->dashboardSection($dashboard, 'analytics');
+        $state    = $this->dashboardSourceState($dashboard, 'analytics');
+        $overview = $state === 'unavailable'
+            ? null
+            : (is_array($section['analytics'] ?? null) ? $section['analytics'] : []);
 
         $this->closeSessionSafely();
 
-        return $this->response->setBody($this->renderDevApiErrorPanel($response) . view('dashboard/partials/widget_analytics', [
-            'overview' => $this->extractData($response),
+        return $this->response->setBody(view('dashboard/partials/widget_analytics', [
+            'overview' => $overview,
         ]));
     }
 

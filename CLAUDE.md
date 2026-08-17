@@ -197,6 +197,12 @@ environment before expecting fresh dashboard data.
   remains renderable. Restore/check the BFF and its upstreams before changing
   dashboard code. Domain CRUD modules continue using their own domain clients;
   this boundary applies only to the dashboard aggregate.
+- The dashboard's analytics and translation widgets also read the
+  `analytics`/`translations` sections from this same cached snapshot. They
+  must not instantiate `AnalyticsApiService` or
+  `TranslationAuditApiService` for an additional upstream request; those
+  services remain available to their standalone CMS screens until their own
+  migration is complete.
 
 ### ApiClient: Central HTTP Communication Layer
 

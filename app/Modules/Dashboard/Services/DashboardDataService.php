@@ -15,7 +15,7 @@ use CodeIgniter\Cache\CacheInterface;
  */
 final readonly class DashboardDataService
 {
-    private const CACHE_VERSION = 2;
+    private const CACHE_VERSION = 3;
 
     public function __construct(
         private BffApiClientInterface $bffClient,
@@ -142,7 +142,10 @@ final readonly class DashboardDataService
         $mappedSource = [];
         $mappedSections = [];
 
-        foreach (['hub', 'cms', 'catalog', 'event'] as $key) {
+        foreach (['hub', 'cms', 'analytics', 'translations', 'catalog', 'event'] as $key) {
+            if (! array_key_exists($key, $source) && in_array($key, ['analytics', 'translations'], true)) {
+                continue;
+            }
             $state = ($source[$key] ?? null) === 'ok' ? 'fresh' : 'unavailable';
             $mappedSource[$key] = $state;
             $mappedSections[$key] = is_array($sections[$key] ?? null)
@@ -170,7 +173,10 @@ final readonly class DashboardDataService
     private function withStaleSourceState(array $snapshot, string $reason): array
     {
         $source = is_array($snapshot['source'] ?? null) ? $snapshot['source'] : [];
-        foreach (['hub', 'cms', 'catalog', 'event'] as $key) {
+        foreach (['hub', 'cms', 'analytics', 'translations', 'catalog', 'event'] as $key) {
+            if (! array_key_exists($key, $source) && in_array($key, ['analytics', 'translations'], true)) {
+                continue;
+            }
             $source[$key] = 'stale';
         }
         $source['state'] = 'stale';
@@ -205,10 +211,19 @@ final readonly class DashboardDataService
                 'cms' => 'unavailable',
                 'catalog' => 'unavailable',
                 'event' => 'unavailable',
+                'analytics' => 'unavailable',
+                'translations' => 'unavailable',
                 'state' => 'unavailable',
                 'reason' => $reason,
             ],
-            'sections' => ['hub' => [], 'cms' => [], 'catalog' => [], 'event' => []],
+            'sections' => [
+                'hub' => [],
+                'cms' => [],
+                'analytics' => [],
+                'translations' => [],
+                'catalog' => [],
+                'event' => [],
+            ],
         ];
     }
 }

@@ -101,6 +101,43 @@ final class BffApiClientTest extends CIUnitTestCase
         $this->assertSame([], $result['data']);
     }
 
+    public function testAdminAnalyticsReadUsesPeriodQueryAndRetryBudget(): void
+    {
+        session()->set(SessionKeys::ACCESS_TOKEN->value, 'admin-access-token');
+
+        $config = new BffApiClientConfig();
+        $config->baseUrl = 'http://localhost:8188';
+        $hubClient = $this->createMock(ApiClientInterface::class);
+        $client = new BffApiClient($config, $hubClient);
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+        $response->method('getBody')->willReturn('{"data":{"sections":{"overview":{}}}}');
+
+        $http = $this->createMock(CURLRequest::class);
+        $http->expects($this->once())
+            ->method('request')
+            ->with(
+                'GET',
+                '/api/v1/me/admin-analytics',
+                $this->callback(function (array $options): bool {
+                    $this->assertSame(['period' => '24h'], $options['query']);
+                    $this->assertSame('Bearer admin-access-token', $options['headers']['Authorization']);
+                    $this->assertSame('application/json', $options['headers']['Accept']);
+                    $this->assertArrayNotHasKey('max_retries', $options);
+
+                    return true;
+                })
+            )
+            ->willReturn($response);
+
+        $this->setProtectedProperty($client, 'http', $http);
+
+        $result = $client->getAdminAnalytics('24h', 1);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame(200, $result['status']);
+    }
+
     private function setProtectedProperty(object $object, string $property, mixed $value): void
     {
         $reflection = new ReflectionClass($object);
