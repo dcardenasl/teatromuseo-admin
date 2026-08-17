@@ -27,6 +27,7 @@ import { blockPreview } from './components/blockPreview.js';
 import { blockTypeDesigner } from './components/blockTypeDesigner.js';
 import { blockInstanceConfig } from './components/blockInstanceConfig.js';
 import { collectionBlockTemplateBuilder } from './components/collectionBlockTemplateBuilder.js';
+import { menuItemForm } from './components/menuItemForm.js';
 import { schemaEditor } from './components/schemaEditor.js';
 import { blockSorter } from './components/blockSorter.js';
 import { bootSessionExpiryWatcher } from './components/sessionWatcher.js';
@@ -67,6 +68,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('blockTypeDesigner', blockTypeDesigner);
     Alpine.data('blockInstanceConfig', blockInstanceConfig);
     Alpine.data('collectionBlockTemplateBuilder', collectionBlockTemplateBuilder);
+    Alpine.data('menuItemForm', menuItemForm);
     Alpine.data('schemaEditor', schemaEditor);
     Alpine.data('blockSorter', blockSorter);
     Alpine.data('wizard', wizard);

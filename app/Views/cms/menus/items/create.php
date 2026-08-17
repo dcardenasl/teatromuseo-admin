@@ -82,7 +82,7 @@ $suggestedSortOrder = count($items);
     <span class="text-gray-500 font-mono"><?= esc($menu['menu_key'] ?? '') ?></span>
 </div>
 
-<section class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden" x-data="menuItemForm('<?= esc($linkType) ?>')">
+<section class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden" x-data="menuItemForm('<?= esc($linkType) ?>', <?= esc(json_encode($languages, JSON_THROW_ON_ERROR), 'attr') ?>)">
         <div class="px-6 py-4 border-b border-gray-100">
             <h3 class="text-base font-semibold text-gray-900"><?= esc(lang('Menus.items_create_title')) ?></h3>
         </div>
@@ -339,57 +339,3 @@ $suggestedSortOrder = count($items);
             </aside>
         </form>
     </section>
-
-<script <?= csp_script_nonce() ?>>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('menuItemForm', (initialLinkType) => ({
-        linkType: initialLinkType,
-        categoryOptions: [],
-        selectedColId: '',
-        selectedCatId: '',
-        activeCol: null,
-        activeCat: null,
-        init() {
-            fetch('/admin/cms/menus/category-options')
-                .then(r => r.json())
-                .then(res => {
-                    if (res.ok) {
-                        this.categoryOptions = res.data;
-                    }
-                });
-        },
-        onCollectionChange() {
-            this.selectedCatId = '';
-            this.activeCat = null;
-            this.activeCol = this.categoryOptions.find(c => c.id == this.selectedColId) || null;
-        },
-        onCategoryChange() {
-            if (!this.activeCol) return;
-            this.activeCat = this.activeCol.categories.find(cat => cat.id == this.selectedCatId) || null;
-            if (this.activeCat) {
-                this.autofillUrls();
-            }
-        },
-        autofillUrls() {
-            const languages = <?= json_encode($languages) ?>;
-            Object.values(languages).forEach(lang => {
-                const langId = lang.id;
-                const languageIndex = Object.keys(languages).find(index => Number(languages[index].id) === Number(langId)) ?? langId;
-                const colSlug = this.activeCol.translations[langId]?.slug || this.activeCol.key;
-                const catSlug = this.activeCat.translations[langId]?.slug || '';
-                if (colSlug && catSlug) {
-                    const url = `/${colSlug}?category=${catSlug}`;
-                    const urlInput = document.querySelector(`input[name='translations[${languageIndex}][custom_url]']`);
-                    if (urlInput) {
-                        urlInput.value = url;
-                    }
-                    const labelInput = document.querySelector(`input[name='translations[${languageIndex}][label]']`);
-                    if (labelInput) {
-                        labelInput.value = this.activeCat.translations[langId]?.name || '';
-                    }
-                }
-            });
-        }
-    }));
-});
-</script>
