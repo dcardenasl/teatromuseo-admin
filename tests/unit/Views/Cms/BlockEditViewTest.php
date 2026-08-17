@@ -114,7 +114,8 @@ final class BlockEditViewTest extends CIUnitTestCase
         $this->assertStringContainsString('data-language-id="1"', $html);
         $this->assertStringContainsString('mediaReferenceField(', $html);
         $this->assertStringContainsString('translations&#x5B;0&#x5D;&#x5B;block_data&#x5D;&#x5B;cover&#x5D;&#x5B;source_kind&#x5D;', $html);
-        $this->assertStringContainsString('window.openBlockEditPreview', $html);
+        $this->assertStringContainsString('data-block-preview-key="hero"', $html);
+        $this->assertStringNotContainsString('onclick="', $html);
     }
 
     public function testEditViewRendersMediaReferenceRepeaters(): void
@@ -395,37 +396,20 @@ final class BlockEditViewTest extends CIUnitTestCase
 
         $this->assertStringContainsString('value="upcoming"', $html);
         $this->assertStringContainsString('canUseUpcoming()', $html);
-        $this->assertStringContainsString("this.source === 'auto'", $html);
         $this->assertStringContainsString('&quot;direction&quot;&#x3A;&quot;upcoming', $html);
-        $this->assertStringContainsString('window.listingProjectionEditor', $html);
+        $this->assertStringContainsString('x-data="listingProjectionEditor(', $html);
+        $this->assertStringNotContainsString('<script', $html);
     }
 
-    public function testListingProjectionInlineScriptUsesCspNonceWhenEnabled(): void
+    public function testListingProjectionUsesTheBundledComponentWithoutInlineScript(): void
     {
-        $appConfig = config(\Config\App::class);
-        $previousCspEnabled = $appConfig->CSPEnabled;
+        $html = view('cms/pages/blocks/_listing_projection', [
+            'listingFieldCatalog' => ['teatroescuela' => []],
+            'blockConfig' => [],
+            'submittedBlockConfig' => [],
+        ]);
 
-        try {
-            $appConfig->CSPEnabled = true;
-            Services::reset();
-
-            $html = view('cms/pages/blocks/_listing_projection', [
-                'listingFieldCatalog' => ['teatroescuela' => []],
-                'blockConfig' => [],
-                'submittedBlockConfig' => [],
-            ]);
-
-            $markerPosition = strpos($html, 'window.listingProjectionEditor');
-            $this->assertIsInt($markerPosition);
-
-            $openingTagPosition = strrpos(substr($html, 0, $markerPosition), '<script');
-            $this->assertIsInt($openingTagPosition);
-
-            $openingTag = substr($html, $openingTagPosition, $markerPosition - $openingTagPosition);
-            $this->assertMatchesRegularExpression('~<script\s+nonce="[^"]+">\s*$~', $openingTag);
-        } finally {
-            $appConfig->CSPEnabled = $previousCspEnabled;
-            Services::reset();
-        }
+        $this->assertStringContainsString('x-data="listingProjectionEditor(', $html);
+        $this->assertStringNotContainsString('<script', $html);
     }
 }
