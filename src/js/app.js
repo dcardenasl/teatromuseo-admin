@@ -24,6 +24,7 @@ import { adminMediaGallery } from './components/adminMediaGallery.js';
 import { langTabs } from './components/langTabs.js';
 import { jsonEditor } from './components/jsonEditor.js';
 import { blockPreview } from './components/blockPreview.js';
+import { bootBlockEditPreview, openBlockEditPreview } from './components/blockEditPreview.js';
 import { blockTypeDesigner } from './components/blockTypeDesigner.js';
 import { blockInstanceConfig } from './components/blockInstanceConfig.js';
 import { collectionBlockTemplateBuilder } from './components/collectionBlockTemplateBuilder.js';
@@ -93,6 +94,7 @@ document.addEventListener('alpine:init', () => {
     window.copyLangTabsMediaReferenceFieldToAll = copyLangTabsMediaReferenceFieldToAll;
     window.blockInstanceConfigFactory = blockInstanceConfig;
     window.listingProjectionEditor = listingProjectionEditor;
+    window.openBlockEditPreview = openBlockEditPreview;
 });
 
 // Must be on window before the Google GSI script fires
@@ -106,6 +108,7 @@ let lastActionButtonClick = null;
 document.addEventListener('DOMContentLoaded', () => {
     if (!lucideBootstrapped) { bootLucideIcons(); lucideBootstrapped = true; }
     bootSlugFields();
+    bootBlockEditPreview();
     bootGlobalSubmitGuard();
     const config = window.__componentConfig || {};
     bootSessionExpiryWatcher({ expiringMessage: config.sessionExpiringMessage });

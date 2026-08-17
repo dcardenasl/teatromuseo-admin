@@ -92,7 +92,7 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
             <?php endif; ?>
         </div>
         <button type="button"
-                onclick="window.openBlockEditPreview && window.openBlockEditPreview(<?= esc(json_encode($blockKey), 'attr') ?>)"
+                data-block-preview-key="<?= esc($blockKey, 'attr') ?>"
                 class="shrink-0 flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-400 bg-white hover:bg-brand-50 px-3 py-1.5 rounded-lg transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.963-7.178Z"/>
@@ -839,36 +839,6 @@ $serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | 
         </form>
     </section>
 </div>
-<script <?= csp_script_nonce() ?>>
-window.openBlockEditPreview = window.openBlockEditPreview || function openBlockEditPreview(blockKey) {
-    const form = document.getElementById('block-edit-form');
-    if (!(form instanceof HTMLFormElement)) {
-        return;
-    }
-
-    const langTabs = form.querySelector('[x-ref="langTabs"]')?._x_dataStack?.[0] || null;
-    const activeLanguageId = Number(langTabs?.active || 0);
-    const activePanel = activeLanguageId > 0
-        ? form.querySelector(`[data-language-id="${activeLanguageId}"]`)
-        : form.querySelector('[data-language-id]');
-
-    const translatedData = typeof window.formValuesToObject === 'function'
-        ? window.formValuesToObject(form)
-        : {};
-    const blockConfig = translatedData.block_config || {};
-    const translationIndex = Number(activePanel?.dataset?.translationIndex || 0);
-    const blockData = translatedData.translations?.[String(translationIndex)]?.block_data || {};
-
-    window.dispatchEvent(new CustomEvent('block-preview-open', {
-        detail: {
-            blockKey,
-            blockConfig,
-            blockData,
-            previewMode: 'live',
-        },
-    }));
-};
-</script>
 <?= view('components/form/server_field_errors') ?>
 <?php $blockEditContent = ob_get_clean(); ?>
 
