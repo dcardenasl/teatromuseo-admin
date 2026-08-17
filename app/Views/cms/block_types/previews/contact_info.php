@@ -1,13 +1,13 @@
 <?php
 /** @var array<string, mixed> $config */
 /** @var array<string, mixed> $data */
-$addressLabel = esc($data['address_label'] ?? 'Address');
+$addressLabel = esc($data['address_label'] ?? lang('BlockPreview.contact.address'));
 $address      = esc($data['address'] ?? '');
-$phoneLabel   = esc($data['phone_label'] ?? 'Phone');
+$phoneLabel   = esc($data['phone_label'] ?? lang('BlockPreview.contact.phone'));
 $phone        = esc($data['phone'] ?? '');
-$emailLabel   = esc($data['email_label'] ?? 'Email');
+$emailLabel   = esc($data['email_label'] ?? lang('BlockPreview.contact.email'));
 $email        = esc($data['email'] ?? '');
-$hoursLabel   = esc($data['hours_label'] ?? 'Office Hours');
+$hoursLabel   = esc($data['hours_label'] ?? lang('BlockPreview.contact.hours'));
 $hours        = esc($data['hours'] ?? '');
 $cssClass     = esc($config['css_class'] ?? '');
 ?>
@@ -84,7 +84,7 @@ $cssClass     = esc($config['css_class'] ?? '');
 
                 <?php if (! $address && ! $phone && ! $email && ! $hours): ?>
                     <div class="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-sm text-gray-400 text-center">
-                        Configure address, phone, email, and hours in the form.
+                        <?= esc(lang('BlockPreview.contact.hint')) ?>
                     </div>
                 <?php endif; ?>
             </div>

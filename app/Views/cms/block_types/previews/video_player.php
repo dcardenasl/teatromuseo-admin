@@ -19,7 +19,7 @@ if ($aspectRatio === '4/3') {
     <div class="flex items-center justify-between mb-3 border-b border-red-100 pb-2">
         <span class="text-xs font-semibold text-red-700 uppercase tracking-wider flex items-center gap-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Reproductor de Video
+            <?= esc(lang('BlockPreview.video.player_label')) ?>
         </span>
         <span class="text-xxs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-medium">
             Proporción: <?= esc($aspectRatio) ?>
@@ -41,7 +41,7 @@ if ($aspectRatio === '4/3') {
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 </div>
                 <div class="text-[10px] text-white/95 font-medium truncate max-w-xs">
-                    <?= $videoUrl !== '' ? esc($videoUrl) : 'Ninguna URL configurada todavía.' ?>
+                    <?= $videoUrl !== '' ? esc($videoUrl) : esc(lang('BlockPreview.video.empty_url')) ?>
                 </div>
             </div>
         </div>

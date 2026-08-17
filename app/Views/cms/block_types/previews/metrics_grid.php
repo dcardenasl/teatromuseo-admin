@@ -27,10 +27,10 @@ if ($variant === 'dark') {
     <div class="flex items-center justify-between mb-3 border-b border-sky-100/20 pb-2">
         <span class="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 <?= $variant === 'light' ? 'text-sky-700' : 'text-white' ?>">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calculator"><rect x="14" y="14" width="4" height="6" rx="1"/><rect x="6" y="14" width="4" height="6" rx="1"/><rect x="6" y="4" width="12" height="6" rx="1"/></svg>
-            Grilla de Métricas (Contenedor)
+            <?= esc(lang('BlockPreview.metric.grid_title')) ?>
         </span>
         <span class="text-xxs px-2 py-0.5 rounded-full font-medium <?= $variant === 'light' ? 'bg-sky-100 text-sky-800' : 'bg-white/10 text-white' ?>">
-            Variante: <?= esc($variant) ?>
+            <?= esc(lang('BlockPreview.collection.variant')) ?> <?= esc($variant) ?>
         </span>
     </div>
     
@@ -38,10 +38,10 @@ if ($variant === 'dark') {
         <?php for ($i = 1; $i <= 3; $i++): ?>
             <div class="<?= $statBoxClass ?> rounded-lg p-3 text-center">
                 <span class="text-lg md:text-xl font-black block <?= $numColor ?>">99+</span>
-                <span class="text-[9px] uppercase tracking-wide font-medium block <?= $textColor ?>">Métrica <?= $i ?></span>
+                <span class="text-[9px] uppercase tracking-wide font-medium block <?= $textColor ?>"><?= esc(lang('BlockPreview.metric.label')) ?> <?= $i ?></span>
             </div>
         <?php endfor; ?>
     </div>
     
-    <p class="text-[10px] mt-3 text-center italic <?= $variant === 'light' ? 'text-slate-400' : 'text-white/40' ?>">Agrega bloques del tipo "Métrica" como hijos.</p>
+    <p class="text-[10px] mt-3 text-center italic <?= $variant === 'light' ? 'text-slate-400' : 'text-white/40' ?>"><?= esc(lang('BlockPreview.metric.child_hint')) ?></p>
 </div>

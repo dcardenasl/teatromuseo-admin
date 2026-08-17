@@ -16,14 +16,14 @@ $ctaLabel = $data['cta_label'] ?? '';
         <?php endif; ?>
     </div>
     <div class="flex-grow min-w-0">
-        <div class="text-[10px] font-bold text-violet-500 uppercase mb-1">Diapositiva (Slide)</div>
-        <h4 class="text-xs font-bold text-slate-800 truncate"><?= $heading !== '' ? esc($heading) : 'Sin título' ?></h4>
+        <div class="text-[10px] font-bold text-violet-500 uppercase mb-1"><?= esc(lang('BlockPreview.slide.banner_label')) ?></div>
+        <h4 class="text-xs font-bold text-slate-800 truncate"><?= $heading !== '' ? esc($heading) : esc(lang('BlockPreview.common.empty_title')) ?></h4>
         <?php if ($subtitle !== ''): ?>
             <p class="text-[10px] text-slate-500 truncate"><?= esc($subtitle) ?></p>
         <?php endif; ?>
         <?php if ($ctaLabel !== ''): ?>
             <span class="inline-block mt-1 text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-medium">
-                Botón: <?= esc($ctaLabel) ?>
+                <?= esc(lang('BlockPreview.common.button')) ?> <?= esc($ctaLabel) ?>
             </span>
         <?php endif; ?>
     </div>

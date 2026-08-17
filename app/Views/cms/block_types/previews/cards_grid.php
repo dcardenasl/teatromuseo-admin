@@ -25,7 +25,7 @@ if ($variant === 'bordered') {
     <div class="flex items-center justify-between mb-3 border-b border-blue-100 pb-2">
         <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-grid"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-            Grilla de Tarjetas (Contenedor)
+            <?= esc(lang('BlockPreview.cards.grid_title')) ?>
         </span>
         <span class="text-xxs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
             Columnas: <?= esc($columnsDesktop) ?> | <?= esc($variant) ?>
@@ -36,10 +36,10 @@ if ($variant === 'bordered') {
         <?php for ($i = 1; $i <= (int) $columnsDesktop; $i++): ?>
             <div class="<?= $cardClass ?>">
                 <div class="h-6 w-6 rounded bg-violet-100 mb-2 flex items-center justify-center text-[10px] font-bold text-violet-600">★</div>
-                <h4 class="text-xs font-bold text-slate-800">Servicio / Card <?= $i ?></h4>
-                <p class="text-[10px] text-slate-500 mt-1 line-clamp-2">Detalle o descripción corta de la característica.</p>
+                <h4 class="text-xs font-bold text-slate-800"><?= esc(lang('BlockPreview.cards.service')) ?> <?= $i ?></h4>
+                <p class="text-[10px] text-slate-500 mt-1 line-clamp-2"><?= esc(lang('BlockPreview.cards.description')) ?></p>
             </div>
         <?php endfor; ?>
     </div>
-    <p class="text-[10px] text-slate-400 mt-3 text-center italic">Agrega bloques del tipo "Tarjeta" como hijos.</p>
+    <p class="text-[10px] text-slate-400 mt-3 text-center italic"><?= esc(lang('BlockPreview.cards.grid_child_hint')) ?></p>
 </div>

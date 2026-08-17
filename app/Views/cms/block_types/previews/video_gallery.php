@@ -7,8 +7,8 @@ if ($videos === []) {
     $videos = [
         [
             'video_url' => 'https://youtu.be/dQw4w9WgXcQ',
-            'title' => 'Video de ejemplo',
-            'description' => 'Previsualización local del bloque de video gallery.',
+            'title' => lang('BlockPreview.video.sample_title'),
+            'description' => lang('BlockPreview.video.sample_description'),
             'poster' => ['url' => 'https://placehold.co/600x400/0f172a/ffffff?text=Video'],
         ],
     ];
@@ -23,10 +23,10 @@ $columnClass = match ($columns) {
 <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <div class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Galería de videos</div>
-            <div class="mt-1 text-sm font-semibold text-slate-900"><?= esc($data['title'] ?? 'Videos') ?></div>
+            <div class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400"><?= esc(lang('BlockPreview.video.gallery_title')) ?></div>
+            <div class="mt-1 text-sm font-semibold text-slate-900"><?= esc($data['title'] ?? lang('BlockPreview.video.gallery_heading')) ?></div>
         </div>
-        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600"><?= esc($columns) ?> cols</span>
+        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600"><?= esc($columns) ?> <?= esc(lang('BlockPreview.common.cols')) ?></span>
     </div>
 
     <div class="grid gap-3 <?= $columnClass ?>">
@@ -40,7 +40,7 @@ $columnClass = match ($columns) {
                     <img src="<?= esc($posterUrl) ?>" alt="<?= esc($video['title'] ?? '') ?>" class="h-full w-full object-cover" />
                 </div>
                 <div class="p-3">
-                    <div class="text-sm font-semibold text-slate-900"><?= esc($video['title'] ?? 'Video') ?></div>
+                    <div class="text-sm font-semibold text-slate-900"><?= esc($video['title'] ?? lang('BlockPreview.video.gallery_item')) ?></div>
                     <div class="mt-0.5 text-xs text-slate-500"><?= esc($video['description'] ?? '') ?></div>
                 </div>
             </div>
