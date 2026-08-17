@@ -47,7 +47,7 @@ return [
     'summary_desc'                => 'Everything relevant to your project, at a glance.',
     'no_summary_visible'          => 'You do not have access to any section of the system.',
     'source_unavailable'          => 'Information is temporarily unavailable.',
-    'source_unavailable_named'    => '%s information could not be loaded.',
+    'source_unavailable_named'    => '{0} information could not be loaded.',
     'source_cms'                  => 'CMS',
     'source_catalog'              => 'Museum catalog',
     'source_event'                => 'Events',

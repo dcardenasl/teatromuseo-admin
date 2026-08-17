@@ -47,7 +47,7 @@ return [
     'summary_desc'                => 'Todo lo relevante de tu proyecto, de un vistazo.',
     'no_summary_visible'          => 'No tienes acceso a ninguna sección del sistema.',
     'source_unavailable'          => 'Información temporalmente no disponible.',
-    'source_unavailable_named'    => 'No se pudo cargar la información de %s.',
+    'source_unavailable_named'    => 'No se pudo cargar la información de {0}.',
     'source_cms'                  => 'CMS',
     'source_catalog'              => 'Catálogo del museo',
     'source_event'                => 'Eventos',
