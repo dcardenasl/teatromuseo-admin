@@ -8,6 +8,7 @@ use App\Controllers\BaseWebController;
 use App\Modules\Events\Requests\EventStoreRequest;
 use App\Modules\Events\Requests\EventUpdateRequest;
 use App\Modules\Events\Services\EventApiServiceInterface;
+use App\Modules\Events\Services\EventWorkspaceBffAdapter;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -16,11 +17,13 @@ use Psr\Log\LoggerInterface;
 class EventController extends BaseWebController
 {
     protected EventApiServiceInterface $eventService;
+    protected EventWorkspaceBffAdapter $workspaceAdapter;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->eventService = service('eventApiService');
+        $this->workspaceAdapter = service('eventWorkspaceBffAdapter');
     }
 
     public function index(): string
@@ -44,6 +47,23 @@ class EventController extends BaseWebController
 
     public function show(string $id): string
     {
+        $workspace = $this->workspaceAdapter->workspace((int) $id);
+        if ($workspace !== null && is_array($workspace['event'] ?? null)) {
+            return $this->render('events/events/show', [
+                'title' => lang('Events.events_details'),
+                'event' => $workspace['event'],
+                'eventTypeLabels' => $this->eventTypeLabelsFromWorkspace($workspace['eventTypes'] ?? []),
+            ]);
+        }
+        if (! $this->workspaceAdapter->wasUnavailable()) {
+            return $this->render('events/events/show', [
+                'title' => lang('Events.events_details'),
+                'event' => [],
+                'eventTypeLabels' => [],
+                'error' => lang('Events.events_not_found'),
+            ]);
+        }
+
         $response = $this->safeApiCall(fn () => $this->eventService->get($id));
 
         if (! $response['ok']) {
@@ -66,11 +86,18 @@ class EventController extends BaseWebController
 
     public function create(): string
     {
-        $languageContext = $this->contentLanguageContext();
+        $workspace = $this->workspaceAdapter->workspace();
+        $languageContext = $this->contentLanguageContext(
+            languages: $workspace !== null && is_array($workspace['languages'] ?? null)
+                ? $workspace['languages']
+                : null,
+        );
 
         return $this->render('events/events/create', [
             'title' => lang('Events.events_create'),
-            'eventTypeOptions' => $this->eventTypeLabels(),
+            'eventTypeOptions' => $workspace !== null
+                ? $this->eventTypeLabelsFromWorkspace($workspace['eventTypes'] ?? [])
+                : $this->eventTypeLabels(),
             ...$languageContext,
 
         ]);
@@ -98,6 +125,23 @@ class EventController extends BaseWebController
 
     public function edit(string $id): string|RedirectResponse
     {
+        $workspace = $this->workspaceAdapter->workspace((int) $id);
+        if ($workspace !== null && is_array($workspace['event'] ?? null)) {
+            $item = $workspace['event'];
+            return $this->render('events/events/edit', [
+                'title' => lang('Events.events_edit'),
+                'item' => $item,
+                'eventTypeOptions' => $this->eventTypeLabelsFromWorkspace($workspace['eventTypes'] ?? []),
+                ...$this->contentLanguageContext(
+                    $item,
+                    is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [],
+                ),
+            ]);
+        }
+        if (! $this->workspaceAdapter->wasUnavailable()) {
+            return $this->withError(lang('Events.events_not_found'), route_to('admin.events.events'));
+        }
+
         $response = $this->safeApiCall(fn () => $this->eventService->get($id));
         if (! $response['ok']) {
             return $this->withError(lang('Events.events_not_found'), route_to('admin.events.events'));
@@ -151,28 +195,36 @@ class EventController extends BaseWebController
      * source of truth for persisted translations.
      *
      * @param array<string, mixed> $item
+     * @param array<int|string, mixed>|null $languages
      * @return array{languages: list<array<string, mixed>>, defaultLangCode: string, defaultLangIndex: int, translations: array<string, array<string, string>>}
      */
-    private function contentLanguageContext(array $item = []): array
+    private function contentLanguageContext(array $item = [], ?array $languages = null): array
     {
-        $response = $this->safeApiCall(
-            fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true])
-        );
-        $languages = [];
+        if ($languages === null) {
+            $response = $this->safeApiCall(
+                fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true])
+            );
+            $languages = [];
 
-        foreach ($this->extractItems($response) as $language) {
-            if (! is_array($language) || ! isset($language['code']) || ! is_scalar($language['code'])) {
-                continue;
+            foreach ($this->extractItems($response) as $language) {
+                if (! is_array($language) || ! isset($language['code']) || ! is_scalar($language['code'])) {
+                    continue;
+                }
+
+                $code = strtolower(str_replace('_', '-', trim((string) $language['code'])));
+                if (preg_match('/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $code) !== 1) {
+                    continue;
+                }
+
+                $language['code'] = $code;
+                $languages[] = $language;
             }
-
-            $code = strtolower(str_replace('_', '-', trim((string) $language['code'])));
-            if (preg_match('/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $code) !== 1) {
-                continue;
-            }
-
-            $language['code'] = $code;
-            $languages[] = $language;
         }
+
+        $languages = array_values(array_filter(
+            $languages,
+            static fn (mixed $language): bool => is_array($language),
+        ));
 
         if ($languages === []) {
             $fallbackCode = strtolower((string) ($this->viewData['currentLocale'] ?? 'es'));
@@ -238,6 +290,29 @@ class EventController extends BaseWebController
 
             $localized = is_array($type['localized'] ?? null) ? $type['localized'] : [];
             $labels[$slug] = (string) ($localized['name'] ?? $type['name'] ?? $slug);
+        }
+
+        return $labels;
+    }
+
+    /**
+     * @param mixed $items
+     * @return array<string,string>
+     */
+    private function eventTypeLabelsFromWorkspace(mixed $items): array
+    {
+        $labels = [];
+        if (! is_array($items)) {
+            return $labels;
+        }
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $slug = trim((string) ($item['slug'] ?? ''));
+            if ($slug !== '') {
+                $labels[$slug] = (string) ($item['name'] ?? $slug);
+            }
         }
 
         return $labels;

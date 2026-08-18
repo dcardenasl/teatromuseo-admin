@@ -7,6 +7,7 @@ namespace App\Modules\Museum\Controllers;
 use App\Controllers\BaseWebController;
 use App\Modules\Museum\Requests\CollectionItemStoreRequest;
 use App\Modules\Museum\Requests\CollectionItemUpdateRequest;
+use App\Modules\Museum\Services\CatalogCollectionItemBffAdapter;
 use App\Modules\Museum\Services\CollectionItemApiServiceInterface;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -16,11 +17,13 @@ use Psr\Log\LoggerInterface;
 class CollectionItemController extends BaseWebController
 {
     protected CollectionItemApiServiceInterface $collectionItemService;
+    protected CatalogCollectionItemBffAdapter $workspaceAdapter;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->collectionItemService = service('museumCollectionItemApiService');
+        $this->workspaceAdapter = service('catalogCollectionItemBffAdapter');
     }
 
     public function index(): string
@@ -43,6 +46,25 @@ class CollectionItemController extends BaseWebController
 
     public function show(string $id): string
     {
+        $workspace = $this->workspaceAdapter->workspace((int) $id);
+        if ($workspace !== null && is_array($workspace['collectionItem'] ?? null)) {
+            return $this->render('museum/collection_items/show', [
+                'title' => lang('Museum.collection_items_details'),
+                'collectionItem' => $workspace['collectionItem'],
+                'categories' => $this->workspaceOptions($workspace['categories'] ?? []),
+                'languages' => is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [],
+            ]);
+        }
+        if (! $this->workspaceAdapter->wasUnavailable()) {
+            return $this->render('museum/collection_items/show', [
+                'title' => lang('Museum.collection_items_details'),
+                'collectionItem' => [],
+                'error' => lang('Museum.collection_items_not_found'),
+                'categories' => [],
+                'languages' => [],
+            ]);
+        }
+
         $response = $this->safeApiCall(fn () => $this->collectionItemService->get($id));
 
         if (! $response['ok']) {
@@ -65,7 +87,12 @@ class CollectionItemController extends BaseWebController
 
     public function create(): string
     {
-        $languages = $this->getLanguages();
+        $workspace = $this->workspaceAdapter->workspace();
+        $languages = $workspace !== null && is_array($workspace['languages'] ?? null)
+            ? $workspace['languages']
+            : $this->getLanguages();
+        $categories = $workspace !== null ? $this->workspaceOptions($workspace['categories'] ?? []) : $this->categoriesOptions();
+        $techniques = $workspace !== null ? $this->workspaceOptions($workspace['techniques'] ?? []) : $this->techniquesOptions();
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && ! empty($languages))
@@ -74,8 +101,8 @@ class CollectionItemController extends BaseWebController
 
         return $this->render('museum/collection_items/create', [
             'title'            => lang('Museum.collection_items_create'),
-            'categories'       => $this->categoriesOptions(),
-            'techniques'       => $this->techniquesOptions(),
+            'categories'       => $categories,
+            'techniques'       => $techniques,
             'languages'        => $languages,
             'defaultLangId'    => $defaultLangId,
             'defaultLangIndex' => $languageContext['defaultLangIndex'],
@@ -106,6 +133,32 @@ class CollectionItemController extends BaseWebController
 
     public function edit(string $id): string|RedirectResponse
     {
+        $workspace = $this->workspaceAdapter->workspace((int) $id);
+        if ($workspace !== null && is_array($workspace['collectionItem'] ?? null)) {
+            $item = $workspace['collectionItem'];
+            $languages = is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [];
+            $languageContext = $this->resolveLanguageContext($languages);
+            $defaultLangId = $languageContext['defaultLangId'];
+            $translateTargets = ($defaultLangId > 0 && $languages !== [])
+                ? $this->buildTranslateTargets($languages, ['name', 'summary', 'curiosidad', 'contenido', 'physical_description', 'ubicacion'], $defaultLangId)
+                : [];
+
+            return $this->render('museum/collection_items/edit', [
+                'title' => lang('Museum.collection_items_edit'),
+                'item' => $item,
+                'categories' => $this->workspaceOptions($workspace['categories'] ?? []),
+                'techniques' => $this->workspaceOptions($workspace['techniques'] ?? []),
+                'languages' => $languages,
+                'defaultLangId' => $defaultLangId,
+                'defaultLangIndex' => $languageContext['defaultLangIndex'],
+                'defaultLangCode' => $languageContext['defaultLangCode'],
+                'translateTargets' => $translateTargets,
+            ]);
+        }
+        if (! $this->workspaceAdapter->wasUnavailable()) {
+            return $this->withError(lang('Museum.collection_items_not_found'), route_to('admin.museum.collection_items'));
+        }
+
         $response = $this->safeApiCall(fn () => $this->collectionItemService->get($id));
         if (! $response['ok']) {
             return $this->withError(lang('Museum.collection_items_not_found'), route_to('admin.museum.collection_items'));
@@ -209,6 +262,26 @@ class CollectionItemController extends BaseWebController
             }
             $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
             $options[(string) $item['id']] = (string) $label;
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param mixed $items
+     * @return array<string,string>
+     */
+    private function workspaceOptions(mixed $items): array
+    {
+        $options = [];
+        if (! is_array($items)) {
+            return $options;
+        }
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+            $options[(string) $item['id']] = (string) ($item['name'] ?? $item['title'] ?? $item['label'] ?? $item['slug'] ?? $item['id']);
         }
 
         return $options;
