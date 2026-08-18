@@ -20,6 +20,7 @@ helper('cms_settings');
 $contentSettings = $contentSettings ?? [];
 $assetSettings = $assetSettings ?? [];
 $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : [];
+$errorMessage = is_string($error ?? null) ? trim($error) : '';
 ?>
 
 <div class="space-y-5">
@@ -28,6 +29,12 @@ $translationPanel = is_array($translationPanel ?? null) ? $translationPanel : []
         <h1 class="text-xl font-semibold text-gray-900"><?= lang('SiteIdentity.page_title') ?></h1>
         <p class="mt-1 text-sm text-gray-500"><?= lang('SiteIdentity.section_intro') ?></p>
     </div>
+
+    <?php if ($errorMessage !== ''): ?>
+        <div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <?= esc($errorMessage) ?>
+        </div>
+    <?php endif; ?>
 
     <?php if (empty($contentSettings) && empty($assetSettings)): ?>
 

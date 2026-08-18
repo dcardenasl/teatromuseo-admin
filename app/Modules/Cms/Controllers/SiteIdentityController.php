@@ -42,36 +42,17 @@ class SiteIdentityController extends BaseWebController
         helper('cms_settings');
 
         $bootstrap = $this->cmsBootstrap->siteIdentityBootstrap();
-        if ($bootstrap !== null) {
-            $items = is_array($bootstrap['settings'] ?? null) ? $bootstrap['settings'] : [];
-            $languages = is_array($bootstrap['languages'] ?? null) ? array_values($bootstrap['languages']) : [];
-        } else {
-            $identityResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('identity'));
-            if (! ($identityResponse['ok'] ?? false)) {
-                return $this->failApi(
-                    $identityResponse,
-                    lang('SiteIdentity.update_failed'),
-                    route_to('admin.cms.site_identity'),
-                    false
-                );
-            }
-            $identityItems = $this->extractItems($identityResponse);
-
-            $socialResponse = $this->safeApiCall(fn () => $this->settingService->getByGroup('social'));
-            if (! ($socialResponse['ok'] ?? false)) {
-                return $this->failApi(
-                    $socialResponse,
-                    lang('SiteIdentity.update_failed'),
-                    route_to('admin.cms.site_identity'),
-                    false
-                );
-            }
-            $socialItems = $this->extractItems($socialResponse);
-            $items = array_merge($identityItems, $socialItems);
-
-            $langsRes = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
-            $languages = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
+        if ($bootstrap === null) {
+            return $this->render('cms/site-identity/show', [
+                'title'            => lang('SiteIdentity.page_title'),
+                'contentSettings'  => [],
+                'assetSettings'    => [],
+                'translationPanel' => [],
+                'error'            => lang('App.connection_error'),
+            ]);
         }
+        $items = is_array($bootstrap['settings'] ?? null) ? $bootstrap['settings'] : [];
+        $languages = is_array($bootstrap['languages'] ?? null) ? array_values($bootstrap['languages']) : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $settingsMap    = $this->indexSettingsByKey($items);
         $sortedSettings = $this->sortSettingsByOrder($settingsMap);
@@ -93,16 +74,13 @@ class SiteIdentityController extends BaseWebController
             return $deny;
         }
 
-        $identityResponse = $this->settingService->getByGroup('identity');
-        $identityItems    = $this->extractItems($identityResponse);
-
-        $socialResponse   = $this->settingService->getByGroup('social');
-        $socialItems      = $this->extractItems($socialResponse);
-
-        $items            = array_merge($identityItems, $socialItems);
-
-        $langsRes       = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
-        $languages      = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
+        $bootstrap = $this->cmsBootstrap->siteIdentityBootstrap();
+        if ($bootstrap === null) {
+            return redirect()->to(route_to('admin.cms.site_identity'))
+                ->with('error', lang('App.connection_error'));
+        }
+        $items = is_array($bootstrap['settings'] ?? null) ? $bootstrap['settings'] : [];
+        $languages = is_array($bootstrap['languages'] ?? null) ? array_values($bootstrap['languages']) : [];
         $languageContext = $this->resolveLanguageContext($languages);
 
         /** @var SiteIdentityUpdateRequest $formRequest */

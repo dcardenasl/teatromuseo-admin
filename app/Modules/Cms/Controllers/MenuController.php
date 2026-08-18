@@ -177,17 +177,27 @@ class MenuController extends BaseWebController
     public function createItem(string $menuId): string
     {
         $bootstrap = $this->cmsBootstrap->menuEditorBootstrap((int) $menuId);
-        $menuResponse = null;
         if ($bootstrap === null) {
-            $menuResponse = $this->safeApiCall(fn () => $this->menuService->get($menuId));
+            return $this->render('cms/menus/items/create', [
+                'title'            => lang('Menus.menus_items_create') ?? 'Add Menu Item',
+                'menuId'           => $menuId,
+                'menu'             => [],
+                'items'            => [],
+                'pages'            => [],
+                'entries'          => [],
+                'collections'      => [],
+                'languages'        => [],
+                'translateTargets' => [],
+                'error'            => lang('App.connection_error'),
+            ]);
         }
 
         $items = is_array($bootstrap['items'] ?? null)
             ? $bootstrap['items']
-            : $this->extractItems($this->menuService->listItems(['menu_id' => $menuId, 'limit' => 1000]));
+            : [];
         $languages = is_array($bootstrap['languages'] ?? null)
             ? $bootstrap['languages']
-            : $this->getLanguages();
+            : [];
         $defaultLangId = $this->resolveLanguageContext($languages)['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && !empty($languages))
             ? $this->buildTranslateTargets($languages, ['label', 'custom_url'], $defaultLangId, 'translations', true)
@@ -196,11 +206,11 @@ class MenuController extends BaseWebController
         return $this->render('cms/menus/items/create', [
             'title'     => lang('Menus.menus_items_create') ?? 'Add Menu Item',
             'menuId'    => $menuId,
-            'menu'      => is_array($bootstrap['menu'] ?? null) ? $bootstrap['menu'] : $this->extractData($menuResponse ?? []),
+            'menu'      => is_array($bootstrap['menu'] ?? null) ? $bootstrap['menu'] : [],
             'items'     => $items,
-            'pages'     => is_array($bootstrap['pages'] ?? null) ? $this->pagesOptionsFromItems($bootstrap['pages']) : $this->pagesOptions(),
-            'entries'   => is_array($bootstrap['entries'] ?? null) ? $this->entriesOptionsFromItems($bootstrap['entries']) : $this->entriesOptions(),
-            'collections' => is_array($bootstrap['collections'] ?? null) ? $this->collectionsOptionsFromItems($bootstrap['collections']) : $this->collectionsOptions(),
+            'pages'     => is_array($bootstrap['pages'] ?? null) ? $this->pagesOptionsFromItems($bootstrap['pages']) : [],
+            'entries'   => is_array($bootstrap['entries'] ?? null) ? $this->entriesOptionsFromItems($bootstrap['entries']) : [],
+            'collections' => is_array($bootstrap['collections'] ?? null) ? $this->collectionsOptionsFromItems($bootstrap['collections']) : [],
             'languages' => $languages,
             'translateTargets' => $translateTargets,
         ]);
@@ -233,22 +243,19 @@ class MenuController extends BaseWebController
     public function editItem(string $menuId, string $itemId): string|RedirectResponse
     {
         $bootstrap = $this->cmsBootstrap->menuEditorBootstrap((int) $menuId, (int) $itemId);
-        $menuResponse = null;
-        $itemResponse = null;
         if ($bootstrap === null) {
-            $menuResponse = $this->safeApiCall(fn () => $this->menuService->get($menuId));
-            $itemResponse = $this->safeApiCall(fn () => $this->menuService->getItem($itemId));
-            if (! $itemResponse['ok']) {
-                return $this->withError(lang('Menus.menus_items_not_found') ?? 'Menu item not found.', route_to('admin.cms.menus.show', $menuId));
-            }
+            return $this->withError(lang('App.connection_error'), route_to('admin.cms.menus.show', $menuId));
+        }
+        if (! is_array($bootstrap['item'] ?? null) || $bootstrap['item'] === []) {
+            return $this->withError(lang('Menus.menus_items_not_found') ?? 'Menu item not found.', route_to('admin.cms.menus.show', $menuId));
         }
 
         $items = is_array($bootstrap['items'] ?? null)
             ? $bootstrap['items']
-            : $this->extractItems($this->menuService->listItems(['menu_id' => $menuId, 'limit' => 1000]));
+            : [];
         $languages = is_array($bootstrap['languages'] ?? null)
             ? $bootstrap['languages']
-            : $this->getLanguages();
+            : [];
         $defaultLangId = $this->resolveLanguageContext($languages)['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && !empty($languages))
             ? $this->buildTranslateTargets($languages, ['label', 'custom_url'], $defaultLangId, 'translations', true)
@@ -258,12 +265,12 @@ class MenuController extends BaseWebController
             'title'     => lang('Menus.menus_items_edit') ?? 'Edit Menu Item',
             'menuId'    => $menuId,
             'itemId'    => $itemId,
-            'menu'      => is_array($bootstrap['menu'] ?? null) ? $bootstrap['menu'] : $this->extractData($menuResponse ?? []),
-            'item'      => is_array($bootstrap['item'] ?? null) ? $bootstrap['item'] : $this->extractData($itemResponse ?? []),
+            'menu'      => is_array($bootstrap['menu'] ?? null) ? $bootstrap['menu'] : [],
+            'item'      => $bootstrap['item'],
             'items'     => $items,
-            'pages'     => is_array($bootstrap['pages'] ?? null) ? $this->pagesOptionsFromItems($bootstrap['pages']) : $this->pagesOptions(),
-            'entries'   => is_array($bootstrap['entries'] ?? null) ? $this->entriesOptionsFromItems($bootstrap['entries']) : $this->entriesOptions(),
-            'collections' => is_array($bootstrap['collections'] ?? null) ? $this->collectionsOptionsFromItems($bootstrap['collections']) : $this->collectionsOptions(),
+            'pages'     => is_array($bootstrap['pages'] ?? null) ? $this->pagesOptionsFromItems($bootstrap['pages']) : [],
+            'entries'   => is_array($bootstrap['entries'] ?? null) ? $this->entriesOptionsFromItems($bootstrap['entries']) : [],
+            'collections' => is_array($bootstrap['collections'] ?? null) ? $this->collectionsOptionsFromItems($bootstrap['collections']) : [],
             'languages' => $languages,
             'translateTargets' => $translateTargets,
             'returnTo' => $this->incomingReturnTo(),

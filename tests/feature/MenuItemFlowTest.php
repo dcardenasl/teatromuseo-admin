@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Modules\Cms\Services\EntryApiService;
-use App\Modules\Cms\Services\LanguageApiService;
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\MenuApiService;
-use App\Modules\Cms\Services\PageApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
@@ -35,31 +33,21 @@ final class MenuItemFlowTest extends CIUnitTestCase
         $collection = $fixtures->collection([]);
         $languages = $fixtures->languages();
 
-        $menuMock = $this->createMock(MenuApiService::class);
-        $menuMock->method('get')
-            ->with((string) $menu['id'])
-            ->willReturn($fixtures->response($menu));
-        $menuMock->method('listItems')
-            ->with($this->callback(static fn (array $filters): bool => ($filters['menu_id'] ?? null) === (string) $menu['id']))
-            ->willReturn($fixtures->response([]));
-        Services::injectMock('menuApiService', $menuMock);
-
-        $pageMock = $this->createMock(PageApiService::class);
-        $pageMock->method('pages')
-            ->willReturn($fixtures->response(['items' => [$page]]));
-        Services::injectMock('pageApiService', $pageMock);
-
-        $entryMock = $this->createMock(EntryApiService::class);
-        $entryMock->method('list')
-            ->willReturn($fixtures->response(['items' => [$entry]]));
-        $entryMock->method('collections')
-            ->willReturn($fixtures->response(['items' => [$collection]]));
-        Services::injectMock('entryApiService', $entryMock);
-
-        $langMock = $this->createMock(LanguageApiService::class);
-        $langMock->method('list')
-            ->willReturn($fixtures->response($languages));
-        Services::injectMock('languageApiService', $langMock);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsMenuEditorBootstrap')
+            ->with((int) $menu['id'], null)
+            ->willReturn($fixtures->response([
+                'sections' => [
+                    'menu' => $menu,
+                    'items' => [],
+                    'pages' => [$page],
+                    'entries' => [$entry],
+                    'collections' => [$collection],
+                    'languages' => $languages,
+                ],
+            ]));
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -88,26 +76,12 @@ final class MenuItemFlowTest extends CIUnitTestCase
             'fieldErrors' => [],
         ];
 
-        $menuMock = $this->createMock(MenuApiService::class);
-        $menuMock->method('get')
-            ->with((string) $menu['id'])
-            ->willReturn($fixtures->response($menu));
-        $menuMock->method('listItems')
-            ->willReturn($fixtures->response([]));
-        Services::injectMock('menuApiService', $menuMock);
-
-        $pageMock = $this->createMock(PageApiService::class);
-        $pageMock->method('pages')->willReturn($failure);
-        Services::injectMock('pageApiService', $pageMock);
-
-        $entryMock = $this->createMock(EntryApiService::class);
-        $entryMock->method('list')->willReturn($failure);
-        $entryMock->method('collections')->willReturn($failure);
-        Services::injectMock('entryApiService', $entryMock);
-
-        $langMock = $this->createMock(LanguageApiService::class);
-        $langMock->method('list')->willReturn($failure);
-        Services::injectMock('languageApiService', $langMock);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsMenuEditorBootstrap')
+            ->with((int) $menu['id'], null)
+            ->willReturn($failure);
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',

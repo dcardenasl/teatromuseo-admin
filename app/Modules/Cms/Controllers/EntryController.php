@@ -10,10 +10,8 @@ use App\Modules\Cms\Requests\EntryUpdateRequest;
 use App\Modules\Cms\Services\CategoryApiService;
 use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
 use App\Modules\Cms\Services\CmsWorkspaceBffAdapter;
-use App\Modules\Cms\Services\CollectionApiService;
 use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\TagApiService;
-use App\Modules\Cms\Services\TranslationAuditApiService;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -22,10 +20,8 @@ use Psr\Log\LoggerInterface;
 class EntryController extends BaseWebController
 {
     protected EntryApiService $entryService;
-    protected CollectionApiService $collectionService;
     protected CategoryApiService $categoryService;
     protected TagApiService $tagService;
-    protected TranslationAuditApiService $translationAuditService;
     protected CmsBootstrapBffAdapter $cmsBootstrap;
     protected CmsWorkspaceBffAdapter $cmsWorkspace;
 
@@ -33,10 +29,8 @@ class EntryController extends BaseWebController
     {
         parent::initController($request, $response, $logger);
         $this->entryService      = service('entryApiService');
-        $this->collectionService = service('collectionApiService');
         $this->categoryService   = service('categoryApiService');
         $this->tagService        = service('tagApiService');
-        $this->translationAuditService = service('translationAuditApiService');
         $this->cmsBootstrap      = service('cmsBootstrapBffAdapter');
         $this->cmsWorkspace       = service('cmsWorkspaceBffAdapter');
     }
@@ -80,114 +74,20 @@ class EntryController extends BaseWebController
             ]);
         }
 
-        if (! $this->cmsWorkspace->wasUnavailable()) {
-            return $this->render('cms/entries/show', [
-                'title' => lang('Entries.entries_details'),
-                'entry' => [],
-                'collection' => [],
-                'languages' => [],
-                'error' => lang('Entries.entries_not_found'),
-                'collections' => [],
-                'blocks' => [],
-                'blockTypes' => [],
-                'blockTranslationStatus' => [],
-                'publicSiteUrl' => '',
-            ]);
-        }
-
-        // Temporary availability fallback: a BFF outage must not turn a
-        // read-only Admin screen into a hard failure during rollout.
-        $response = $this->safeApiCall(fn () => $this->entryService->get($id));
-
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-
-            return $this->render('cms/entries/show', [
-                'title' => lang('Entries.entries_details'),
-                'entry' => [],
-                'collection' => [],
-                'languages' => [],
-                'error' => $this->firstMessage($response, lang('Entries.entries_not_found')),
-                'collections' => $this->collectionsOptions(),
-                'blocks' => [],
-                'blockTypes' => [],
-                'blockTranslationStatus' => [],
-                'publicSiteUrl' => '',
-            ]);
-        }
-
-        $entryData = $this->extractData($response);
-        $collectionId = $entryData['collection_id'] ?? '';
-        $collection = [];
-        if ($collectionId !== '') {
-            $colResponse = $this->safeApiCall(fn () => $this->collectionService->get((string) $collectionId));
-            if ($colResponse['ok']) {
-                $collection = $this->extractData($colResponse);
-            } else {
-                $this->maybeFlashDevError($colResponse);
-            }
-        }
-
         return $this->render('cms/entries/show', [
             'title' => lang('Entries.entries_details'),
-            'entry' => $entryData,
-            'collection' => $collection,
-            'languages' => $this->getLanguages(),
-            'collections' => $this->collectionsOptions(),
-            'blocks' => $this->entryBlocks($id),
-            'blockTypes' => $this->fetchBlockTypesIndexed(),
-            'blockTranslationStatus' => $this->ownerBlockTranslationStatus('entry', $id),
-            'publicSiteUrl' => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
+            'entry' => [],
+            'collection' => [],
+            'languages' => [],
+            'error' => $this->cmsWorkspace->wasUnavailable()
+                ? lang('App.connection_error')
+                : lang('Entries.entries_not_found'),
+            'collections' => [],
+            'blocks' => [],
+            'blockTypes' => [],
+            'blockTranslationStatus' => [],
+            'publicSiteUrl' => '',
         ]);
-    }
-
-    /**
-     * Translation status for every top-level/child block of this entry.
-     * Degrades to empty on API failure so a status outage never breaks the
-     * entry detail page itself.
-     *
-     * @return array<int|string, array<string, array<string, mixed>>>
-     */
-    private function ownerBlockTranslationStatus(string $ownerType, string $ownerId): array
-    {
-        $response = $this->safeApiCall(fn () => $this->translationAuditService->auditOwnerBlocks($ownerType, $ownerId));
-        $data = $response['ok'] ? $this->extractData($response) : [];
-
-        return is_array($data['blocks'] ?? null) ? $data['blocks'] : [];
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function entryBlocks(string $id): array
-    {
-        $response = $this->safeApiCall(fn () => service('blockInstanceApiService')->list($id, 'entry', ['sort' => 'sort_order']));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-
-            return [];
-        }
-
-        $blocks = $this->extractItems($response);
-
-        return array_values(array_filter($blocks, static fn (array $b) => empty($b['parent_instance_id'])));
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function fetchBlockTypesIndexed(): array
-    {
-        $types = service('blockCatalogService')->indexed();
-
-        $indexed = [];
-        foreach ((array) $types as $t) {
-            if (is_array($t) && isset($t['id'])) {
-                $indexed[(int) $t['id']] = $t;
-            }
-        }
-
-        return $indexed;
     }
 
     public function create(): string
@@ -201,7 +101,7 @@ class EntryController extends BaseWebController
         $bootstrap = $this->cmsBootstrap->entryFormOptions();
         $languages = is_array($bootstrap['languages'] ?? null)
             ? $bootstrap['languages']
-            : $this->getLanguages();
+            : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
@@ -213,7 +113,7 @@ class EntryController extends BaseWebController
             'title'            => lang('Entries.entries_create'),
             'collections'      => is_array($bootstrap['collections'] ?? null)
                 ? $this->optionMap($bootstrap['collections'], 'collection_key')
-                : $this->collectionsOptions(),
+                : [],
             'languages'        => $languages,
             'defaultLangId'    => $languageContext['defaultLangId'],
             'defaultLangCode'  => $languageContext['defaultLangCode'],
@@ -275,83 +175,10 @@ class EntryController extends BaseWebController
             ]);
         }
 
-        if (! $this->cmsWorkspace->wasUnavailable()) {
-            return $this->withError(lang('Entries.entries_not_found'), route_to('admin.cms.entries'));
-        }
-
-        // Temporary availability fallback; remove after the BFF rollout has
-        // completed its smoke and latency acceptance window.
-        $response = $this->safeApiCall(fn () => $this->entryService->get($id));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-
-            return $this->withError(lang('Entries.entries_not_found'), route_to('admin.cms.entries'));
-        }
-
-        $item           = $this->extractData($response);
-        $blockTemplate  = $this->resolveBlockTemplate($item);
-        $bootstrap      = $this->cmsBootstrap->entryFormOptions((int) $id);
-        $languages      = is_array($bootstrap['languages'] ?? null)
-            ? $bootstrap['languages']
-            : $this->getLanguages();
-        $languageContext = $this->resolveLanguageContext($languages);
-        $defaultLangId  = $languageContext['defaultLangId'];
-        $fieldMap       = ['title', 'excerpt', 'meta_title', 'meta_description'];
-        $translateTargets = ($defaultLangId > 0 && !empty($languages))
-            ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
-            : [];
-
-        $focusLangRaw = $this->request->getGet('focus_lang');
-        $focusLangId  = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
-            ? (int) $focusLangRaw
-            : 0;
-
-        return $this->render('cms/entries/edit', [
-            'title'            => lang('Entries.entries_edit'),
-            'item'             => $item,
-            'collections'      => is_array($bootstrap['collections'] ?? null)
-                ? $this->optionMap($bootstrap['collections'], 'collection_key')
-                : $this->collectionsOptions(),
-            'languages'        => $languages,
-            'focusLangId'      => $focusLangId,
-            'defaultLangId'    => $languageContext['defaultLangId'],
-            'defaultLangCode'  => $languageContext['defaultLangCode'],
-            'defaultLangIndex' => $languageContext['defaultLangIndex'],
-            'blockTemplate'    => $blockTemplate,
-            'translateTargets' => $translateTargets,
-            'returnTo'         => $this->incomingReturnTo(),
-            ...$this->taxonomyOptions($item, $bootstrap),
-        ]);
-    }
-
-    /**
-     * Fetches block_template from the entry's parent collection (null if none).
-     *
-     * @param array<string, mixed> $item
-     * @return array<string, mixed>|null
-     */
-    private function resolveBlockTemplate(array $item): ?array
-    {
-        $collectionId = $item['collection_id'] ?? null;
-        if (empty($collectionId)) {
-            return null;
-        }
-
-        $response = $this->safeApiCall(fn () => $this->collectionService->get((string) $collectionId));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-
-            return null;
-        }
-
-        $collection = $this->extractData($response);
-        $template   = $collection['block_template'] ?? null;
-
-        if (!is_array($template) || empty($template['blocks'])) {
-            return null;
-        }
-
-        return $template;
+        return $this->withError(
+            $this->cmsWorkspace->wasUnavailable() ? lang('App.connection_error') : lang('Entries.entries_not_found'),
+            route_to('admin.cms.entries'),
+        );
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Libraries\DomainApiClientInterface;
 use App\Modules\Cms\Controllers\StructureWizardController;
 use App\Modules\Cms\Controllers\WizardController;
@@ -285,13 +286,11 @@ final class WizardFlowTest extends CIUnitTestCase
         $pageId = $fixtures->id('page');
         $menuId = $fixtures->id('menu');
         $blockTypeId = $fixtures->id('block-type');
-        $mock = $this->createMock(DomainApiClientInterface::class);
         $configResponse = [
             'ok' => true,
             'status' => 200,
-            'data' => [
-                'status' => 'success',
-                'data' => [
+            'data' => ['data' => ['sections' => [
+                'config' => [
                     'default_language_id' => $language['id'],
                     'languages' => [$language],
                     'collections' => [
@@ -304,52 +303,32 @@ final class WizardFlowTest extends CIUnitTestCase
                         ['id' => $menuId, 'name' => $fixtures->value('menu-name')],
                     ],
                 ],
-                'raw' => '',
-                'headers' => [],
-                'messages' => [],
-                'fieldErrors' => [],
-            ],
+                'blockTypes' => [[
+                    'id' => $blockTypeId,
+                    'block_key' => 'rich_text',
+                    'name' => 'Rich Text',
+                    'description' => 'Editor de texto enriquecido',
+                    'icon' => 'align-left',
+                    'schema_definition' => ['fields' => []],
+                    'supports_pages' => true,
+                    'supports_entries' => true,
+                    'is_container' => false,
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]],
+            ]]],
             'raw' => '',
             'headers' => [],
             'messages' => [],
             'fieldErrors' => [],
         ];
 
-        $blockTypesResponse = [
-            'ok' => true,
-            'status' => 200,
-            'data' => [
-                'items' => [
-                    [
-                        'id' => $blockTypeId,
-                        'block_key' => 'rich_text',
-                        'name' => 'Rich Text',
-                        'description' => 'Editor de texto enriquecido',
-                        'icon' => 'align-left',
-                        'schema_definition' => ['fields' => []],
-                        'supports_pages' => true,
-                        'supports_entries' => true,
-                        'is_container' => false,
-                        'is_active' => true,
-                        'sort_order' => 1,
-                    ],
-                ],
-                'raw' => '',
-                'headers' => [],
-                'messages' => [],
-                'fieldErrors' => [],
-            ],
-            'raw' => '',
-            'headers' => [],
-            'messages' => [],
-            'fieldErrors' => [],
-        ];
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->exactly(2))
+            ->method('getAdminCmsWizardBootstrap')
+            ->willReturn($configResponse, $configResponse);
 
-        $mock->expects($this->exactly(4))
-            ->method('get')
-            ->willReturnOnConsecutiveCalls($configResponse, $blockTypesResponse, $configResponse, $blockTypesResponse);
-
-        Services::injectMock('domainApiClient', $mock);
+        Services::injectMock('bffApiClient', $bff);
 
         $controller = new WizardController();
         $controller->initController(Services::request(), Services::response(), Services::logger(true));
