@@ -65,6 +65,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Google Identity Services was blocked in production** — the CSP `style-src` didn't allow
+  `https://accounts.google.com` and cPanel's default `Referrer-Policy` stripped the origin Google
+  needs to render the sign-in button. Added the origin to `ContentSecurityPolicy::$styleSrc` and
+  forced `Referrer-Policy: strict-origin-when-cross-origin` via `public/.htaccess`.
 - **`BffApiClient` could get stuck on a broken uppercase `BFF_API_BASE_URL`** — some hosts inject a
   short process value (e.g. `api`) under that key and refuse to let `.env` override it. `Config\BffApiClient`
   now validates each candidate URL and prefers the dotted `bffApiClient.baseUrl` setting whenever it
