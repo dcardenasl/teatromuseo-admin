@@ -64,6 +64,70 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /**
+     * Read the Hub-owned Metrics summary and trend series through one BFF
+     * request. The Admin keeps direct calls as an availability fallback while
+     * the BFF contract is rolled out.
+     *
+     * @return ApiResponse
+     */
+    public function getAdminMetricsWorkspace(string $period = '24h', int $maxRetries = 2): array
+    {
+        if (! in_array($period, ['1h', '24h', '7d', '30d'], true)) {
+            return $this->unavailableResponse();
+        }
+
+        try {
+            $response = $this->request('GET', '/me/admin-metrics/workspace', [
+                'query' => ['period' => $period],
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin metrics workspace BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin metrics workspace BFF returned HTTP %d (access_token=%s).',
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
+    }
+
+    /** @return ApiResponse */
+    public function getAdminIamRoleWorkspace(int|string $roleId, int $maxRetries = 2): array
+    {
+        $normalizedId = (string) $roleId;
+        if ($normalizedId === '' || ! ctype_digit($normalizedId) || (int) $normalizedId < 1) {
+            return $this->unavailableResponse();
+        }
+
+        try {
+            $response = $this->request('GET', '/me/admin-iam/roles/' . $normalizedId . '/workspace', [
+                'max_retries' => $maxRetries,
+            ], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin IAM role workspace BFF transport failure: %s: %s',
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        return $response;
+    }
+
+    /**
      * Read the complete authenticated Admin analytics projection from the BFF.
      *
      * The BFF owns the bounded CMS projection so the Analytics page does not
@@ -167,6 +231,32 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
         }
 
         return $response;
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCatalogCollectionItemWorkspace(?int $itemId = null, int $maxRetries = 2): array
+    {
+        if ($itemId !== null && $itemId < 1) {
+            return $this->unavailableResponse();
+        }
+        $path = $itemId === null
+            ? '/me/admin-catalog/collection-items/workspace'
+            : '/me/admin-catalog/collection-items/' . $itemId . '/workspace';
+
+        return $this->adminWorkspaceRequest('Catalog collection item workspace', $path, $maxRetries);
+    }
+
+    /** @return ApiResponse */
+    public function getAdminEventWorkspace(?int $eventId = null, int $maxRetries = 2): array
+    {
+        if ($eventId !== null && $eventId < 1) {
+            return $this->unavailableResponse();
+        }
+        $path = $eventId === null
+            ? '/me/admin-event/events/workspace'
+            : '/me/admin-event/events/' . $eventId . '/workspace';
+
+        return $this->adminWorkspaceRequest('Event workspace', $path, $maxRetries);
     }
 
     /** @return ApiResponse */
@@ -329,6 +419,34 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
         if (($response['ok'] ?? false) !== true) {
             log_message('error', sprintf(
                 'Admin CMS %s BFF returned HTTP %d (access_token=%s).',
+                $label,
+                (int) ($response['status'] ?? 0),
+                $this->hasAccessToken() ? 'present' : 'missing',
+            ));
+        }
+
+        return $response;
+    }
+
+    /** @return ApiResponse */
+    private function adminWorkspaceRequest(string $label, string $path, int $maxRetries): array
+    {
+        try {
+            $response = $this->request('GET', $path, ['max_retries' => $maxRetries], true);
+        } catch (\Throwable $exception) {
+            log_message('error', sprintf(
+                'Admin %s BFF transport failure: %s: %s',
+                $label,
+                $exception::class,
+                $exception->getMessage(),
+            ));
+
+            return $this->unavailableResponse();
+        }
+
+        if (($response['ok'] ?? false) !== true) {
+            log_message('error', sprintf(
+                'Admin %s BFF returned HTTP %d (access_token=%s).',
                 $label,
                 (int) ($response['status'] ?? 0),
                 $this->hasAccessToken() ? 'present' : 'missing',

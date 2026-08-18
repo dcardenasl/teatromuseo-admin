@@ -47,12 +47,16 @@ use App\Modules\Events\Services\EventApiServiceInterface;
 use App\Modules\Events\Services\EventLookupBffAdapter;
 use App\Modules\Events\Services\EventTypeApiService;
 use App\Modules\Events\Services\EventTypeApiServiceInterface;
+use App\Modules\Events\Services\EventWorkspaceBffAdapter;
 use App\Modules\Files\Services\FileApiService;
 use App\Modules\Iam\Services\ApplicationApiService;
 use App\Modules\Iam\Services\PermissionApiService;
 use App\Modules\Iam\Services\RoleApiService;
 use App\Modules\Iam\Services\RoleMatrixApiService;
+use App\Modules\Iam\Services\RoleWorkspaceBffAdapter;
 use App\Modules\Metrics\Services\MetricsApiService;
+use App\Modules\Metrics\Services\MetricsWorkspaceBffAdapter;
+use App\Modules\Museum\Services\CatalogCollectionItemBffAdapter;
 use App\Modules\Museum\Services\CategoryApiService as MuseumCategoryApiService;
 use App\Modules\Museum\Services\CategoryApiServiceInterface;
 use App\Modules\Museum\Services\CollectionItemApiService;
@@ -250,6 +254,15 @@ class Services extends BaseService
         return new MetricsApiService(static::apiClient());
     }
 
+    public static function metricsWorkspaceBffAdapter(bool $getShared = true): MetricsWorkspaceBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('metricsWorkspaceBffAdapter');
+        }
+
+        return new MetricsWorkspaceBffAdapter(static::bffApiClient());
+    }
+
     public static function healthApiService(bool $getShared = true): HealthApiService
     {
         if ($getShared) {
@@ -332,6 +345,15 @@ class Services extends BaseService
         }
 
         return new RoleApiService(static::apiClient());
+    }
+
+    public static function roleWorkspaceBffAdapter(bool $getShared = true): RoleWorkspaceBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('roleWorkspaceBffAdapter');
+        }
+
+        return new RoleWorkspaceBffAdapter(static::bffApiClient());
     }
     public static function roleMatrixApiService(bool $getShared = true): RoleMatrixApiService
     {
@@ -527,6 +549,15 @@ class Services extends BaseService
         return new EventLookupBffAdapter(static::bffApiClient());
     }
 
+    public static function eventWorkspaceBffAdapter(bool $getShared = true): EventWorkspaceBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('eventWorkspaceBffAdapter');
+        }
+
+        return new EventWorkspaceBffAdapter(static::bffApiClient());
+    }
+
     public static function cmsBootstrapBffAdapter(bool $getShared = true): CmsBootstrapBffAdapter
     {
         if ($getShared) {
@@ -622,5 +653,14 @@ class Services extends BaseService
             return static::getSharedInstance('museumCollectionItemApiService');
         }
         return new CollectionItemApiService(static::catalogDomainApiClient());
+    }
+
+    public static function catalogCollectionItemBffAdapter(bool $getShared = true): CatalogCollectionItemBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('catalogCollectionItemBffAdapter');
+        }
+
+        return new CatalogCollectionItemBffAdapter(static::bffApiClient());
     }
 }

@@ -19,6 +19,12 @@ interface BffApiClientInterface extends ApiClientInterface
     public function getAdminDashboard(int $maxRetries = 2): array;
 
     /** @return ApiResponse */
+    public function getAdminMetricsWorkspace(string $period = '24h', int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminIamRoleWorkspace(int|string $roleId, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
     public function getAdminAnalytics(string $period = '7d', int $maxRetries = 2): array;
 
     /**
@@ -29,6 +35,12 @@ interface BffApiClientInterface extends ApiClientInterface
 
     /** @return ApiResponse */
     public function getAdminEventLookups(string $context, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminCatalogCollectionItemWorkspace(?int $itemId = null, int $maxRetries = 2): array;
+
+    /** @return ApiResponse */
+    public function getAdminEventWorkspace(?int $eventId = null, int $maxRetries = 2): array;
 
     /** @return ApiResponse */
     public function getAdminCmsEntryFormOptions(?int $entryId = null, int $maxRetries = 2): array;
