@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Cms\Services;
 
 use App\Libraries\BffApiClientInterface;
+use App\Support\BffAvailability;
 
 /** Normalizes the single-read CMS workspace projection for Admin views. */
 final class CmsWorkspaceBffAdapter
@@ -42,8 +43,12 @@ final class CmsWorkspaceBffAdapter
      */
     private function sections(array $response): ?array
     {
-        $this->lastRequestUnavailable = ($response['ok'] ?? false) !== true;
+        $this->lastRequestUnavailable = BffAvailability::isUnavailable($response);
         if ($this->lastRequestUnavailable) {
+            return null;
+        }
+
+        if (($response['ok'] ?? false) !== true) {
             return null;
         }
 

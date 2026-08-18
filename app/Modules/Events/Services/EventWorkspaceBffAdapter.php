@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Events\Services;
 
 use App\Libraries\BffApiClientInterface;
+use App\Support\BffAvailability;
 
 /** Normalizes the single-read Event workspace for Admin screens. */
 final class EventWorkspaceBffAdapter
@@ -19,8 +20,11 @@ final class EventWorkspaceBffAdapter
     public function workspace(?int $eventId = null): ?array
     {
         $response = $this->bffApiClient->getAdminEventWorkspace($eventId);
-        $this->lastRequestUnavailable = ($response['ok'] ?? false) !== true;
+        $this->lastRequestUnavailable = BffAvailability::isUnavailable($response);
         if ($this->lastRequestUnavailable) {
+            return null;
+        }
+        if (($response['ok'] ?? false) !== true) {
             return null;
         }
         $payload = is_array($response['data'] ?? null) ? $response['data'] : [];

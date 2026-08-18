@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Museum\Services;
 
 use App\Libraries\BffApiClientInterface;
+use App\Support\BffAvailability;
 
 /** Normalizes the single-read Catalog collection-item workspace. */
 final class CatalogCollectionItemBffAdapter
@@ -19,8 +20,11 @@ final class CatalogCollectionItemBffAdapter
     public function workspace(?int $itemId = null): ?array
     {
         $response = $this->bffApiClient->getAdminCatalogCollectionItemWorkspace($itemId);
-        $this->lastRequestUnavailable = ($response['ok'] ?? false) !== true;
+        $this->lastRequestUnavailable = BffAvailability::isUnavailable($response);
         if ($this->lastRequestUnavailable) {
+            return null;
+        }
+        if (($response['ok'] ?? false) !== true) {
             return null;
         }
         $payload = is_array($response['data'] ?? null) ? $response['data'] : [];

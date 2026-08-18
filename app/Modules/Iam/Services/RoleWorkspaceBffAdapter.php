@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\Iam\Services;
 
 use App\Libraries\BffApiClientInterface;
+use App\Support\BffAvailability;
 
 /** Normalizes the Hub IAM role workspace for existing Admin views. */
 final class RoleWorkspaceBffAdapter
 {
+    private bool $unavailable = false;
+
     public function __construct(private readonly BffApiClientInterface $bffClient)
     {
     }
@@ -17,7 +20,8 @@ final class RoleWorkspaceBffAdapter
     public function read(int|string $roleId): ?array
     {
         $response = $this->bffClient->getAdminIamRoleWorkspace($roleId);
-        if (($response['ok'] ?? false) !== true) {
+        $this->unavailable = BffAvailability::isUnavailable($response);
+        if ($this->unavailable || ($response['ok'] ?? false) !== true) {
             return null;
         }
 
@@ -29,5 +33,10 @@ final class RoleWorkspaceBffAdapter
             'allPermissions' => is_array($data['allPermissions'] ?? null) ? $data['allPermissions'] : [],
             'assignedPermissionIds' => is_array($data['assignedPermissionIds'] ?? null) ? $data['assignedPermissionIds'] : [],
         ];
+    }
+
+    public function wasUnavailable(): bool
+    {
+        return $this->unavailable;
     }
 }

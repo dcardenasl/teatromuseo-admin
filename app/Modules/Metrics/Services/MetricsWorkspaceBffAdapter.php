@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Metrics\Services;
 
 use App\Libraries\BffApiClientInterface;
+use App\Support\BffAvailability;
 
 /** Normalizes the Hub-owned Metrics workspace for the existing view. */
 final class MetricsWorkspaceBffAdapter
@@ -19,8 +20,8 @@ final class MetricsWorkspaceBffAdapter
     public function read(string $period): ?array
     {
         $response = $this->bffClient->getAdminMetricsWorkspace($period);
-        if (($response['ok'] ?? false) !== true) {
-            $this->unavailable = true;
+        $this->unavailable = BffAvailability::isUnavailable($response);
+        if ($this->unavailable || ($response['ok'] ?? false) !== true) {
 
             return null;
         }

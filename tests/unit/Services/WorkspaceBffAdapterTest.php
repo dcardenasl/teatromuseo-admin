@@ -52,7 +52,21 @@ final class WorkspaceBffAdapterTest extends CIUnitTestCase
         ], (new RoleWorkspaceBffAdapter($bff))->read(7));
     }
 
-    public function testCatalogAndEventFailuresRemainAvailableForDirectFallback(): void
+    public function testRoleClientErrorsDoNotTriggerDirectFallback(): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminIamRoleWorkspace')
+            ->with(7)
+            ->willReturn($this->unavailableResponse(404));
+
+        $adapter = new RoleWorkspaceBffAdapter($bff);
+
+        $this->assertNull($adapter->read(7));
+        $this->assertFalse($adapter->wasUnavailable());
+    }
+
+    public function testCatalogAndEventFailuresAreClassifiedAsUnavailable(): void
     {
         $catalogBff = $this->createMock(BffApiClientInterface::class);
         $catalogBff->expects($this->once())
@@ -73,6 +87,20 @@ final class WorkspaceBffAdapterTest extends CIUnitTestCase
         $eventAdapter = new EventWorkspaceBffAdapter($eventBff);
         $this->assertNull($eventAdapter->workspace(11));
         $this->assertTrue($eventAdapter->wasUnavailable());
+    }
+
+    public function testClientErrorsDoNotTriggerDirectFallback(): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCatalogCollectionItemWorkspace')
+            ->with(9)
+            ->willReturn($this->unavailableResponse(404));
+
+        $adapter = new CatalogCollectionItemBffAdapter($bff);
+
+        $this->assertNull($adapter->workspace(9));
+        $this->assertFalse($adapter->wasUnavailable());
     }
 
     /** @param array<string,mixed> $data */
