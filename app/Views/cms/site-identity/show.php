@@ -302,7 +302,6 @@ $errorMessage = is_string($error ?? null) ? trim($error) : '';
                                 accept: '<?= esc($fpAccept, 'js') ?>',
                                 filterType: '<?= esc($fpFilter, 'js') ?>'
                             })"
-                             x-init="init()"
                              <?= $isReadonly ? 'data-readonly="true"' : '' ?>>
 
                             <input type="hidden" :name="fieldName" :value="fileId">

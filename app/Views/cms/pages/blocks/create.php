@@ -502,7 +502,6 @@ $isImageAccept = static function (string $accept): bool {
 
                                 <template x-if="field.type === 'richtext'">
                                     <div x-data="richTextEditor('', `translations[${langIndex}][block_data][${fieldKey}]`)"
-                                         x-init="init()"
                                          class="border border-gray-300 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 transition-shadow">
                                         <?= view('partials/richtext_toolbar') ?>
                                         <!-- Editor area -->

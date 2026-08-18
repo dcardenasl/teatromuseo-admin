@@ -47,7 +47,7 @@ if ($metadataRows === []) {
     jsonPastePrompt: <?= esc(json_encode(lang('Labels.json_paste_prompt'), JSON_THROW_ON_ERROR), 'attr') ?>,
     jsonInvalidFormat: <?= esc(json_encode(lang('Labels.json_invalid_format'), JSON_THROW_ON_ERROR), 'attr') ?>,
     jsonSyntaxError: <?= esc(json_encode(lang('Labels.json_syntax_error'), JSON_THROW_ON_ERROR), 'attr') ?>
-})" x-init="init()">
+})">
     <input type="hidden" id="<?= esc($name, 'attr') ?>" name="<?= esc($name, 'attr') ?>" :value="json">
     
     <div class="flex items-center justify-between gap-3">

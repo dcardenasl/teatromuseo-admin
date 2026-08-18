@@ -38,8 +38,7 @@
         deleteAction(row) {
             return `<?= rtrim(route_to('admin.cms.forms'), '/') ?>/${row.id}/delete`;
         }
-    }"
-    x-init="init()">
+    }">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Forms.title'),

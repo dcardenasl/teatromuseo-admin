@@ -7,7 +7,7 @@
 $csrfName  ??= csrf_token();
 $csrfToken ??= csrf_hash();
 ?>
-<div class="max-w-6xl mx-auto space-y-6" x-data="wizard()" x-init="init()">
+<div class="max-w-6xl mx-auto space-y-6" x-data="wizard()">
 
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-4">

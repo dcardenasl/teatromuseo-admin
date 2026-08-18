@@ -31,8 +31,7 @@ $fpErrorClass = field_error_class($fpName, 'border-red-500 bg-red-50');
         value: '<?= esc($fpValue, 'js') ?>',
         accept: '<?= esc($fpAccept, 'js') ?>',
         filterType: '<?= esc($fpFilter, 'js') ?>'
-    })"
-     x-init="init()">
+    })">
 
     <input type="hidden" :name="fieldName" :value="fileId">
 

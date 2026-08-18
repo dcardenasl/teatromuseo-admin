@@ -36,7 +36,7 @@ $csrfHash = csrf_hash();
         routes: {},
         csrf: { name: '<?= esc($csrfName) ?>', hash: '<?= esc($csrfHash) ?>' },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    }))" x-init="init()">
+    }))">
 
     <?= view('layouts/partials/filter_panel', [
         'actionUrl'          => route_to('files.trash'),

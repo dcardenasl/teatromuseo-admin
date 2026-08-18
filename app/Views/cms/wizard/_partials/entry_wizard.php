@@ -272,7 +272,6 @@
                     <div :data-wizard-content-richtext-field="blockContentStepIndex + ':' + field.key"
                          :data-field-key="field.key"
                          x-data="richTextEditor(blockContentDrafts[blockContentStepIndex][field.key] || '', '')"
-                         x-init="init()"
                          class="border border-gray-300 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 transition-shadow">
                         <?= view('partials/richtext_toolbar') ?>
                         <div x-ref="editorEl" class="richtext-content px-3 py-2.5 min-h-[130px] text-sm text-gray-800 cursor-text"></div>

@@ -41,7 +41,7 @@ $currentCategory = (string) request()->getGet('category');
         },
         confirmDelete: '<?= esc(lang('Files.confirm_delete')) ?>',
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    }))" x-init="init()">
+    }))">
 
     <div class="flex items-center justify-between gap-3">
         <h3 class="text-lg font-semibold text-gray-900"><?= lang('Files.my_files') ?></h3>

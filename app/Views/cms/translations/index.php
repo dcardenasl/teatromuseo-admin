@@ -160,7 +160,7 @@
                 const row = this.rows.find((candidate) => ['missing', 'incomplete', 'mismatch'].includes(candidate.status));
                 return row ? this.editUrl(row) : '#';
             }
-        }" x-init="init()">
+        }">
 
         <?= view('layouts/partials/table_toolbar', [
             'title' => lang('Translations.missing_incomplete'),

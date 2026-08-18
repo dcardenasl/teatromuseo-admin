@@ -33,7 +33,7 @@ $wizardDefaultLanguageId = (int) ($wizardDefaultLanguage['id'] ?? 0);
 $wizardDefaultLanguageCode = strtoupper((string) ($wizardDefaultLanguage['code'] ?? ''));
 $wizardDefaultLanguageLabel = (string) ($wizardDefaultLanguage['label'] ?? $wizardDefaultLanguage['name'] ?? $wizardDefaultLanguageCode);
 ?>
-<div class="max-w-6xl mx-auto space-y-6" x-data="structureWizard()" x-init="init()" @slug-availability-changed.window="onSlugAvailabilityChanged($event)">
+<div class="max-w-6xl mx-auto space-y-6" x-data="structureWizard()" @slug-availability-changed.window="onSlugAvailabilityChanged($event)">
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="space-y-1">

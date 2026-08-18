@@ -31,7 +31,7 @@ $errorClass = field_error_class($name, 'border-red-500 bg-red-50/40');
             accept: '<?= esc($accept, 'js') ?>',
             filterType: '<?= esc($filterType, 'js') ?>'
         })"
-         x-init="init()" class="<?= esc($errorClass, 'attr') ?>">
+         class="<?= esc($errorClass, 'attr') ?>">
 
         <input type="hidden" :name="fieldName" :value="csvValue">
 

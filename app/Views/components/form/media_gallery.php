@@ -35,7 +35,7 @@ if ($mediaRows === []) {
 }
 ?>
 
-<div class="mt-6" x-data="adminMediaGallery({ rows: <?= esc(json_encode(array_values($mediaRows), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), 'attr') ?> })" x-init="init()">
+<div class="mt-6" x-data="adminMediaGallery({ rows: <?= esc(json_encode(array_values($mediaRows), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), 'attr') ?> })">
     <div class="flex items-center justify-between">
         <div>
             <h4 class="text-base font-semibold text-gray-900"><?= esc($label) ?></h4>

@@ -204,8 +204,7 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
 	         optionsRequiredMessage: <?= esc(json_encode(lang('Forms.options_required'), JSON_THROW_ON_ERROR), 'attr') ?>,
 	         confirmDeleteFieldMessage: <?= esc(json_encode(lang('Forms.confirm_delete_field'), JSON_THROW_ON_ERROR), 'attr') ?>,
 	         deleteFailedMessage: <?= esc(json_encode(lang('Forms.delete_failed'), JSON_THROW_ON_ERROR), 'attr') ?>,
-	     })"
-     x-init="init()">
+     })">
 
     <div class="mb-4 flex items-center justify-between">
         <h2 class="text-base font-semibold text-gray-800"><?= lang('Forms.section_fields') ?></h2>
