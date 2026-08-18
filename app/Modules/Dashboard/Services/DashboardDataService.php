@@ -15,7 +15,7 @@ use CodeIgniter\Cache\CacheInterface;
  */
 final readonly class DashboardDataService
 {
-    private const CACHE_VERSION = 3;
+    private const CACHE_VERSION = 4;
 
     public function __construct(
         private BffApiClientInterface $bffClient,
