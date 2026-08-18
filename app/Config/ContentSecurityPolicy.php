@@ -211,6 +211,7 @@ class ContentSecurityPolicy extends BaseConfig
             // `hidden`) as part of the same Alpine CSP migration.
             // TRACKED: TASKS.md FRONT-01g.
             "'unsafe-inline'",
+            'https://accounts.google.com',
         ];
         $this->imageSrc = [
             "'self'",
