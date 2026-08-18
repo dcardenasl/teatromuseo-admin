@@ -44,6 +44,24 @@ final class PageFlowTest extends CIUnitTestCase
         Services::injectMock('bffApiClient', $bff);
     }
 
+    private function injectUnavailablePageWorkspace(int $pageId = 1): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsPageWorkspace')
+            ->with($pageId, null)
+            ->willReturn([
+                'ok' => false,
+                'status' => 503,
+                'data' => [],
+                'raw' => '',
+                'headers' => [],
+                'messages' => ['BFF workspace unavailable'],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $bff);
+    }
+
     public function testAdminRoutesRequireAuth(): void
     {
         $result = $this->get('/admin/cms/pages');
@@ -77,6 +95,19 @@ final class PageFlowTest extends CIUnitTestCase
         ])->get('/admin/cms/pages');
 
         $result->assertStatus(200);
+    }
+
+    public function testShowDoesNotFanOutWhenBffWorkspaceIsUnavailable(): void
+    {
+        $this->injectUnavailablePageWorkspace();
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['cms.pages.read']],
+        ])->get('/admin/cms/pages/1');
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString('Error de conexi&oacute;n con el servidor.', (string) $result->getBody());
     }
 
     public function testStoreValidationFailureRedirectsBack(): void

@@ -9,6 +9,8 @@ use App\Libraries\BffApiClientInterface;
 /** Normalizes the single-read CMS workspace projection for Admin views. */
 final class CmsWorkspaceBffAdapter
 {
+    private bool $lastRequestUnavailable = false;
+
     public function __construct(private readonly BffApiClientInterface $bffApiClient)
     {
     }
@@ -16,13 +18,22 @@ final class CmsWorkspaceBffAdapter
     /** @return array<string, mixed>|null */
     public function page(int $pageId, ?int $instanceId = null): ?array
     {
-        return $this->sections($this->bffApiClient->getAdminCmsPageWorkspace($pageId, $instanceId));
+        $sections = $this->sections($this->bffApiClient->getAdminCmsPageWorkspace($pageId, $instanceId));
+
+        return $sections !== null && is_array($sections['page'] ?? null) ? $sections : null;
     }
 
     /** @return array<string, mixed>|null */
     public function entry(int $entryId, ?int $instanceId = null): ?array
     {
-        return $this->sections($this->bffApiClient->getAdminCmsEntryWorkspace($entryId, $instanceId));
+        $sections = $this->sections($this->bffApiClient->getAdminCmsEntryWorkspace($entryId, $instanceId));
+
+        return $sections !== null && is_array($sections['entry'] ?? null) ? $sections : null;
+    }
+
+    public function wasUnavailable(): bool
+    {
+        return $this->lastRequestUnavailable;
     }
 
     /**
@@ -31,7 +42,8 @@ final class CmsWorkspaceBffAdapter
      */
     private function sections(array $response): ?array
     {
-        if (($response['ok'] ?? false) !== true) {
+        $this->lastRequestUnavailable = ($response['ok'] ?? false) !== true;
+        if ($this->lastRequestUnavailable) {
             return null;
         }
 

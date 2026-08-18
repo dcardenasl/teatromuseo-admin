@@ -57,9 +57,7 @@ class BlockInstanceController extends BaseWebController
         return in_array('entries', $segments, true) ? self::OWNER_ENTRY : self::OWNER_PAGE;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function fetchOwner(string $ownerType, string $ownerId): array
     {
         $cacheKey = 'cms_block_owner_' . $ownerType . '_' . $ownerId;
@@ -80,16 +78,7 @@ class BlockInstanceController extends BaseWebController
         return $owner;
     }
 
-    /**
-     * Translation status for every block belonging to a single page/entry,
-     * keyed by instance id -> language code -> {language_id,status,detail}.
-     * Backs the contextual per-language badges rendered in the block list
-     * views; degrades to empty on API failure so a badge outage never breaks
-     * the block builder itself (same graceful-degradation posture as
-     * activeLanguages() above).
-     *
-     * @return array<int|string, array<string, array<string, mixed>>>
-     */
+    /** @return array<int|string, array<string, array<string, mixed>>> */
     private function ownerBlockTranslationStatus(string $ownerType, string $ownerId): array
     {
         $response = $this->safeApiCall(fn () => $this->translationAuditService->auditOwnerBlocks($ownerType, $ownerId));
@@ -148,10 +137,6 @@ class BlockInstanceController extends BaseWebController
     }
 
     /**
-     * Resolve the small thumbnail variant for image references used by child
-     * blocks. The block API intentionally returns the stored media reference,
-     * while this admin listing needs a display-ready URL for both images.
-     *
      * @param array<int, array<string, mixed>> $children
      * @return array<int, array<string, mixed>>
      */
@@ -173,9 +158,6 @@ class BlockInstanceController extends BaseWebController
             return $children;
         }
 
-        // The picker manifest already contains a display URL backed by the
-        // thumb variant. Resolve it once instead of issuing one API request
-        // per image and exhausting the Hub's request rate limit.
         $manifestResponse = $this->safeApiCall(fn () => $this->fileService->pickerManifest());
         if (! $manifestResponse['ok']) {
             return $children;
@@ -216,10 +198,12 @@ class BlockInstanceController extends BaseWebController
     public function index(string $ownerId): string|RedirectResponse
     {
         $ownerType = $this->ownerTypeFromRequest();
-        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId);
+        $workspace = $ownerType === self::OWNER_PAGE
+            ? $this->workspaceForOwner((int) $ownerId)
+            : null;
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
             if ($workspace === null || ! is_array($workspace[$ownerType] ?? null)) {
-                return redirect()->to(BlockOwnerRouting::listRoute($ownerType))->with('error', BlockOwnerRouting::notFoundMessage($ownerType));
+                return redirect()->to(BlockOwnerRouting::listRoute($ownerType))->with('error', $this->workspaceError($ownerType));
             }
 
             $page = $workspace[$ownerType];
@@ -259,21 +243,14 @@ class BlockInstanceController extends BaseWebController
         if ($page === []) {
             return redirect()->to(BlockOwnerRouting::listRoute($ownerType))->with('error', BlockOwnerRouting::notFoundMessage($ownerType));
         }
-        $routes = BlockOwnerRouting::routes($ownerType);
 
         $blocksResponse = $this->safeApiCall(fn () => $this->blockInstanceService->list($ownerId, $ownerType));
         $allBlocks = $blocksResponse['ok'] ? $this->extractItems($blocksResponse) : [];
-
-        // Only show top-level blocks in the page editor (children managed via their parent's UI)
         $blocks = array_values(array_filter($allBlocks, static fn (array $b) => empty($b['parent_instance_id'])));
-
-        // Index only renders static metadata (name/icon/block_key/category/
-        // description/is_container) — never config_fields/schema_definition
-        // options — so it skips resolve()'s forms/collections/pages/entries
-        // hydration entirely instead of paying for it unused.
         $typesIndexed = $this->blockTypeOptions->rawIndexed();
         $routes = BlockOwnerRouting::routes($ownerType);
-        $previewUrl = BlockOwnerRouting::previewUrl($ownerType, $page, $this->activeLanguages());
+        $languages = $this->activeLanguages();
+        $previewUrl = BlockOwnerRouting::previewUrl($ownerType, $page, $languages);
 
         return $this->render('cms/pages/blocks/index', [
             'title'             => lang('Blocks.blocks_section_title') . ': ' . ($page['title'] ?? BlockOwnerRouting::label($ownerType)),
@@ -282,8 +259,8 @@ class BlockInstanceController extends BaseWebController
             'blockTypes'        => $typesIndexed,
             'collectionsMap'    => $this->blockTypeOptions->collectionsMap(),
             'publicSiteUrl'     => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
-            'languages'         => $this->activeLanguages(),
-            'blockTranslationStatus'  => $this->ownerBlockTranslationStatus($ownerType, $ownerId),
+            'languages'         => $languages,
+            'blockTranslationStatus' => $this->ownerBlockTranslationStatus($ownerType, $ownerId),
             'ownerType'         => $ownerType,
             'ownerLabel'        => BlockOwnerRouting::label($ownerType),
             'ownerShowRoute'    => BlockOwnerRouting::showRoute($ownerType),
@@ -314,10 +291,12 @@ class BlockInstanceController extends BaseWebController
             ? (int) $parentIdRaw
             : null;
 
-        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId, $parentInstanceId);
+        $workspace = $ownerType === self::OWNER_PAGE
+            ? $this->workspaceForOwner((int) $ownerId, $parentInstanceId)
+            : null;
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
             if ($workspace === null || ! is_array($workspace[$ownerType] ?? null)) {
-                return redirect()->to(BlockOwnerRouting::listRoute($ownerType))->with('error', BlockOwnerRouting::notFoundMessage($ownerType));
+                return redirect()->to(BlockOwnerRouting::listRoute($ownerType))->with('error', $this->workspaceError($ownerType));
             }
 
             $page = $workspace[$ownerType];
@@ -360,19 +339,14 @@ class BlockInstanceController extends BaseWebController
 
         $typesIndexed = $this->blockTypeOptions->resolve();
         $types = array_values($typesIndexed);
-
         $languages = $this->activeLanguages();
         $languageContext = $this->resolveLanguageContext($languages);
-
         $parentBlockType = null;
         if ($parentInstanceId !== null) {
             $parentResponse = $this->safeApiCall(fn () => $this->blockInstanceService->get($ownerId, $ownerType, (string) $parentInstanceId));
             if ($parentResponse['ok']) {
                 $parentBlock = $this->extractData($parentResponse);
-                $parentBlockId = $parentBlock['block_id'] ?? null;
-                if ($parentBlockId) {
-                    $parentBlockType = $typesIndexed[$parentBlockId] ?? null;
-                }
+                $parentBlockType = $typesIndexed[$parentBlock['block_id'] ?? 0] ?? null;
             }
         }
 
@@ -386,22 +360,20 @@ class BlockInstanceController extends BaseWebController
             'blockTypes'        => $types,
             'languages'         => $languages,
             'entryOptionsUrl'   => route_to('admin.cms.blocks.entries'),
-            // A cached empty block catalog is a valid degraded state. Do not
-            // fan out to the collections API just to render an empty create
-            // form; the next uncached request will hydrate the dynamic catalog.
             'listingFieldCatalog' => $types !== [] ? $this->blockTypeOptions->listingFieldCatalog() : [],
             'translateUrl'      => route_to('admin.cms.translate'),
             'defaultLangCode'   => $languageContext['defaultLangCode'],
             'defaultLangId'     => $languageContext['defaultLangId'],
+            'defaultLangIndex'  => $languageContext['defaultLangIndex'],
             'parentInstanceId'  => $parentInstanceId,
             'parentBlockType'   => $parentBlockType,
             'ownerType'         => $ownerType,
             'ownerLabel'        => BlockOwnerRouting::label($ownerType),
-            'ownerBlocksRoute'   => $routes['index'],
-            'ownerCreateRoute'   => $routes['create'],
-            'ownerStoreRoute'    => $routes['store'],
+            'ownerBlocksRoute'  => $routes['index'],
+            'ownerCreateRoute'  => $routes['create'],
+            'ownerStoreRoute'   => $routes['store'],
             'ownerChildrenRoute' => $routes['children'],
-            'ownerChildLabel'    => BlockOwnerRouting::childLabel($ownerType),
+            'ownerChildLabel'   => BlockOwnerRouting::childLabel($ownerType),
         ]);
     }
 
@@ -523,9 +495,14 @@ class BlockInstanceController extends BaseWebController
         }
 
         $ownerType = $this->ownerTypeFromRequest();
-        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId, (int) $id);
+        $workspace = $ownerType === self::OWNER_PAGE
+            ? $this->workspaceForOwner((int) $ownerId, (int) $id)
+            : null;
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
-            if ($workspace === null || ! is_array($workspace[$ownerType] ?? null) || ! is_array($workspace['block'] ?? null)) {
+            if ($workspace === null) {
+                return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['index'], $ownerId))->with('error', $this->workspaceError($ownerType));
+            }
+            if (! is_array($workspace[$ownerType] ?? null) || ! is_array($workspace['block'] ?? null)) {
                 return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['index'], $ownerId))->with('error', lang('Blocks.block_not_found'));
             }
 
@@ -583,79 +560,63 @@ class BlockInstanceController extends BaseWebController
         }
 
         $focusLangRaw = $this->request->getGet('focus_lang');
-        $focusLangId  = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
+        $focusLangId = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
             ? (int) $focusLangRaw
             : 0;
-
         $blockResponse = $this->safeApiCall(fn () => $this->blockInstanceService->get($ownerId, $ownerType, $id));
-        if (!$blockResponse['ok']) {
+        if (! $blockResponse['ok']) {
             return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['index'], $ownerId))->with('error', lang('Blocks.block_not_found'));
         }
         $block = $this->extractData($blockResponse);
-
         $typeCacheKey = 'cms_block_type_' . $block['block_id'];
         $blockType = cache()->get($typeCacheKey);
         if ($blockType === null) {
             $typeResponse = $this->safeApiCall(fn () => service('blockTypeApiService')->get($block['block_id']));
             $blockType = $typeResponse['ok'] ? $this->extractData($typeResponse) : [];
-            if (! empty($blockType)) {
-                // Short TTL on purpose — see BlockCatalogService::CACHE_TTL for why.
+            if ($blockType !== []) {
                 cache()->save($typeCacheKey, $blockType, 120);
             }
         }
         $this->blockTypeOptions->augment($blockType);
 
-        // Fetch active languages (cached)
         $languages = cache()->get('cms_active_languages');
         if ($languages === null) {
             $languagesResponse = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
             $languages = $languagesResponse['ok'] ? $this->extractItems($languagesResponse) : [];
-            if (! empty($languages)) {
+            if ($languages !== []) {
                 cache()->save('cms_active_languages', $languages, 3600);
             }
         }
 
         $languageContext = $this->resolveLanguageContext($languages);
-        $defaultLangId = $languageContext['defaultLangId'];
-
-        // Extract translatable fields (exclude non-translatable types)
-        $allFields = is_array($blockType['fields'] ?? null) ? $blockType['fields'] : [];
         $translatableFieldNames = [];
-        foreach ($allFields as $fieldKey => $field) {
-            $fieldType = $field['type'] ?? 'string';
-            if (!in_array($fieldType, CmsFieldEnums::NON_TRANSLATABLE_TYPES, true)) {
+        foreach (is_array($blockType['fields'] ?? null) ? $blockType['fields'] : [] as $fieldKey => $field) {
+            $fieldType = is_array($field) ? ($field['type'] ?? 'string') : 'string';
+            if (! in_array($fieldType, CmsFieldEnums::NON_TRANSLATABLE_TYPES, true)) {
                 $translatableFieldNames[] = "block_data][{$fieldKey}";
             }
         }
-
-        // Build translation targets using the centralized method
-        $translateTargets = ($defaultLangId > 0 && !empty($translatableFieldNames))
-            ? $this->buildTranslateTargets($languages, $translatableFieldNames, $defaultLangId, 'translations')
+        $translateTargets = ($languageContext['defaultLangId'] > 0 && $translatableFieldNames !== [])
+            ? $this->buildTranslateTargets($languages, $translatableFieldNames, $languageContext['defaultLangId'], 'translations')
             : [];
-
-        // Per-language completeness for this single block, keyed by language
-        // code (e.g. 'es' => ['status' => 'incomplete', ...]) — powers the
-        // status dot on each ES/EN/FR tab. Degrades to [] on API failure so a
-        // status outage never blocks editing the block itself.
         $blockStatusResponse = $this->safeApiCall(fn () => $this->translationAuditService->auditResource('block_instance', $id));
-        $blockTranslationStatus = $blockStatusResponse['ok'] ? $this->extractData($blockStatusResponse) : [];
 
         return $this->render('cms/pages/blocks/edit', [
-            'title'        => lang('Blocks.block_edit_title'),
-            'page'         => $page,
-            'block'        => $block,
-            'blockType'    => $blockType,
-            'languages'    => $languages,
+            'title' => lang('Blocks.block_edit_title'),
+            'page' => $page,
+            'block' => $block,
+            'blockType' => $blockType,
+            'languages' => $languages,
             'entryOptionsUrl' => route_to('admin.cms.blocks.entries'),
             'listingFieldCatalog' => $this->blockTypeOptions->listingFieldCatalog(),
             'defaultLangId' => $languageContext['defaultLangId'],
             'defaultLangCode' => $languageContext['defaultLangCode'],
             'defaultLangIndex' => $languageContext['defaultLangIndex'],
             'translateTargets' => $translateTargets,
-            'focusLangId'  => $focusLangId,
-            'blockTranslationStatus' => $blockTranslationStatus,
-            'ownerType'    => $ownerType,
-            'ownerLabel'   => BlockOwnerRouting::label($ownerType),
+            'focusLangId' => $focusLangId,
+            'blockTranslationStatus' => $blockStatusResponse['ok'] ? $this->extractData($blockStatusResponse) : [],
+            'ownerType' => $ownerType,
+            'ownerLabel' => BlockOwnerRouting::label($ownerType),
             'ownerBlocksRoute' => BlockOwnerRouting::routes($ownerType)['index'],
             'ownerStoreRoute' => BlockOwnerRouting::routes($ownerType)['store'],
             'ownerEditRoute' => BlockOwnerRouting::routes($ownerType)['edit'],
@@ -910,17 +871,22 @@ class BlockInstanceController extends BaseWebController
     public function children(string $ownerId, string $instanceId): string|RedirectResponse
     {
         $ownerType = $this->ownerTypeFromRequest();
-        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId, (int) $instanceId);
+        $workspace = $ownerType === self::OWNER_PAGE
+            ? $this->workspaceForOwner((int) $ownerId, (int) $instanceId)
+            : null;
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
             // The workspace projection names the requested instance `block`.
             // `parentBlock` is only present when that instance itself has a
             // parent. For the children screen the requested instance is the
             // parent, so accept the canonical `block` section as the parent.
-            $parentBlock = is_array($workspace['parentBlock'] ?? null)
+            $parentBlock = is_array($workspace) && is_array($workspace['parentBlock'] ?? null)
                 ? $workspace['parentBlock']
-                : (is_array($workspace['block'] ?? null) ? $workspace['block'] : null);
+                : (is_array($workspace) && is_array($workspace['block'] ?? null) ? $workspace['block'] : null);
 
-            if ($workspace === null || ! is_array($workspace[$ownerType] ?? null) || ! is_array($parentBlock)) {
+            if ($workspace === null) {
+                return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['index'], $ownerId))->with('error', $this->workspaceError($ownerType));
+            }
+            if (! is_array($workspace[$ownerType] ?? null) || ! is_array($parentBlock)) {
                 return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['index'], $ownerId))->with('error', lang('Blocks.block_not_found'));
             }
 
@@ -976,21 +942,15 @@ class BlockInstanceController extends BaseWebController
         }
 
         $parentResponse = $this->safeApiCall(fn () => $this->blockInstanceService->get($ownerId, $ownerType, $instanceId));
-        if (!$parentResponse['ok']) {
+        if (! $parentResponse['ok']) {
             return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['index'], $ownerId))->with('error', lang('Blocks.block_not_found'));
         }
         $parentBlock = $this->extractData($parentResponse);
-
-        // Fetch all page blocks and filter to just children of this instance
         $blocksResponse = $this->safeApiCall(fn () => $this->blockInstanceService->list($ownerId, $ownerType));
-        $allBlocks      = $blocksResponse['ok'] ? $this->extractItems($blocksResponse) : [];
-        $children       = array_values(array_filter($allBlocks, static fn (array $b) => (int) ($b['parent_instance_id'] ?? 0) === (int) $instanceId));
-        $children       = $this->enrichChildImageThumbnails($children);
-
-        // Same reasoning as index(): this view only renders name/icon, so it
-        // uses the cheap, unhydrated catalog instead of resolve().
+        $allBlocks = $blocksResponse['ok'] ? $this->extractItems($blocksResponse) : [];
+        $children = array_values(array_filter($allBlocks, static fn (array $b): bool => (int) ($b['parent_instance_id'] ?? 0) === (int) $instanceId));
+        $children = $this->enrichChildImageThumbnails($children);
         $typesIndexed = $this->blockTypeOptions->rawIndexed();
-
         $parentType = $typesIndexed[$parentBlock['block_id']] ?? [];
         $schema = is_array($parentType['schema_definition'] ?? null)
             ? $parentType['schema_definition']
@@ -1011,34 +971,39 @@ class BlockInstanceController extends BaseWebController
             : $childLabel . 's';
 
         return $this->render('cms/pages/blocks/children/index', [
-            'title'                => BlockOwnerRouting::childLabel($ownerType) . ': ' . ($parentType['name'] ?? BlockOwnerRouting::label($ownerType)),
-            'page'                 => $page,
-            'parentBlock'          => $parentBlock,
-            'parentType'           => $parentType,
-            'children'             => $children,
-            'blockTypes'           => $typesIndexed,
-            'collectionsMap'       => $this->blockTypeOptions->collectionsMap(),
-            'languages'            => $this->activeLanguages(),
+            'title' => BlockOwnerRouting::childLabel($ownerType) . ': ' . ($parentType['name'] ?? BlockOwnerRouting::label($ownerType)),
+            'page' => $page,
+            'parentBlock' => $parentBlock,
+            'parentType' => $parentType,
+            'children' => $children,
+            'blockTypes' => $typesIndexed,
+            'collectionsMap' => $this->blockTypeOptions->collectionsMap(),
+            'languages' => $this->activeLanguages(),
             'blockTranslationStatus' => $this->ownerBlockTranslationStatus($ownerType, $ownerId),
-            'ownerType'            => $ownerType,
-            'ownerLabel'           => BlockOwnerRouting::label($ownerType),
-            'ownerBlocksRoute'     => BlockOwnerRouting::routes($ownerType)['index'],
-            'ownerCreateRoute'     => BlockOwnerRouting::routes($ownerType)['create'],
-            'ownerStoreRoute'      => BlockOwnerRouting::routes($ownerType)['store'],
-            'ownerEditRoute'       => BlockOwnerRouting::routes($ownerType)['edit'],
-            'ownerUpdateRoute'     => BlockOwnerRouting::routes($ownerType)['update'],
-            'ownerDeleteRoute'     => BlockOwnerRouting::routes($ownerType)['delete'],
+            'ownerType' => $ownerType,
+            'ownerLabel' => BlockOwnerRouting::label($ownerType),
+            'ownerBlocksRoute' => BlockOwnerRouting::routes($ownerType)['index'],
+            'ownerCreateRoute' => BlockOwnerRouting::routes($ownerType)['create'],
+            'ownerStoreRoute' => BlockOwnerRouting::routes($ownerType)['store'],
+            'ownerEditRoute' => BlockOwnerRouting::routes($ownerType)['edit'],
+            'ownerUpdateRoute' => BlockOwnerRouting::routes($ownerType)['update'],
+            'ownerDeleteRoute' => BlockOwnerRouting::routes($ownerType)['delete'],
             'ownerChildrenReorderRoute' => BlockOwnerRouting::routes($ownerType)['childrenReorder'],
-            'childLabel'           => $childLabel,
-            'childLabelPlural'     => $childLabelPlural,
+            'childLabel' => $childLabel,
+            'childLabelPlural' => $childLabelPlural,
         ]);
     }
 
     /** @return array<string, mixed>|null */
-    private function workspaceForOwner(string $ownerType, int $ownerId, ?int $instanceId = null): ?array
+    private function workspaceForOwner(int $ownerId, ?int $instanceId = null): ?array
     {
-        return $ownerType === self::OWNER_ENTRY
-            ? $this->cmsWorkspace->entry($ownerId, $instanceId)
-            : $this->cmsWorkspace->page($ownerId, $instanceId);
+        return $this->cmsWorkspace->page($ownerId, $instanceId);
+    }
+
+    private function workspaceError(string $ownerType): string
+    {
+        return $this->cmsWorkspace->wasUnavailable()
+            ? lang('App.connection_error')
+            : BlockOwnerRouting::notFoundMessage($ownerType);
     }
 }

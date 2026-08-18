@@ -57,18 +57,21 @@ class PageController extends BaseWebController
     public function show(string $id): string
     {
         $workspace = $this->cmsWorkspace->page((int) $id);
-        if ($workspace === null) {
+        if ($workspace === null || ! is_array($workspace['page'] ?? null)) {
             return $this->render('cms/pages/show', [
                 'title'      => lang('Pages.pages_details'),
                 'page'       => [],
-                'error'      => lang('Pages.pages_not_found'),
                 'pages'      => [],
                 'collections' => [],
+                'publicSiteUrl' => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
                 'blocks'     => [],
                 'blockTypes' => [],
                 'languages'  => [],
-                'blockTranslationStatus'  => [],
+                'blockTranslationStatus' => [],
                 'quality'    => [],
+                'error'      => $this->cmsWorkspace->wasUnavailable()
+                    ? lang('App.connection_error')
+                    : lang('Pages.pages_not_found'),
             ]);
         }
 
@@ -157,43 +160,46 @@ class PageController extends BaseWebController
     public function edit(string $id): string|RedirectResponse
     {
         $workspace = $this->cmsWorkspace->page((int) $id);
-        if ($workspace === null || ! is_array($workspace['page'] ?? null)) {
-            return $this->withError(lang('Pages.pages_not_found'), route_to('admin.cms.pages'));
+        if ($workspace !== null && is_array($workspace['page'] ?? null)) {
+            $focusLangRaw = $this->request->getGet('focus_lang');
+            $focusLangId  = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
+                ? (int) $focusLangRaw
+                : 0;
+
+            $bootstrap = $workspace;
+            $languages = is_array($bootstrap['languages'] ?? null) ? $bootstrap['languages'] : [];
+            $languageContext = $this->resolveLanguageContext($languages);
+            $defaultLangId = $languageContext['defaultLangId'];
+            $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
+            $translateTargets = ($defaultLangId > 0 && !empty($languages))
+                ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
+                : [];
+
+            return $this->render('cms/pages/edit', [
+                'title' => lang('Pages.pages_edit'),
+                'item' => $workspace['page'],
+                'pages' => is_array($bootstrap['pages'] ?? null)
+                    ? $this->pageOptionsFromBootstrap($bootstrap['pages'], $id)
+                    : [],
+                'languages' => $languages,
+                'collections' => is_array($bootstrap['collections'] ?? null)
+                    ? $this->collectionOptionsFromBootstrap($bootstrap['collections'])
+                    : [],
+                'focusLangId' => $focusLangId,
+                'defaultLangId' => $languageContext['defaultLangId'],
+                'defaultLangCode' => $languageContext['defaultLangCode'],
+                'defaultLangIndex' => $languageContext['defaultLangIndex'],
+                'translateTargets' => $translateTargets,
+                'pageTypes' => $this->pageTypeOptions(),
+                'returnTo' => $this->incomingReturnTo(),
+                'quality' => (array) ($workspace['quality'] ?? []),
+            ]);
         }
 
-        $focusLangRaw = $this->request->getGet('focus_lang');
-        $focusLangId  = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
-            ? (int) $focusLangRaw
-            : 0;
-
-        $bootstrap = $workspace;
-        $languages = is_array($bootstrap['languages'] ?? null) ? $bootstrap['languages'] : [];
-        $languageContext = $this->resolveLanguageContext($languages);
-        $defaultLangId = $languageContext['defaultLangId'];
-        $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
-        $translateTargets = ($defaultLangId > 0 && !empty($languages))
-            ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
-            : [];
-
-        return $this->render('cms/pages/edit', [
-            'title' => lang('Pages.pages_edit'),
-            'item' => $workspace['page'],
-            'pages' => is_array($bootstrap['pages'] ?? null)
-                ? $this->pageOptionsFromBootstrap($bootstrap['pages'], $id)
-                : [],
-            'languages' => $languages,
-            'collections' => is_array($bootstrap['collections'] ?? null)
-                ? $this->collectionOptionsFromBootstrap($bootstrap['collections'])
-                : [],
-            'focusLangId' => $focusLangId,
-            'defaultLangId' => $languageContext['defaultLangId'],
-            'defaultLangCode' => $languageContext['defaultLangCode'],
-            'defaultLangIndex' => $languageContext['defaultLangIndex'],
-            'translateTargets' => $translateTargets,
-            'pageTypes' => $this->pageTypeOptions(),
-            'returnTo' => $this->incomingReturnTo(),
-            'quality' => (array) ($workspace['quality'] ?? []),
-        ]);
+        return $this->withError(
+            $this->cmsWorkspace->wasUnavailable() ? lang('App.connection_error') : lang('Pages.pages_not_found'),
+            route_to('admin.cms.pages'),
+        );
     }
 
     public function update(string $id): RedirectResponse

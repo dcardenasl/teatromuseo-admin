@@ -50,6 +50,24 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
         Services::injectMock('bffApiClient', $bff);
     }
 
+    private function injectUnavailablePageWorkspace(int $pageId = 1, ?int $instanceId = null): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsPageWorkspace')
+            ->with($pageId, $instanceId)
+            ->willReturn([
+                'ok' => false,
+                'status' => 503,
+                'data' => [],
+                'raw' => '',
+                'headers' => [],
+                'messages' => ['BFF workspace unavailable'],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $bff);
+    }
+
     public function testIndexRequiresAuth(): void
     {
         $result = $this->get('/admin/cms/pages/1/blocks');
@@ -99,6 +117,19 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
         ])->get('/admin/cms/pages/1/blocks');
 
         $result->assertStatus(200);
+    }
+
+    public function testPageIndexDoesNotFanOutWhenBffWorkspaceIsUnavailable(): void
+    {
+        $this->injectUnavailablePageWorkspace();
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['cms.pages.read']],
+        ])->get('/admin/cms/pages/1/blocks');
+
+        $result->assertRedirectTo(site_url('admin/cms/pages'));
+        $this->assertSame(lang('App.connection_error'), session()->getFlashdata('error'));
     }
 
     public function testEntryIndexRendersForAdmin(): void
