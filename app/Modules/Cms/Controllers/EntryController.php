@@ -9,6 +9,7 @@ use App\Modules\Cms\Requests\EntryStoreRequest;
 use App\Modules\Cms\Requests\EntryUpdateRequest;
 use App\Modules\Cms\Services\CategoryApiService;
 use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
+use App\Modules\Cms\Services\CmsWorkspaceBffAdapter;
 use App\Modules\Cms\Services\CollectionApiService;
 use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\TagApiService;
@@ -26,6 +27,7 @@ class EntryController extends BaseWebController
     protected TagApiService $tagService;
     protected TranslationAuditApiService $translationAuditService;
     protected CmsBootstrapBffAdapter $cmsBootstrap;
+    protected CmsWorkspaceBffAdapter $cmsWorkspace;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
@@ -36,6 +38,7 @@ class EntryController extends BaseWebController
         $this->tagService        = service('tagApiService');
         $this->translationAuditService = service('translationAuditApiService');
         $this->cmsBootstrap      = service('cmsBootstrapBffAdapter');
+        $this->cmsWorkspace       = service('cmsWorkspaceBffAdapter');
     }
 
     public function index(): string
@@ -59,6 +62,41 @@ class EntryController extends BaseWebController
 
     public function show(string $id): string
     {
+        $workspace = $this->cmsWorkspace->entry((int) $id);
+        if ($workspace !== null && is_array($workspace['entry'] ?? null)) {
+            $entry = $workspace['entry'];
+            $allBlocks = is_array($workspace['blocks'] ?? null) ? $workspace['blocks'] : [];
+
+            return $this->render('cms/entries/show', [
+                'title' => lang('Entries.entries_details'),
+                'entry' => $entry,
+                'collection' => $this->workspaceCollection($workspace, (int) ($entry['collection_id'] ?? 0)),
+                'languages' => (array) ($workspace['languages'] ?? []),
+                'collections' => $this->optionMap((array) ($workspace['collections'] ?? []), 'collection_key'),
+                'blocks' => array_values(array_filter($allBlocks, static fn (array $block): bool => empty($block['parent_instance_id']))),
+                'blockTypes' => (array) ($workspace['blockTypes'] ?? []),
+                'blockTranslationStatus' => (array) ($workspace['blockTranslationStatus'] ?? []),
+                'publicSiteUrl' => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
+            ]);
+        }
+
+        if (! $this->cmsWorkspace->wasUnavailable()) {
+            return $this->render('cms/entries/show', [
+                'title' => lang('Entries.entries_details'),
+                'entry' => [],
+                'collection' => [],
+                'languages' => [],
+                'error' => lang('Entries.entries_not_found'),
+                'collections' => [],
+                'blocks' => [],
+                'blockTypes' => [],
+                'blockTranslationStatus' => [],
+                'publicSiteUrl' => '',
+            ]);
+        }
+
+        // Temporary availability fallback: a BFF outage must not turn a
+        // read-only Admin screen into a hard failure during rollout.
         $response = $this->safeApiCall(fn () => $this->entryService->get($id));
 
         if (! $response['ok']) {
@@ -205,6 +243,44 @@ class EntryController extends BaseWebController
 
     public function edit(string $id): string|RedirectResponse
     {
+        $workspace = $this->cmsWorkspace->entry((int) $id);
+        if ($workspace !== null && is_array($workspace['entry'] ?? null)) {
+            $item = $workspace['entry'];
+            $languages = is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [];
+            $languageContext = $this->resolveLanguageContext($languages);
+            $defaultLangId = $languageContext['defaultLangId'];
+            $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
+            $translateTargets = ($defaultLangId > 0 && $languages !== [])
+                ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
+                : [];
+            $focusLangRaw = $this->request->getGet('focus_lang');
+            $focusLangId = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
+                ? (int) $focusLangRaw
+                : 0;
+            $collection = $this->workspaceCollection($workspace, (int) ($item['collection_id'] ?? 0));
+
+            return $this->render('cms/entries/edit', [
+                'title' => lang('Entries.entries_edit'),
+                'item' => $item,
+                'collections' => $this->optionMap((array) ($workspace['collections'] ?? []), 'collection_key'),
+                'languages' => $languages,
+                'focusLangId' => $focusLangId,
+                'defaultLangId' => $languageContext['defaultLangId'],
+                'defaultLangCode' => $languageContext['defaultLangCode'],
+                'defaultLangIndex' => $languageContext['defaultLangIndex'],
+                'blockTemplate' => is_array($collection['block_template'] ?? null) ? $collection['block_template'] : null,
+                'translateTargets' => $translateTargets,
+                'returnTo' => $this->incomingReturnTo(),
+                ...$this->taxonomyOptions($item, $workspace),
+            ]);
+        }
+
+        if (! $this->cmsWorkspace->wasUnavailable()) {
+            return $this->withError(lang('Entries.entries_not_found'), route_to('admin.cms.entries'));
+        }
+
+        // Temporary availability fallback; remove after the BFF rollout has
+        // completed its smoke and latency acceptance window.
         $response = $this->safeApiCall(fn () => $this->entryService->get($id));
         if (! $response['ok']) {
             $this->maybeFlashDevError($response);
@@ -276,6 +352,21 @@ class EntryController extends BaseWebController
         }
 
         return $template;
+    }
+
+    /**
+     * @param array<string, mixed> $workspace
+     * @return array<string, mixed>
+     */
+    private function workspaceCollection(array $workspace, int $collectionId): array
+    {
+        foreach ((array) ($workspace['collections'] ?? []) as $collection) {
+            if (is_array($collection) && (int) ($collection['id'] ?? 0) === $collectionId) {
+                return $collection;
+            }
+        }
+
+        return [];
     }
 
     public function update(string $id): RedirectResponse
