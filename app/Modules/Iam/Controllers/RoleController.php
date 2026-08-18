@@ -9,6 +9,7 @@ use App\Modules\Iam\Requests\RoleStoreRequest;
 use App\Modules\Iam\Requests\RoleUpdateRequest;
 use App\Modules\Iam\Services\PermissionApiService;
 use App\Modules\Iam\Services\RoleApiService;
+use App\Modules\Iam\Services\RoleWorkspaceBffAdapter;
 use App\Modules\Iam\Support\IamLookups;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -20,6 +21,7 @@ class RoleController extends BaseWebController
     protected RoleApiService $roleService;
     protected PermissionApiService $permissionService;
     protected IamLookups $lookups;
+    protected RoleWorkspaceBffAdapter $workspace;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
@@ -27,6 +29,7 @@ class RoleController extends BaseWebController
         $this->roleService       = service('roleApiService');
         $this->permissionService = service('permissionApiService');
         $this->lookups           = new IamLookups();
+        $this->workspace         = service('roleWorkspaceBffAdapter');
     }
 
     public function index(): string
@@ -50,6 +53,16 @@ class RoleController extends BaseWebController
 
     public function show(string $id): string
     {
+        $workspace = $this->workspace->read($id);
+        if ($workspace !== null && is_array($workspace['role'] ?? null)) {
+            return $this->render('iam/roles/show', [
+                'title'                 => lang('Iam.roles_details'),
+                'role'                  => $workspace['role'],
+                'allPermissions'        => (array) ($workspace['allPermissions'] ?? []),
+                'assignedPermissionIds' => array_values(array_map('intval', (array) ($workspace['assignedPermissionIds'] ?? []))),
+            ]);
+        }
+
         $response = $this->safeApiCall(fn () => $this->roleService->get($id));
 
         if (! ($response['ok'] ?? false)) {
@@ -109,6 +122,17 @@ class RoleController extends BaseWebController
 
     public function edit(string $id): string|RedirectResponse
     {
+        $workspace = $this->workspace->read($id);
+        if ($workspace !== null && is_array($workspace['role'] ?? null)) {
+            return $this->render('iam/roles/edit', [
+                'title'                 => lang('Iam.roles_edit'),
+                'item'                  => $workspace['role'],
+                'applications'          => $this->lookups->applications(),
+                'allPermissions'        => (array) ($workspace['allPermissions'] ?? []),
+                'assignedPermissionIds' => array_values(array_map('intval', (array) ($workspace['assignedPermissionIds'] ?? []))),
+            ]);
+        }
+
         $response = $this->safeApiCall(fn () => $this->roleService->get($id));
         if (! $response['ok']) {
             return $this->withError(lang('Iam.roles_not_found'), route_to('admin.iam.roles'));
