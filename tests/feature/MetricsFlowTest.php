@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Modules\Metrics\Services\MetricsApiService;
+use App\Libraries\BffApiClientInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
@@ -24,38 +24,21 @@ final class MetricsFlowTest extends CIUnitTestCase
 
     public function testMetricsPageRendersSummaryAndTimeseries(): void
     {
-        $metricsService = $this->createMock(MetricsApiService::class);
-        $metricsService->expects($this->once())
-            ->method('summary')
-            ->with(['period' => '24h'])
-            ->willReturn([
-                'ok' => true,
-                'status' => 200,
-                'data' => [
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminMetricsWorkspace')
+            ->with('24h')
+            ->willReturn($this->bffResponse([
+                'summary' => [
                     'request_stats' => ['total_requests' => 321, 'avg_response_time_ms' => 87, 'availability_percent' => 99.2, 'successful_requests' => 315],
                     'slow_requests' => [
-                        ['method' => 'GET', 'uri' => '/api/v1/slow-route', 'response_time' => 1500]
-                    ]
+                        ['method' => 'GET', 'uri' => '/api/v1/slow-route', 'response_time' => 1500],
+                    ],
                 ],
-                'raw' => '',
-                'headers' => [],
-                'messages' => [],
-                'fieldErrors' => [],
-            ]);
-        $metricsService->expects($this->once())
-            ->method('timeseries')
-            ->with(['period' => '24h'])
-            ->willReturn([
-                'ok' => true,
-                'status' => 200,
-                'data' => [['period' => '10:00', 'value' => 12, 'errors' => 0, 'latency' => 45]],
-                'raw' => '',
-                'headers' => [],
-                'messages' => [],
-                'fieldErrors' => [],
-            ]);
+                'timeseries' => [['period' => '10:00', 'value' => 12, 'errors' => 0, 'latency' => 45]],
+            ]));
 
-        Services::injectMock('metricsApiService', $metricsService);
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -71,33 +54,13 @@ final class MetricsFlowTest extends CIUnitTestCase
 
     public function testMetricsPageFallsBackToDefaultPeriodWhenFilterIsInvalid(): void
     {
-        $metricsService = $this->createMock(MetricsApiService::class);
-        $metricsService->expects($this->once())
-            ->method('summary')
-            ->with(['period' => '24h'])
-            ->willReturn([
-                'ok' => true,
-                'status' => 200,
-                'data' => [],
-                'raw' => '',
-                'headers' => [],
-                'messages' => [],
-                'fieldErrors' => [],
-            ]);
-        $metricsService->expects($this->once())
-            ->method('timeseries')
-            ->with(['period' => '24h'])
-            ->willReturn([
-                'ok' => true,
-                'status' => 200,
-                'data' => [],
-                'raw' => '',
-                'headers' => [],
-                'messages' => [],
-                'fieldErrors' => [],
-            ]);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminMetricsWorkspace')
+            ->with('24h')
+            ->willReturn($this->bffResponse(['summary' => [], 'timeseries' => []]));
 
-        Services::injectMock('metricsApiService', $metricsService);
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -105,5 +68,19 @@ final class MetricsFlowTest extends CIUnitTestCase
         ])->get('/admin/metrics?period=invalid');
 
         $result->assertStatus(200);
+    }
+
+    /** @param array<string, mixed> $sections */
+    private function bffResponse(array $sections): array
+    {
+        return [
+            'ok' => true,
+            'status' => 200,
+            'data' => ['data' => $sections],
+            'raw' => '',
+            'headers' => [],
+            'messages' => [],
+            'fieldErrors' => [],
+        ];
     }
 }

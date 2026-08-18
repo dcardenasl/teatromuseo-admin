@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Events\Services\EventApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -67,24 +68,31 @@ final class EventFlowTest extends CIUnitTestCase
 
     public function testShowRendersForAdmin(): void
     {
-        $mock = $this->createMock(EventApiService::class);
-        $mock->method('get')
-            ->with('test-uuid')
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminEventWorkspace')
+            ->with(21)
             ->willReturn($this->apiSuccess([
-                'id'          => 21,
-                'uuid'        => 'test-uuid',
-                'title'       => 'Evento de prueba',
-                'event_type'  => 'festival',
-                'description' => 'Descripción de prueba',
-                'status'      => 'published',
+                'sections' => [
+                    'event' => [
+                        'id'          => 21,
+                        'uuid'        => 'test-uuid',
+                        'title'       => 'Evento de prueba',
+                        'event_type'  => 'festival',
+                        'description' => 'Descripción de prueba',
+                        'status'      => 'published',
+                    ],
+                    'eventTypes' => [['slug' => 'festival', 'name' => 'Festival']],
+                    'languages' => [],
+                ],
             ]));
 
-        Services::injectMock('eventApiService', $mock);
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['permissions' => ['event.events.read']],
-        ])->get('/admin/events/events/test-uuid');
+        ])->get('/admin/events/events/21');
 
         $result->assertStatus(200);
         $result->assertSee('Evento de prueba');

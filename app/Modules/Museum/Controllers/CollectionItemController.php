@@ -55,33 +55,14 @@ class CollectionItemController extends BaseWebController
                 'languages' => is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [],
             ]);
         }
-        if (! $this->workspaceAdapter->wasUnavailable()) {
-            return $this->render('museum/collection_items/show', [
-                'title' => lang('Museum.collection_items_details'),
-                'collectionItem' => [],
-                'error' => lang('Museum.collection_items_not_found'),
-                'categories' => [],
-                'languages' => [],
-            ]);
-        }
-
-        $response = $this->safeApiCall(fn () => $this->collectionItemService->get($id));
-
-        if (! $response['ok']) {
-            return $this->render('museum/collection_items/show', [
-                'title'          => lang('Museum.collection_items_details'),
-                'collectionItem' => [],
-                'error'          => $this->firstMessage($response, lang('Museum.collection_items_not_found')),
-                'categories'     => $this->categoriesOptions(),
-                'languages'      => $this->getLanguages(),
-            ]);
-        }
-
         return $this->render('museum/collection_items/show', [
-            'title'          => lang('Museum.collection_items_details'),
-            'collectionItem' => $this->extractData($response),
-            'categories'     => $this->categoriesOptions(),
-            'languages'      => $this->getLanguages(),
+            'title' => lang('Museum.collection_items_details'),
+            'collectionItem' => [],
+            'error' => $this->workspaceAdapter->wasUnavailable()
+                ? lang('App.connection_error')
+                : lang('Museum.collection_items_not_found'),
+            'categories' => [],
+            'languages' => [],
         ]);
     }
 
@@ -90,9 +71,9 @@ class CollectionItemController extends BaseWebController
         $workspace = $this->workspaceAdapter->workspace();
         $languages = $workspace !== null && is_array($workspace['languages'] ?? null)
             ? $workspace['languages']
-            : $this->getLanguages();
-        $categories = $workspace !== null ? $this->workspaceOptions($workspace['categories'] ?? []) : $this->categoriesOptions();
-        $techniques = $workspace !== null ? $this->workspaceOptions($workspace['techniques'] ?? []) : $this->techniquesOptions();
+            : [];
+        $categories = $workspace !== null ? $this->workspaceOptions($workspace['categories'] ?? []) : [];
+        $techniques = $workspace !== null ? $this->workspaceOptions($workspace['techniques'] ?? []) : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && ! empty($languages))
@@ -155,33 +136,12 @@ class CollectionItemController extends BaseWebController
                 'translateTargets' => $translateTargets,
             ]);
         }
-        if (! $this->workspaceAdapter->wasUnavailable()) {
-            return $this->withError(lang('Museum.collection_items_not_found'), route_to('admin.museum.collection_items'));
-        }
-
-        $response = $this->safeApiCall(fn () => $this->collectionItemService->get($id));
-        if (! $response['ok']) {
-            return $this->withError(lang('Museum.collection_items_not_found'), route_to('admin.museum.collection_items'));
-        }
-
-        $languages = $this->getLanguages();
-        $languageContext = $this->resolveLanguageContext($languages);
-        $defaultLangId = $languageContext['defaultLangId'];
-        $translateTargets = ($defaultLangId > 0 && ! empty($languages))
-            ? $this->buildTranslateTargets($languages, ['name', 'summary', 'curiosidad', 'contenido', 'physical_description', 'ubicacion'], $defaultLangId)
-            : [];
-
-        return $this->render('museum/collection_items/edit', [
-            'title'            => lang('Museum.collection_items_edit'),
-            'item'             => $this->extractData($response),
-            'categories'       => $this->categoriesOptions(),
-            'techniques'       => $this->techniquesOptions(),
-            'languages'        => $languages,
-            'defaultLangId'    => $defaultLangId,
-            'defaultLangIndex' => $languageContext['defaultLangIndex'],
-            'defaultLangCode'  => $languageContext['defaultLangCode'],
-            'translateTargets' => $translateTargets,
-        ]);
+        return $this->withError(
+            $this->workspaceAdapter->wasUnavailable()
+                ? lang('App.connection_error')
+                : lang('Museum.collection_items_not_found'),
+            route_to('admin.museum.collection_items'),
+        );
     }
 
     public function update(string $id): RedirectResponse
@@ -217,14 +177,6 @@ class CollectionItemController extends BaseWebController
         return redirect()->to(route_to('admin.museum.collection_items'))->with('success', lang('Museum.collection_items_delete_success'));
     }
 
-    /** @return array<string, mixed> */
-    private function getLanguages(): array
-    {
-        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
-
-        return $response['ok'] ? $this->extractItems($response) : [];
-    }
-
     /** @return array<string, string> */
     private function categoriesOptions(): array
     {
@@ -240,27 +192,6 @@ class CollectionItemController extends BaseWebController
                 continue;
             }
             $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['email'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
-
-    /** @return array<string, string> */
-    private function techniquesOptions(): array
-    {
-        $techniqueService = service('museumTechniqueApiService');
-        $response = $this->safeApiCall(fn () => $techniqueService->list([
-            'per_page' => 100,
-            'projection' => 'list',
-        ]));
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-            $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
             $options[(string) $item['id']] = (string) $label;
         }
 

@@ -65,8 +65,8 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
 
     /**
      * Read the Hub-owned Metrics summary and trend series through one BFF
-     * request. The Admin keeps direct calls as an availability fallback while
-     * the BFF contract is rolled out.
+     * request. The Admin renders an explicit degraded state when this
+     * projection is unavailable; it does not fan out to direct reads.
      *
      * @return ApiResponse
      */

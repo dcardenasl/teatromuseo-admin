@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Museum\Services\CollectionItemApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -67,34 +68,31 @@ final class CollectionItemFlowTest extends CIUnitTestCase
 
     public function testShowRendersForAdmin(): void
     {
-        $itemMock = $this->createMock(CollectionItemApiService::class);
-        $itemMock->method('get')
-            ->with('test-uuid')
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCatalogCollectionItemWorkspace')
+            ->with(15)
             ->willReturn($this->apiSuccess([
-                'id'             => 15,
-                'name'           => 'Ficha de prueba',
-                'inventory_code' => 'UIC-TEST',
-                'category_id'    => 7,
-                'status'         => 'published',
-                'translations'   => [],
-                'slug'           => 'ficha-de-prueba',
+                'sections' => [
+                    'collectionItem' => [
+                        'id'             => 15,
+                        'name'           => 'Ficha de prueba',
+                        'inventory_code' => 'UIC-TEST',
+                        'category_id'    => 7,
+                        'status'         => 'published',
+                        'translations'   => [],
+                        'slug'           => 'ficha-de-prueba',
+                    ],
+                    'categories' => [['id' => 7, 'name' => 'Categoría de prueba']],
+                    'languages' => [],
+                ],
             ]));
-        Services::injectMock('museumCollectionItemApiService', $itemMock);
-
-        $categoryMock = $this->createMock(\App\Modules\Museum\Services\CategoryApiService::class);
-        $categoryMock->method('list')->willReturn($this->apiSuccess([
-            ['id' => 7, 'name' => 'Categoría de prueba'],
-        ]));
-        Services::injectMock('museumCategoryApiService', $categoryMock);
-
-        $languageMock = $this->createMock(\App\Modules\Cms\Services\LanguageApiService::class);
-        $languageMock->method('list')->willReturn($this->apiSuccess([]));
-        Services::injectMock('languageApiService', $languageMock);
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['permissions' => ['catalog.collectionItem.read']],
-        ])->get('/admin/museum/collection-items/test-uuid');
+        ])->get('/admin/museum/collection-items/15');
 
         $result->assertStatus(200);
         $result->assertSee('Ficha de prueba');

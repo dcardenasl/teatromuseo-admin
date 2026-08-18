@@ -55,49 +55,31 @@ class EventController extends BaseWebController
                 'eventTypeLabels' => $this->eventTypeLabelsFromWorkspace($workspace['eventTypes'] ?? []),
             ]);
         }
-        if (! $this->workspaceAdapter->wasUnavailable()) {
-            return $this->render('events/events/show', [
-                'title' => lang('Events.events_details'),
-                'event' => [],
-                'eventTypeLabels' => [],
-                'error' => lang('Events.events_not_found'),
-            ]);
-        }
-
-        $response = $this->safeApiCall(fn () => $this->eventService->get($id));
-
-        if (! $response['ok']) {
-            return $this->render('events/events/show', [
-                'title' => lang('Events.events_details'),
-                'event' => [],
-                'eventTypeLabels' => $this->eventTypeLabels(),
-                'error' => $this->firstMessage($response, lang('Events.events_not_found')),
-
-            ]);
-        }
-
         return $this->render('events/events/show', [
             'title' => lang('Events.events_details'),
-            'event' => $this->extractData($response),
-            'eventTypeLabels' => $this->eventTypeLabels(),
-
+            'event' => [],
+            'eventTypeLabels' => [],
+            'error' => $this->workspaceAdapter->wasUnavailable()
+                ? lang('App.connection_error')
+                : lang('Events.events_not_found'),
         ]);
     }
 
     public function create(): string
     {
         $workspace = $this->workspaceAdapter->workspace();
+        $languages = $workspace !== null && is_array($workspace['languages'] ?? null)
+            ? $workspace['languages']
+            : [];
         $languageContext = $this->contentLanguageContext(
-            languages: $workspace !== null && is_array($workspace['languages'] ?? null)
-                ? $workspace['languages']
-                : null,
+            languages: $languages,
         );
 
         return $this->render('events/events/create', [
             'title' => lang('Events.events_create'),
             'eventTypeOptions' => $workspace !== null
                 ? $this->eventTypeLabelsFromWorkspace($workspace['eventTypes'] ?? [])
-                : $this->eventTypeLabels(),
+                : [],
             ...$languageContext,
 
         ]);
@@ -138,22 +120,10 @@ class EventController extends BaseWebController
                 ),
             ]);
         }
-        if (! $this->workspaceAdapter->wasUnavailable()) {
-            return $this->withError(lang('Events.events_not_found'), route_to('admin.events.events'));
-        }
-
-        $response = $this->safeApiCall(fn () => $this->eventService->get($id));
-        if (! $response['ok']) {
-            return $this->withError(lang('Events.events_not_found'), route_to('admin.events.events'));
-        }
-
-        return $this->render('events/events/edit', [
-            'title' => lang('Events.events_edit'),
-            'item'  => $this->extractData($response),
-            'eventTypeOptions' => $this->eventTypeLabels(),
-            ...$this->contentLanguageContext($this->extractData($response)),
-
-        ]);
+        return $this->withError(
+            $this->workspaceAdapter->wasUnavailable() ? lang('App.connection_error') : lang('Events.events_not_found'),
+            route_to('admin.events.events'),
+        );
     }
 
     public function update(string $id): RedirectResponse
@@ -190,9 +160,9 @@ class EventController extends BaseWebController
     }
 
     /**
-     * Read the CMS language registry for every form render. The fallback keeps
-     * the Event UI usable during a CMS outage, while the API still remains the
-     * source of truth for persisted translations.
+     * Normalize the language section supplied by the BFF workspace for the
+     * existing translation controls. The synthetic locale only preserves the
+     * view shape when the projection is empty; no direct CMS read is made.
      *
      * @param array<string, mixed> $item
      * @param array<int|string, mixed>|null $languages

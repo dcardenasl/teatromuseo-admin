@@ -63,30 +63,20 @@ class RoleController extends BaseWebController
             ]);
         }
 
-        $response = $this->safeApiCall(fn () => $this->roleService->get($id));
-
-        if (! ($response['ok'] ?? false)) {
+        if (! $this->workspace->wasUnavailable()) {
             return $this->render('iam/roles/show', [
                 'title' => lang('Iam.roles_details'),
                 'role'  => [],
-                'error' => $this->firstMessage($response, lang('Iam.roles_not_found')),
+                'error' => lang('Iam.roles_not_found'),
             ]);
         }
 
-        $assignedResponse       = $this->safeApiCall(fn () => $this->roleService->listPermissions($id));
-        $allPermissionsResponse = $this->safeApiCall(fn () => $this->permissionService->list(['limit' => 200]));
-
-        $assignedPermissions = $this->extractItems($assignedResponse);
-        $allPermissions      = $this->extractItems($allPermissionsResponse);
-        $assignedIds         = array_map(static fn (array $p): int => (int) ($p['id'] ?? 0), $assignedPermissions);
-
-        $role = $this->extractData($response);
-
         return $this->render('iam/roles/show', [
-            'title'                 => lang('Iam.roles_details'),
-            'role'                  => $role,
-            'allPermissions'        => $allPermissions,
-            'assignedPermissionIds' => $assignedIds,
+            'title' => lang('Iam.roles_details'),
+            'role' => [],
+            'allPermissions' => [],
+            'assignedPermissionIds' => [],
+            'error' => lang('App.connection_error'),
         ]);
     }
 
@@ -133,22 +123,11 @@ class RoleController extends BaseWebController
             ]);
         }
 
-        $response = $this->safeApiCall(fn () => $this->roleService->get($id));
-        if (! $response['ok']) {
+        if (! $this->workspace->wasUnavailable()) {
             return $this->withError(lang('Iam.roles_not_found'), route_to('admin.iam.roles'));
         }
 
-        $assignedResponse = $this->safeApiCall(fn () => $this->roleService->listPermissions($id));
-        $assignedItems    = $this->extractItems($assignedResponse);
-        $assignedIds      = array_map(static fn (array $p): int => (int) ($p['id'] ?? 0), $assignedItems);
-
-        return $this->render('iam/roles/edit', [
-            'title'                 => lang('Iam.roles_edit'),
-            'item'                  => $this->extractData($response),
-            'applications'          => $this->lookups->applications(),
-            'allPermissions'        => $this->loadAllPermissions(),
-            'assignedPermissionIds' => $assignedIds,
-        ]);
+        return $this->withError(lang('App.connection_error'), route_to('admin.iam.roles'));
     }
 
     /**
