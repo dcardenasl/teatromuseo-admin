@@ -50,6 +50,28 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
         Services::injectMock('bffApiClient', $bff);
     }
 
+    /** @param array<string, mixed> $sections */
+    private function injectEntryWorkspace(array $sections, int $entryId = 4, ?int $instanceId = null): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsEntryWorkspace')
+            ->with($entryId, $instanceId)
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => [
+                    'status' => 'success',
+                    'sections' => $sections,
+                ],
+                'raw' => '',
+                'headers' => [],
+                'messages' => [],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $bff);
+    }
+
     private function injectUnavailablePageWorkspace(int $pageId = 1, ?int $instanceId = null): void
     {
         $bff = $this->createMock(BffApiClientInterface::class);
@@ -134,31 +156,14 @@ final class BlockInstanceFlowTest extends CIUnitTestCase
 
     public function testEntryIndexRendersForAdmin(): void
     {
-        $entryMock = $this->createMock(EntryApiService::class);
-        $entryMock->method('get')
-            ->with('4')
-            ->willReturn([
-                'ok' => true, 'status' => 200, 'data' => ['id' => 4, 'title' => 'Test Entry'],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('entryApiService', $entryMock);
-
-        $blockMock = $this->createMock(BlockInstanceApiService::class);
-        $blockMock->method('list')
-            ->with('4', 'entry')
-            ->willReturn([
-                'ok' => true, 'status' => 200, 'data' => [],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('blockInstanceApiService', $blockMock);
-
-        $typeMock = $this->createMock(BlockTypeApiService::class);
-        $typeMock->method('list')
-            ->willReturn([
-                'ok' => true, 'status' => 200, 'data' => [],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('blockTypeApiService', $typeMock);
+        $this->injectEntryWorkspace([
+            'entry' => ['id' => 4, 'title' => 'Test Entry'],
+            'blocks' => [],
+            'blockTypes' => [],
+            'collectionsMap' => [],
+            'languages' => [],
+            'blockTranslationStatus' => [],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',

@@ -198,9 +198,7 @@ class BlockInstanceController extends BaseWebController
     public function index(string $ownerId): string|RedirectResponse
     {
         $ownerType = $this->ownerTypeFromRequest();
-        $workspace = $ownerType === self::OWNER_PAGE
-            ? $this->workspaceForOwner((int) $ownerId)
-            : null;
+        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId);
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
             if ($workspace === null || ! is_array($workspace[$ownerType] ?? null)) {
                 return redirect()->to(BlockOwnerRouting::listRoute($ownerType))->with('error', $this->workspaceError($ownerType));
@@ -291,9 +289,7 @@ class BlockInstanceController extends BaseWebController
             ? (int) $parentIdRaw
             : null;
 
-        $workspace = $ownerType === self::OWNER_PAGE
-            ? $this->workspaceForOwner((int) $ownerId, $parentInstanceId)
-            : null;
+        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId, $parentInstanceId);
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
             if ($workspace === null || ! is_array($workspace[$ownerType] ?? null)) {
                 return redirect()->to(BlockOwnerRouting::listRoute($ownerType))->with('error', $this->workspaceError($ownerType));
@@ -495,9 +491,7 @@ class BlockInstanceController extends BaseWebController
         }
 
         $ownerType = $this->ownerTypeFromRequest();
-        $workspace = $ownerType === self::OWNER_PAGE
-            ? $this->workspaceForOwner((int) $ownerId, (int) $id)
-            : null;
+        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId, (int) $id);
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
             if ($workspace === null) {
                 return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['index'], $ownerId))->with('error', $this->workspaceError($ownerType));
@@ -871,9 +865,7 @@ class BlockInstanceController extends BaseWebController
     public function children(string $ownerId, string $instanceId): string|RedirectResponse
     {
         $ownerType = $this->ownerTypeFromRequest();
-        $workspace = $ownerType === self::OWNER_PAGE
-            ? $this->workspaceForOwner((int) $ownerId, (int) $instanceId)
-            : null;
+        $workspace = $this->workspaceForOwner($ownerType, (int) $ownerId, (int) $instanceId);
         if ($ownerType === self::OWNER_PAGE || $workspace !== null) {
             // The workspace projection names the requested instance `block`.
             // `parentBlock` is only present when that instance itself has a
@@ -995,9 +987,11 @@ class BlockInstanceController extends BaseWebController
     }
 
     /** @return array<string, mixed>|null */
-    private function workspaceForOwner(int $ownerId, ?int $instanceId = null): ?array
+    private function workspaceForOwner(string $ownerType, int $ownerId, ?int $instanceId = null): ?array
     {
-        return $this->cmsWorkspace->page($ownerId, $instanceId);
+        return $ownerType === self::OWNER_ENTRY
+            ? $this->cmsWorkspace->entry($ownerId, $instanceId)
+            : $this->cmsWorkspace->page($ownerId, $instanceId);
     }
 
     private function workspaceError(string $ownerType): string
