@@ -62,9 +62,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Collapsible sidebar sub-groups** — `bin/register-sidebar.sh` now supports grouping a module's
   sidebar items into collapsible sections; used to regroup Events' 7 flat items into
   "Scheduling"/"Ticketing".
+- **Localized Google login pending-approval emails** — `AuthController` now forwards the caller's
+  current locale to the Hub's `POST /auth/google` so first-time Google sign-ins receive their
+  pending-approval email in the language they were browsing in, instead of always defaulting to
+  Spanish.
 
 ### Fixed
 
+- **Filter panel rendered the active-filter chips even without reactive filters** — the chips
+  `<div>` in `filter_panel.php` wasn't guarded by the `$reactiveHasFilters` check that already
+  gated the "no filters active" message, so non-reactive filter panels always rendered an
+  Alpine-bound block with no controller behind it. Wrapped both blocks in the same conditional.
 - **Google Identity Services was blocked in production** — the CSP `style-src` didn't allow
   `https://accounts.google.com` and cPanel's default `Referrer-Policy` stripped the origin Google
   needs to render the sign-in button. Added the origin to `ContentSecurityPolicy::$styleSrc` and
