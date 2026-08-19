@@ -42,8 +42,8 @@ $routes->group('admin/cms', ['filter' => ['auth', 'admin']], static function (Ro
     $routes->post('wizard/menus/items/(:num)', '\App\Modules\Cms\Controllers\WizardController::updateMenuItem/$1', ['as' => 'admin.cms.wizard.update-menu-item',   'filter' => 'permission:cms.menus.write']);
 
     // File Translations
-    $routes->get('files/(:num)/translations', '\\App\\Modules\\Cms\\Controllers\\FileTranslationController::edit/$1', ['as' => 'admin.cms.file_translations.edit',   'filter' => 'permission:cms.pages.write']);
-    $routes->post('files/(:num)/translations', '\\App\\Modules\\Cms\\Controllers\\FileTranslationController::update/$1', ['as' => 'admin.cms.file_translations.update', 'filter' => 'permission:cms.pages.write']);
+    $routes->get('files/(:num)/translations', '\\App\\Modules\\Cms\\Controllers\\FileTranslationController::edit/$1', ['as' => 'admin.cms.file_translations.edit',   'filter' => 'permission:cms.file-translations.write']);
+    $routes->post('files/(:num)/translations', '\\App\\Modules\\Cms\\Controllers\\FileTranslationController::update/$1', ['as' => 'admin.cms.file_translations.update', 'filter' => 'permission:cms.file-translations.write']);
 
     // Language
     $routes->get('languages', '\\App\\Modules\\Cms\\Controllers\\LanguageController::index', ['as' => 'admin.cms.languages', 'filter' => 'permission:cms.languages.read']);
@@ -176,7 +176,7 @@ $routes->group('admin/cms', ['filter' => ['auth', 'admin']], static function (Ro
     $routes->get('collections/(:segment)/structure', '\App\Modules\Cms\Controllers\CollectionController::structure/$1', ['as' => 'admin.cms.collections.structure', 'filter' => 'permission:cms.collections.write']);
     $routes->post('collections/(:segment)', '\App\Modules\Cms\Controllers\CollectionController::update/$1', ['as' => 'admin.cms.collections.update', 'filter' => 'permission:cms.collections.write']);
     $routes->post('collections/(:segment)/structure', '\App\Modules\Cms\Controllers\CollectionController::updateStructure/$1', ['as' => 'admin.cms.collections.update_structure', 'filter' => 'permission:cms.collections.write']);
-    $routes->post('collections/(:segment)/delete', '\App\Modules\Cms\Controllers\CollectionController::delete/$1', ['as' => 'admin.cms.collections.delete', 'filter' => 'permission:cms.collections.write']);
+    $routes->post('collections/(:segment)/delete', '\App\Modules\Cms\Controllers\CollectionController::delete/$1', ['as' => 'admin.cms.collections.delete', 'filter' => 'permission:cms.collections.admin']);
 
     // Entry
     $routes->get('entries', '\App\Modules\Cms\Controllers\EntryController::index', ['as' => 'admin.cms.entries', 'filter' => 'permission:cms.entries.read']);
@@ -189,7 +189,7 @@ $routes->group('admin/cms', ['filter' => ['auth', 'admin']], static function (Ro
     $routes->get('entries/(:segment)', '\App\Modules\Cms\Controllers\EntryController::show/$1', ['as' => 'admin.cms.entries.show', 'filter' => 'permission:cms.entries.read']);
     $routes->get('entries/(:segment)/edit', '\App\Modules\Cms\Controllers\EntryController::edit/$1', ['as' => 'admin.cms.entries.edit', 'filter' => 'permission:cms.entries.write']);
     $routes->post('entries/(:segment)', '\App\Modules\Cms\Controllers\EntryController::update/$1', ['as' => 'admin.cms.entries.update', 'filter' => 'permission:cms.entries.write']);
-    $routes->post('entries/(:segment)/delete', '\App\Modules\Cms\Controllers\EntryController::delete/$1', ['as' => 'admin.cms.entries.delete', 'filter' => 'permission:cms.entries.write']);
+    $routes->post('entries/(:segment)/delete', '\App\Modules\Cms\Controllers\EntryController::delete/$1', ['as' => 'admin.cms.entries.delete', 'filter' => 'permission:cms.entries.admin']);
     $routes->post('entries/(:segment)/publish', '\App\Modules\Cms\Controllers\EntryController::publish/$1', ['as' => 'admin.cms.entries.publish', 'filter' => 'permission:cms.entries.write']);
     $routes->post('entries/(:segment)/archive', '\App\Modules\Cms\Controllers\EntryController::archive/$1', ['as' => 'admin.cms.entries.archive', 'filter' => 'permission:cms.entries.write']);
 
@@ -230,7 +230,7 @@ $routes->group('admin/cms', ['filter' => ['auth', 'admin']], static function (Ro
     $routes->get('redirects/(:segment)', '\App\Modules\Cms\Controllers\RedirectController::show/$1', ['as' => 'admin.cms.redirects.show', 'filter' => 'permission:cms.redirects.read']);
     $routes->get('redirects/(:segment)/edit', '\App\Modules\Cms\Controllers\RedirectController::edit/$1', ['as' => 'admin.cms.redirects.edit', 'filter' => 'permission:cms.redirects.write']);
     $routes->post('redirects/(:segment)', '\App\Modules\Cms\Controllers\RedirectController::update/$1', ['as' => 'admin.cms.redirects.update', 'filter' => 'permission:cms.redirects.write']);
-    $routes->post('redirects/(:segment)/delete', '\App\Modules\Cms\Controllers\RedirectController::delete/$1', ['as' => 'admin.cms.redirects.delete', 'filter' => 'permission:cms.redirects.write']);
+    $routes->post('redirects/(:segment)/delete', '\App\Modules\Cms\Controllers\RedirectController::delete/$1', ['as' => 'admin.cms.redirects.delete', 'filter' => 'permission:cms.redirects.admin']);
     $routes->get('redirects/export', '\App\Modules\Cms\Controllers\RedirectController::exportCsv', ['as' => 'admin.cms.redirects.export_csv', 'filter' => 'permission:cms.redirects.read']);
     $routes->post('redirects/import', '\App\Modules\Cms\Controllers\RedirectController::importCsv', ['as' => 'admin.cms.redirects.import_csv', 'filter' => 'permission:cms.redirects.write']);
 

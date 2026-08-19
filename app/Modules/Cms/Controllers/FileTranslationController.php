@@ -27,7 +27,7 @@ class FileTranslationController extends BaseWebController
 
     public function edit(string $fileId): string|RedirectResponse
     {
-        if (! has_permission('cms.pages.write')) {
+        if (! has_permission('cms.file-translations.write')) {
             return redirect()->to(route_to('dashboard'))->with('error', lang('App.access_denied'));
         }
 
@@ -60,7 +60,7 @@ class FileTranslationController extends BaseWebController
 
     public function update(string $fileId): RedirectResponse
     {
-        if (! has_permission('cms.pages.write')) {
+        if (! has_permission('cms.file-translations.write')) {
             return redirect()->to(route_to('dashboard'))->with('error', lang('App.access_denied'));
         }
 
