@@ -85,7 +85,7 @@ final class EntryFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['cms.entries.write', 'cms.entries.read']],
+            'user'         => ['permissions' => ['cms.entries.admin', 'cms.entries.read']],
             'permissions_refreshed_at' => time(),
         ])->post('/admin/cms/entries/test-uuid/delete', [
             csrf_token() => csrf_hash(),

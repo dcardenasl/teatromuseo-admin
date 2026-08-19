@@ -23,8 +23,31 @@ final class SidebarPermissionGatingTest extends CIUnitTestCase
     {
         return [
             'access_token' => 'test-token',
-            'user'         => ['id' => 1, 'email' => 'user@test.com', 'permissions' => $permissions],
+            // /files is used as the authenticated shell route in these tests.
+            // The module itself now correctly requires files.read.
+            'user'         => ['id' => 1, 'email' => 'user@test.com', 'permissions' => array_values(array_unique([...$permissions, 'files.read']))],
         ];
+    }
+
+    public function testFilesSectionHiddenWithoutFilesReadPermission(): void
+    {
+        $result = $this->withSession([
+            'access_token' => 'test-token',
+            'user'         => ['id' => 1, 'email' => 'user@test.com', 'permissions' => ['users.read']],
+        ])->get('/dashboard');
+
+        $result->assertStatus(200);
+        $body = $this->decodedBody($result->getBody());
+        $this->assertStringNotContainsString('>Archivos<', $body);
+    }
+
+    public function testFilesSectionVisibleWithFilesReadPermission(): void
+    {
+        $result = $this->withSession($this->sessionWithPermissions(['users.read']))->get('/files');
+
+        $result->assertStatus(200);
+        $body = $this->decodedBody($result->getBody());
+        $this->assertStringContainsString('>Archivos<', $body);
     }
 
     /**
