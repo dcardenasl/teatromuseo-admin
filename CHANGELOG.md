@@ -71,6 +71,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **File detail page blocked on the cross-domain usage check** — the file detail view now
+  renders metadata and preview immediately instead of waiting for the Hub's usage fan-out;
+  usage verification loads once client-side against the Hub, the delete button only unlocks
+  once the snapshot reports complete with zero usages, and the preview falls back to the
+  file's direct URL when no `sm` variant exists.
+
 - **CMS delete actions and Files routes were gated too loosely** — `collections`, `entries`,
   `redirects`, and `forms` delete required only `.write`, the same permission as editing; they
   now require `.admin`, both server-side (routes) and in the views that render the delete
