@@ -6,6 +6,13 @@
 
 ## ✅ Completadas
 
+- [x] **ADM-BFF-11 — Carga no bloqueante del detalle de archivos.** Cerrada
+  2026-08-19. La vista entrega metadata y preview sin esperar el fan-out de
+  usos; la verificación se carga una vez contra el BFF, actualiza el borrado
+  sólo con snapshot completo y vacío, y usa la URL directa del archivo cuando
+  no hay variante. Verificado con `composer quality` (829 tests, 3.442
+  assertions, 1 skip) y 106 tests JS.
+
 - [x] **CMS-EDITOR-02 — Flujos y guards de Admin para `cms-editor`.** Cerrada
   2026-08-18. Entries, collections, redirects y forms separan `.write` de
   `.admin` para eliminación; bloques de entries y traducciones de archivos
