@@ -71,6 +71,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dates displayed in UTC instead of the venue's local time** — `appTimezone` now defaults to
+  `America/Santiago`; `format_date()` and the JS date formatter convert technical UTC timestamps
+  to the configured display timezone at render time, while date-only values and event/occurrence
+  wall-clock schedules (via `EVENT_SCHEDULE_TIMEZONE`) keep their own source timezone instead of
+  shifting a day when the display zone is west of UTC.
+
 - **File detail page blocked on the cross-domain usage check** — the file detail view now
   renders metadata and preview immediately instead of waiting for the Hub's usage fan-out;
   usage verification loads once client-side against the Hub, the delete button only unlocks
