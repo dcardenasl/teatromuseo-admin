@@ -150,6 +150,7 @@ final class FileUploadFlowTest extends CIUnitTestCase
     public function testFileDetailsShowsIncompleteUsageWarningAndNoDeleteAction(): void
     {
         $mock = $this->createMock(FileApiService::class);
+        $mock->expects($this->never())->method('usages');
         $mock->method('getInfo')->willReturn($this->apiOkResponse([
             'id' => 7,
             'original_name' => 'image.jpg',
@@ -176,6 +177,7 @@ final class FileUploadFlowTest extends CIUnitTestCase
 
         $this->assertStringContainsString(lang('Files.usages_unavailable_body'), $body);
         $this->assertStringNotContainsString('action="/files/7/delete"', $body);
+        $this->assertStringContainsString('data-file-usages', $body);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────

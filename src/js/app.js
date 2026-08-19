@@ -39,6 +39,7 @@ import { bootAdminFormFieldErrors, adminFormFieldErrors } from './components/ser
 import { schemaEditor } from './components/schemaEditor.js';
 import { blockSorter } from './components/blockSorter.js';
 import { bootSessionExpiryWatcher } from './components/sessionWatcher.js';
+import { bootFileUsages } from './components/fileUsages.js';
 import { handleGoogleCredentialResponse } from './components/googleAuth.js';
 import { richTextEditor } from './components/richTextEditor.js';
 import { passwordToggle } from './components/passwordToggle.js';
@@ -123,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bootGlobalSubmitGuard();
     const config = window.__componentConfig || {};
     bootSessionExpiryWatcher({ expiringMessage: config.sessionExpiringMessage });
+    bootFileUsages();
 });
 
 bootAdminFormFieldErrors();

@@ -152,32 +152,26 @@ class FileController extends BaseWebController
             return redirect()->to(route_to('files'))->with('error', lang('Files.file_not_found'));
         }
 
-        $usages         = $this->safeApiCall(fn () => $this->fileService->usages($id));
-        $usagesComplete = $this->isCompleteUsageResponse($usages);
-        $usageData       = ($usages['ok'] ?? false) ? $this->extractData($usages) : [];
-        if (isset($usageData['data']) && is_array($usageData['data'])) {
-            $usageData = $usageData['data'];
-        }
-
-        $usageData = array_map(fn (array $u) => array_merge($u, [
-            'edit_url' => $this->resolveEditUrl(
-                (string) ($u['resource'] ?? ''),
-                (int) ($u['resource_id'] ?? 0),
-                is_array($u['context'] ?? null) ? (array) $u['context'] : [],
-            ),
-        ]), array_values($usageData));
-
         return $this->render('files/show', [
             'title'  => lang('Files.detail_title'),
             'file'   => $this->extractData($info),
-            'usages' => $usageData,
-            'usagesComplete' => $usagesComplete,
+            // Usage verification is intentionally deferred. It is a
+            // cross-domain read and must not hold the server-rendered page
+            // open while Hub checks every domain in sequence.
+            'usages' => [],
+            'usagesComplete' => false,
+            'usagesDeferred' => true,
         ]);
     }
 
     public function usagesJson(string $id): ResponseInterface
     {
         $response = $this->safeApiCall(fn () => $this->fileService->usages($id));
+
+        if (($response['ok'] ?? false) === true) {
+            $usageData = $this->extractData($response);
+            $response['data']['data'] = $this->decorateUsages($usageData);
+        }
 
         return $this->response->setJSON($response);
     }
@@ -505,6 +499,29 @@ class FileController extends BaseWebController
         ];
 
         return isset($map[$resource]) ? $map[$resource]($resourceId) : null;
+    }
+
+    /**
+     * @param array<int|string, mixed> $usages
+     * @return list<array<string, mixed>>
+     */
+    private function decorateUsages(array $usages): array
+    {
+        $decorated = [];
+        foreach ($usages as $usage) {
+            if (! is_array($usage)) {
+                continue;
+            }
+            $decorated[] = array_merge($usage, [
+                'edit_url' => $this->resolveEditUrl(
+                    (string) ($usage['resource'] ?? ''),
+                    (int) ($usage['resource_id'] ?? 0),
+                    is_array($usage['context'] ?? null) ? $usage['context'] : [],
+                ),
+            ]);
+        }
+
+        return $decorated;
     }
 
     /**
