@@ -6,6 +6,13 @@
 
 ## ✅ Completadas
 
+- [x] **CMS-EDITOR-02 — Flujos y guards de Admin para `cms-editor`.** Cerrada
+  2026-08-18. Entries, collections, redirects y forms separan `.write` de
+  `.admin` para eliminación; bloques de entries y traducciones de archivos
+  usan los permisos correctos; Files quedó protegido por `files.read/write`;
+  sidebar y wizard ocultan acciones fuera del alcance. Verificado con
+  `composer quality` (826 tests, 3.437 asserts, 1 skip).
+
 - [x] **ADM-BFF-01 — Consumir `analytics`/`translations` del snapshot BFF.**
   Cerrada 2026-08-17. `DashboardDataService` traduce las nuevas fuentes,
   incrementa la versión de caché y conserva sus estados; ambos widgets leen
@@ -104,9 +111,6 @@
   `docs/FRONTEND.md`, `docs/es/FRONTEND.md`, `docs/COMPONENTS.md` y el
   Consistency Contract de `CLAUDE.md` con el patrón `remoteTable`, `mode`,
   preferencias por pestaña, flags del toolbar y mapeos explícitos de tarjetas.
-
-## 🔴 En progreso
-
 
 ## 🟡 Próximo
 
