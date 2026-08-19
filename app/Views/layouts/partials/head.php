@@ -174,6 +174,7 @@ $componentConfigJson = json_encode([
   window.auditSeverityLabels = <?= $auditSeverityLabelsJson ?>;
   window.paginationLabels = <?= $paginationLabelsJson ?>;
   window.__componentConfig = <?= $componentConfigJson ?>;
+  window.appTimezone = <?= json_encode(app_timezone(), JSON_THROW_ON_ERROR) ?>;
 </script>
 <?php // tailwind.config script removed as we now use compiled CSS?>
 <?php if (isset($extraHead)) {

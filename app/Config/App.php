@@ -144,7 +144,10 @@ class App extends BaseConfig
      * @see https://www.php.net/manual/en/timezones.php for list of timezones
      *      supported by PHP.
      */
-    public string $appTimezone = 'UTC';
+    // User-facing dates are shown in the museum's venue timezone. Technical
+    // timestamps received from the APIs remain UTC and are converted at the
+    // presentation boundary.
+    public string $appTimezone = 'America/Santiago';
 
     /**
      * --------------------------------------------------------------------------

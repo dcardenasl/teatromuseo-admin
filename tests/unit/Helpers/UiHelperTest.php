@@ -64,4 +64,22 @@ final class UiHelperTest extends CIUnitTestCase
         $this->assertTrue(has_active_filters(['status' => 'inactive'], $defaults));
         $this->assertTrue(has_active_filters(['status' => ''], $defaults));
     }
+
+    public function testFormatDateConvertsTechnicalUtcTimestampToConfiguredDisplayTimezone(): void
+    {
+        $this->assertSame('18/08/2026 21:24', format_date('2026-08-19 01:24:00'));
+    }
+
+    public function testFormatDatePreservesVenueWallClockTimezoneForSchedules(): void
+    {
+        $this->assertSame(
+            '19/08/2026 10:00',
+            format_date('2026-08-19 10:00:00', null, 'America/Santiago'),
+        );
+    }
+
+    public function testFormatDateDoesNotShiftDateOnlyValues(): void
+    {
+        $this->assertSame('19/08/2026 00:00', format_date('2026-08-19'));
+    }
 }
