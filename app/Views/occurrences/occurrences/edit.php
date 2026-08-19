@@ -1,7 +1,8 @@
 <?php
 $item = $item ?? [];
 $occurrenceEventLabel = $events[(string) ($item['event_id'] ?? '')] ?? lang('Occurrences.occurrences_details');
-$occurrenceLabel = trim($occurrenceEventLabel . (! empty($item['start_time']) ? ' · ' . format_date($item['start_time']) : ''));
+$scheduleTimezone = (string) env('EVENT_SCHEDULE_TIMEZONE', 'America/Santiago');
+$occurrenceLabel = trim($occurrenceEventLabel . (! empty($item['start_time']) ? ' · ' . format_date($item['start_time'], null, $scheduleTimezone) : ''));
 ?>
 <?= view('components/display/admin_page_header', [
     'backUrl' => route_to('admin.occurrences.occurrences'),

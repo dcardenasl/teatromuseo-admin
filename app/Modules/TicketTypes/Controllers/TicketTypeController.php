@@ -181,7 +181,10 @@ class TicketTypeController extends BaseWebController
             $label = is_string($eventLabel) && trim($eventLabel) !== '' ? trim($eventLabel) : lang('Occurrences.occurrences_title');
             if (is_string($startTime) && trim($startTime) !== '') {
                 try {
-                    $label .= ' · ' . (new \DateTime($startTime))->format('d/m/Y H:i');
+                    $label .= ' · ' . (new \DateTimeImmutable(
+                        $startTime,
+                        new \DateTimeZone((string) env('EVENT_SCHEDULE_TIMEZONE', 'America/Santiago')),
+                    ))->format('d/m/Y H:i');
                 } catch (\Throwable) {
                     $label .= ' · ' . $startTime;
                 }

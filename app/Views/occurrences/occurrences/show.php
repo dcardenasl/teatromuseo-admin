@@ -8,7 +8,8 @@
 <?php
     $itemId = (string) ($occurrence['id'] ?? '');
     $occurrenceEventLabel = $events[(string) ($occurrence['event_id'] ?? '')] ?? lang('Occurrences.occurrences_details');
-    $occurrenceLabel = trim($occurrenceEventLabel . (! empty($occurrence['start_time']) ? ' · ' . format_date($occurrence['start_time']) : ''));
+    $scheduleTimezone = (string) env('EVENT_SCHEDULE_TIMEZONE', 'America/Santiago');
+    $occurrenceLabel = trim($occurrenceEventLabel . (! empty($occurrence['start_time']) ? ' · ' . format_date($occurrence['start_time'], null, $scheduleTimezone) : ''));
     ?>
 
     <?= view('components/display/admin_page_header', [
