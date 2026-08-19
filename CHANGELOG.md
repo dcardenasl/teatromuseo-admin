@@ -66,8 +66,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   current locale to the Hub's `POST /auth/google` so first-time Google sign-ins receive their
   pending-approval email in the language they were browsing in, instead of always defaulting to
   Spanish.
+- **Favicon and app-icon set** — added a full favicon/manifest set (SVG, ICO, PNG sizes,
+  apple-touch-icon, web app manifest) with a finite Cache-Control TTL.
 
 ### Fixed
+
+- **CMS delete actions and Files routes were gated too loosely** — `collections`, `entries`,
+  `redirects`, and `forms` delete required only `.write`, the same permission as editing; they
+  now require `.admin`, both server-side (routes) and in the views that render the delete
+  button. File translation routes shared `cms.pages.write` instead of their own permission;
+  they now use `cms.file-translations.write`. The `/files/*` route group had no permission
+  filter at all (only session `auth`); it now requires `files.read`/`files.write` per action,
+  and the sidebar/file-detail "Files"/"Translate" links are hidden without the matching
+  permission.
 
 - **Filter panel rendered the active-filter chips even without reactive filters** — the chips
   `<div>` in `filter_panel.php` wasn't guarded by the `$reactiveHasFilters` check that already
