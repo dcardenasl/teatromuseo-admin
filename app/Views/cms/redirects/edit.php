@@ -97,10 +97,12 @@ $itemId = (string) ($item['id'] ?? '');
         <?php $actionsContent = ob_get_clean(); ?>
 
         <?php ob_start(); ?>
-        <button type="submit" form="delete-redirect-form" class="<?= esc(action_button_class('danger')) ?> w-full justify-center">
-            <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
-            <?= esc(lang('App.delete')) ?>
-        </button>
+        <?php if (has_permission('cms.redirects.admin')): ?>
+            <button type="submit" form="delete-redirect-form" class="<?= esc(action_button_class('danger')) ?> w-full justify-center">
+                <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
+                <?= esc(lang('App.delete')) ?>
+            </button>
+        <?php endif; ?>
         <?php $dangerContent = ob_get_clean(); ?>
 
         <?= view('components/display/admin_actions_panel', [
@@ -110,6 +112,8 @@ $itemId = (string) ($item['id'] ?? '');
     </aside>
 </form>
 
-<form id="delete-redirect-form" method="post" action="<?= route_to('admin.cms.redirects.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['old_path'] ?? $item['new_url'] ?? null), 'js') ?>', () => $el.submit())">
-    <?= csrf_field() ?>
-</form>
+<?php if (has_permission('cms.redirects.admin')): ?>
+    <form id="delete-redirect-form" method="post" action="<?= route_to('admin.cms.redirects.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['old_path'] ?? $item['new_url'] ?? null), 'js') ?>', () => $el.submit())">
+        <?= csrf_field() ?>
+    </form>
+<?php endif; ?>

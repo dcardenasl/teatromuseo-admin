@@ -6,13 +6,15 @@
             <?= ui_icon('layout-template', 'h-3.5 w-3.5') ?>
             <?= esc(lang('Entries.blocks_title')) ?>
         </a>
-        <form method="post" action="<?= route_to('admin.cms.entries.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['title'] ?? $item['slug'] ?? null), 'js') ?>', () => $el.submit())">
-            <?= csrf_field() ?>
-            <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
-                <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
-                <?= esc(lang('App.delete')) ?>
-            </button>
-        </form>
+        <?php if (has_permission('cms.entries.admin')): ?>
+            <form method="post" action="<?= route_to('admin.cms.entries.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['title'] ?? $item['slug'] ?? null), 'js') ?>', () => $el.submit())">
+                <?= csrf_field() ?>
+                <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
+                    <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
+                    <?= esc(lang('App.delete')) ?>
+                </button>
+            </form>
+        <?php endif; ?>
     </div>
 </div>
 

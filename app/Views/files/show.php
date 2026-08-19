@@ -17,7 +17,7 @@ $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url']
         <a href="<?= route_to('files') ?>/<?= esc($id) ?>/download" class="<?= esc(action_button_class()) ?>">
             <?= ui_icon('download', 'h-3.5 w-3.5') ?> <?= esc(lang('App.download')) ?>
         </a>
-        <?php if (has_permission('cms.pages.write')): ?>
+        <?php if (has_permission('cms.file-translations.write')): ?>
             <a href="<?= route_to('admin.cms.file_translations.edit', $id) ?>" class="<?= esc(action_button_class('neutral')) ?>">
                 <?= ui_icon('languages', 'h-3.5 w-3.5') ?> <?= esc(lang('FileTranslations.sidebar_label')) ?>
             </a>

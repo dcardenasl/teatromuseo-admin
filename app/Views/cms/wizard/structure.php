@@ -6,6 +6,9 @@
  */
 $csrfName  ??= csrf_token();
 $csrfToken ??= csrf_hash();
+$canCreateCollection = has_permission('cms.collections.write');
+$canCreatePage = has_permission('cms.pages.write');
+$canCreateMenu = has_permission('cms.menus.write');
 
 $wizardLanguages = array_values(array_filter($languages ?? [], static fn ($language): bool => is_array($language)));
 $wizardDefaultLanguage = null;
@@ -60,27 +63,33 @@ $wizardDefaultLanguageLabel = (string) ($wizardDefaultLanguage['label'] ?? $wiza
 
     <div x-show="screen === 'home'" x-cloak class="space-y-6">
         <div class="grid gap-4 md:grid-cols-3">
-            <button type="button" @click="start('collection')" class="flex min-h-[140px] flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500">
-                <span class="text-3xl">🗂️</span>
-                <span class="space-y-1">
-                    <span class="block text-sm font-semibold text-gray-900"><?= esc(lang('Wizard.create_collection')) ?></span>
-                    <span class="block text-xs text-gray-500"><?= esc(lang('Wizard.create_collection_desc')) ?></span>
-                </span>
-            </button>
-            <button type="button" @click="start('page')" class="flex min-h-[140px] flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500">
-                <span class="text-3xl">📄</span>
-                <span class="space-y-1">
-                    <span class="block text-sm font-semibold text-gray-900"><?= esc(lang('Wizard.create_page')) ?></span>
-                    <span class="block text-xs text-gray-500"><?= esc(lang('Wizard.create_page_desc')) ?></span>
-                </span>
-            </button>
-            <button type="button" @click="start('menu')" class="flex min-h-[140px] flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500">
-                <span class="text-3xl">🧭</span>
-                <span class="space-y-1">
-                    <span class="block text-sm font-semibold text-gray-900"><?= esc(lang('Wizard.create_menu')) ?></span>
-                    <span class="block text-xs text-gray-500"><?= esc(lang('Wizard.create_menu_desc')) ?></span>
-                </span>
-            </button>
+            <?php if ($canCreateCollection): ?>
+                <button type="button" @click="start('collection')" class="flex min-h-[140px] flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <span class="text-3xl">🗂️</span>
+                    <span class="space-y-1">
+                        <span class="block text-sm font-semibold text-gray-900"><?= esc(lang('Wizard.create_collection')) ?></span>
+                        <span class="block text-xs text-gray-500"><?= esc(lang('Wizard.create_collection_desc')) ?></span>
+                    </span>
+                </button>
+            <?php endif; ?>
+            <?php if ($canCreatePage): ?>
+                <button type="button" @click="start('page')" class="flex min-h-[140px] flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <span class="text-3xl">📄</span>
+                    <span class="space-y-1">
+                        <span class="block text-sm font-semibold text-gray-900"><?= esc(lang('Wizard.create_page')) ?></span>
+                        <span class="block text-xs text-gray-500"><?= esc(lang('Wizard.create_page_desc')) ?></span>
+                    </span>
+                </button>
+            <?php endif; ?>
+            <?php if ($canCreateMenu): ?>
+                <button type="button" @click="start('menu')" class="flex min-h-[140px] flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <span class="text-3xl">🧭</span>
+                    <span class="space-y-1">
+                        <span class="block text-sm font-semibold text-gray-900"><?= esc(lang('Wizard.create_menu')) ?></span>
+                        <span class="block text-xs text-gray-500"><?= esc(lang('Wizard.create_menu_desc')) ?></span>
+                    </span>
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 

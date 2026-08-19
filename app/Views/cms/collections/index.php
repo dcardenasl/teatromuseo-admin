@@ -174,9 +174,11 @@
                                     <a :href="showUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.view') ?></a>
                                     <?php if (has_permission('cms.collections.write')): ?>
                                         <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                        <?php if (has_permission('cms.collections.admin')): ?>
                                         <button type="button" class="<?= esc(action_button_class('danger')) ?>"
                                             @click="$store.confirm.show(window.confirmDeleteMessage(String(row.collection_key ?? row.name ?? row.slug ?? '')), () => { const f = document.createElement('form'); f.method = 'post'; f.action = `<?= rtrim(route_to('admin.cms.collections'), '/') ?>/${row.id}/delete`; const i=document.createElement('input');i.type='hidden';i.name='<?= csrf_token() ?>';i.value='<?= csrf_hash() ?>';f.appendChild(i); document.body.appendChild(f); f.submit(); })"
                                         ><?= lang('App.delete') ?></button>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </td>

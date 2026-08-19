@@ -27,10 +27,12 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
             <?= ui_icon('profile') ?>
             <span><?= lang('App.profile') ?></span>
         </a>
-        <a href="<?= route_to('files') ?>" class="<?= $navItemClass ?> <?= active_nav('files', $navItemActiveClass) ?> <?= url_is('files') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navItemIdleClass ?>">
-            <?= ui_icon('files') ?>
-            <span><?= lang('App.files') ?></span>
-        </a>
+        <?php if (has_permission('files.read')): ?>
+            <a href="<?= route_to('files') ?>" class="<?= $navItemClass ?> <?= active_nav('files', $navItemActiveClass) ?> <?= url_is('files') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navItemIdleClass ?>">
+                <?= ui_icon('files') ?>
+                <span><?= lang('App.files') ?></span>
+            </a>
+        <?php endif; ?>
 
         <?php
             $hasAdminItem = has_permission('users.read') || has_permission('audit.read') || has_permission('apikeys.read') || has_permission('metrics.read') || has_permission('cms.analytics.read');
@@ -128,7 +130,7 @@ $navSubItemActiveClass = 'bg-brand-50 text-brand-700 shadow-sm';
                 </a>
             <?php endif; ?>
 
-            <?php if (has_permission('cms.pages.write') || has_permission('cms.menus.write') || has_permission('cms.collections.write')): ?>
+            <?php if (has_permission('cms.pages.write') || has_permission('cms.menus.write')): ?>
                 <a href="<?= site_url('admin/cms/wizard/structure') ?>" class="<?= $navItemClass ?> <?= url_is('admin/cms/wizard/structure*') ? 'bg-brand-50 text-brand-700 shadow-sm' : $navItemIdleClass ?>">
                     <span aria-hidden="true">🏗️</span>
                     <span><?= lang('Wizard.structure_sidebar_label') ?></span>

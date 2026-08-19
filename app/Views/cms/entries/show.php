@@ -195,7 +195,7 @@ foreach ($languages as $l) {
     <?php $actionsContent = ob_get_clean(); ?>
 
     <?php ob_start(); ?>
-    <?php if (has_permission('cms.entries.write')): ?>
+    <?php if (has_permission('cms.entries.admin')): ?>
         <form method="post" action="<?= route_to('admin.cms.entries.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($entry['title'] ?? $entry['slug'] ?? null), 'js') ?>', () => $el.submit())">
             <?= csrf_field() ?>
             <button type="submit" class="<?= esc(action_button_class('danger')) ?> w-full justify-center">
