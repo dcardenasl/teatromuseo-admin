@@ -97,20 +97,64 @@ class DashboardController extends BaseWebController
         $healthServices = [];
         foreach ($labels as $source => $label) {
             $state = $this->dashboardSourceState($dashboard, $source);
+            $diagnostics = is_array($dashboard['diagnostics'] ?? null)
+                ? $dashboard['diagnostics']
+                : [];
+            $diagnostic = is_array($diagnostics[$source] ?? null)
+                ? $diagnostics[$source]
+                : [];
+            $latencyMs = is_numeric($diagnostic['latency_ms'] ?? null)
+                ? round(max(0.0, (float) $diagnostic['latency_ms']), 2)
+                : null;
+            $checks = is_array($diagnostic['checks'] ?? null) ? $diagnostic['checks'] : [];
             $healthServices[] = [
                 'name' => $label,
                 'health' => [
                     'state' => $state === 'fresh' ? 'up' : ($state === 'stale' ? 'degraded' : 'down'),
                     'status' => $state === 'unavailable' ? 503 : 200,
-                    'latency_ms' => 0,
                     'data' => [
                         'timestamp' => $dashboard['generated_at'] ?? null,
+                        'checks' => $checks,
+                    ],
+                ] + ($latencyMs !== null ? ['latency_ms' => $latencyMs] : []),
+            ];
+        }
+
+        $hosting = is_array($diagnostics['hosting'] ?? null) ? $diagnostics['hosting'] : [];
+        $hostingChecks = is_array($hosting['checks'] ?? null) ? $hosting['checks'] : [];
+        if ($hostingChecks !== []) {
+            $healthServices[] = [
+                'name' => lang('Dashboard.service_hosting'),
+                'health' => [
+                    'state' => $this->healthStateFromChecks($hostingChecks),
+                    'status' => 200,
+                    'data' => [
+                        'timestamp' => $dashboard['generated_at'] ?? null,
+                        'checks' => $hostingChecks,
                     ],
                 ],
             ];
         }
 
         return view('dashboard/partials/widget_health', ['healthServices' => $healthServices]);
+    }
+
+    /** @param array<string, mixed> $checks */
+    private function healthStateFromChecks(array $checks): string
+    {
+        foreach ($checks as $check) {
+            if (is_array($check) && ($check['status'] ?? null) === 'unhealthy') {
+                return 'down';
+            }
+        }
+
+        foreach ($checks as $check) {
+            if (is_array($check) && in_array($check['status'] ?? null, ['warning', 'critical', 'unknown'], true)) {
+                return 'degraded';
+            }
+        }
+
+        return 'up';
     }
 
     /** @param array<string, mixed> $dashboard */

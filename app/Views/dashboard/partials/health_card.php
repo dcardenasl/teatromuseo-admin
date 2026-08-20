@@ -23,6 +23,13 @@ $healthTimestamp = $healthData['timestamp'] ?? null;
 $dbCheck       = is_array($healthChecks['database'] ?? null) ? $healthChecks['database'] : null;
 $diskCheck     = is_array($healthChecks['disk'] ?? null) ? $healthChecks['disk'] : null;
 $writableCheck = is_array($healthChecks['writable'] ?? null) ? $healthChecks['writable'] : null;
+$genericChecks = [];
+foreach ($healthChecks as $checkName => $check) {
+    if (in_array($checkName, ['database', 'disk', 'writable'], true) || ! is_array($check)) {
+        continue;
+    }
+    $genericChecks[$checkName] = $check;
+}
 
 $unhealthyStatuses = ['warning', 'critical', 'unhealthy'];
 $needsAttention = $state !== 'up'
@@ -30,7 +37,7 @@ $needsAttention = $state !== 'up'
     || in_array((string) ($diskCheck['status'] ?? 'healthy'), $unhealthyStatuses, true)
     || in_array((string) ($writableCheck['status'] ?? 'healthy'), $unhealthyStatuses, true);
 
-$hasDetail = $healthTimestamp !== null || $dbCheck !== null || $diskCheck !== null || $writableCheck !== null;
+$hasDetail = $healthTimestamp !== null || $dbCheck !== null || $diskCheck !== null || $writableCheck !== null || $genericChecks !== [];
 $rowTag    = $hasDetail ? 'button' : 'div';
 ?>
 
@@ -50,7 +57,10 @@ $rowTag    = $hasDetail ? 'button' : 'div';
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <span class="text-xs font-medium <?= esc($healthTone['text']) ?>">
-                <?= esc(lang('Dashboard.status_' . $state)) ?> &middot; <?= esc((string) ($health['latency_ms'] ?? 0)) ?>ms
+                <?= esc(lang('Dashboard.status_' . $state)) ?>
+                <?php if (is_numeric($health['latency_ms'] ?? null)): ?>
+                    &middot; <?= esc((string) $health['latency_ms']) ?>ms
+                <?php endif; ?>
             </span>
             <?php if ($hasDetail): ?>
                 <span class="inline-flex items-center justify-center text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': open }">
@@ -158,6 +168,34 @@ $rowTag    = $hasDetail ? 'button' : 'div';
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+
+        <?php foreach ($genericChecks as $checkName => $check): ?>
+            <?php
+            $tone = check_tone_badge((string) ($check['status'] ?? 'unknown'));
+            $label = match ($checkName) {
+                'projection' => lang('Dashboard.check_projection'),
+                'upstream' => lang('Dashboard.check_upstream'),
+                default => ucwords(str_replace('_', ' ', (string) $checkName)),
+            };
+            $responseTime = $check['response_time_ms'] ?? null;
+            ?>
+            <div class="flex items-center justify-between gap-3 py-1">
+                <div class="flex items-center gap-2 text-sm text-gray-700">
+                    <?= ui_icon('activity', 'h-4 w-4 text-gray-400') ?>
+                    <span><?= esc($label) ?></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-block h-2 w-2 rounded-full <?= esc($tone['dot']) ?>"></span>
+                    <span class="text-xs font-medium <?= esc($tone['text']) ?>">
+                        <?php if (is_numeric($responseTime)): ?>
+                            <?= esc((string) $responseTime) ?> ms
+                        <?php else: ?>
+                            <?= esc(lang('Dashboard.check_status_' . ($check['status'] ?? 'unknown'))) ?>
+                        <?php endif; ?>
+                    </span>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
     <?php endif; ?>
 </div>

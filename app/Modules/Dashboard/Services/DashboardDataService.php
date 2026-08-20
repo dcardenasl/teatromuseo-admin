@@ -137,6 +137,7 @@ final readonly class DashboardDataService
         $payload = is_array($response['data'] ?? null) ? $response['data'] : [];
         $data = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
         $source = is_array($data['source'] ?? null) ? $data['source'] : [];
+        $diagnostics = is_array($data['diagnostics'] ?? null) ? $data['diagnostics'] : [];
         $sections = is_array($data['sections'] ?? null) ? $data['sections'] : [];
         $states = [];
         $mappedSource = [];
@@ -161,8 +162,9 @@ final readonly class DashboardDataService
             'generated_at' => is_string($data['generated_at'] ?? null)
                 ? $data['generated_at']
                 : date(DATE_ATOM),
-            'source' => $mappedSource,
-            'sections' => $mappedSections,
+            'source'      => $mappedSource,
+            'diagnostics' => $diagnostics,
+            'sections'    => $mappedSections,
         ];
     }
 
