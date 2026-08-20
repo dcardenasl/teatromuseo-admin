@@ -74,6 +74,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CMS entries reorder screen leaked raw PHP source and lost its collection scope** —
+  `cms/entries/reorder.php` built `$saveOrderUrl` outside of `<?php ?>` tags, so the
+  assignment/if-block rendered as literal text on the page instead of executing; the
+  reorder component then received an undefined `$saveOrderUrl` and batch saves lost the
+  `collection_id` query scope. The block is now wrapped in `<?php ... ?>` and covered by
+  a view regression test.
+
 - **Hub/BFF request retries and the dashboard lock wait could each occupy an extra PHP process
   on the production shared host** — `apiClient.maxRetries` (Hub) and `BffApiClient`'s per-call
   `maxRetries` default now default to `0` instead of `2`, and `ADMIN_DASHBOARD_LOCK_WAIT_MS`
