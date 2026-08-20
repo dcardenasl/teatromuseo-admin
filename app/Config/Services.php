@@ -70,6 +70,8 @@ use App\Modules\TicketTypes\Services\TicketTypeApiServiceInterface;
 use App\Modules\Users\Services\UserApiService;
 use App\Modules\Venues\Services\VenueApiService;
 use App\Modules\Venues\Services\VenueApiServiceInterface;
+use App\Services\SortOrderApiService;
+use App\Services\SortOrderApiServiceInterface;
 use App\Support\Requests\FormRequestInterface;
 use CodeIgniter\Config\BaseService;
 use InvalidArgumentException;
@@ -140,6 +142,20 @@ class Services extends BaseService
         }
 
         return new ApiClient(config('ApiClient'));
+    }
+
+    public static function sortOrderApiService(bool $getShared = true): SortOrderApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var SortOrderApiServiceInterface */
+            return static::getSharedInstance('sortOrderApiService');
+        }
+
+        return new SortOrderApiService(
+            static::domainApiClient(),
+            static::catalogDomainApiClient(),
+            static::eventDomainApiClient(),
+        );
     }
 
     public static function domainApiClient(bool $getShared = true): DomainApiClientInterface
