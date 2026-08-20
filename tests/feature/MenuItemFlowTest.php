@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\MenuApiService;
+use App\Services\SortOrderApiServiceInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
@@ -218,31 +219,26 @@ final class MenuItemFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('Reordenar', (string) $result->getBody());
     }
 
-    public function testSaveItemsOrderUpdatesAndReturnsOk(): void
+    public function testSaveItemsOrderUsesOneBatchRequestAndReturnsOk(): void
     {
         $fixtures = new AdminFixtureFactory(__METHOD__);
         $menu = $fixtures->menu();
         $firstItem = $fixtures->menuItem($menu['id'], 1);
         $secondItem = $fixtures->menuItem($menu['id'], 0);
 
-        $menuMock = $this->createMock(MenuApiService::class);
-        $menuMock->method('listItems')
-            ->with($this->callback(static fn (array $filters): bool => ($filters['menu_id'] ?? null) === (string) $menu['id']))
-            ->willReturn($fixtures->response([
-                $firstItem + ['translations' => []],
-                $secondItem + ['translations' => []],
-            ]));
-        $menuMock->expects($this->exactly(2))
-            ->method('updateItem')
-            ->willReturnCallback(static function (string $id, array $payload) use ($secondItem, $firstItem): array {
-                if ($id === (string) $secondItem['id']) {
-                    self::assertSame(0, $payload['sort_order']);
-                } elseif ($id === (string) $firstItem['id']) {
-                    self::assertSame(1, $payload['sort_order']);
-                }
-                return ['ok' => true];
-            });
-        Services::injectMock('menuApiService', $menuMock);
+        $sortOrderMock = $this->createMock(SortOrderApiServiceInterface::class);
+        $sortOrderMock->expects($this->once())
+            ->method('cms')
+            ->with(
+                'menu_items',
+                [
+                    ['id' => (int) $secondItem['id'], 'sort_order' => 0],
+                    ['id' => (int) $firstItem['id'], 'sort_order' => 1],
+                ],
+                ['menu_id' => (int) $menu['id']],
+            )
+            ->willReturn($fixtures->response(['updated' => 2]));
+        Services::injectMock('sortOrderApiService', $sortOrderMock);
 
         $result = $this->withSession([
             'access_token' => 'token',

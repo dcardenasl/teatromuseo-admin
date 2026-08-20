@@ -10,7 +10,6 @@ use App\Modules\Cms\Requests\MenuItemUpdateRequest;
 use App\Modules\Cms\Requests\MenuStoreRequest;
 use App\Modules\Cms\Requests\MenuUpdateRequest;
 use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
-use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\MenuApiService;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -20,14 +19,12 @@ use Psr\Log\LoggerInterface;
 class MenuController extends BaseWebController
 {
     protected MenuApiService $menuService;
-    protected EntryApiService $entryService;
     protected CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->menuService = service('menuApiService');
-        $this->entryService = service('entryApiService');
         $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
     }
 
@@ -51,27 +48,45 @@ class MenuController extends BaseWebController
 
     public function show(string $id): string
     {
-        $response = $this->safeApiCall(fn () => $this->menuService->get($id));
-
-        if (! $response['ok']) {
+        $bootstrap = $this->cmsBootstrap->menuEditorBootstrap((int) $id);
+        if ($bootstrap === null) {
             return $this->render('cms/menus/show', [
                 'title' => lang('Menus.menus_details'),
                 'menu' => [],
-                'error' => $this->firstMessage($response, lang('Menus.menus_not_found')),
+                'items' => [],
+                'languages' => [],
+                'pages' => [],
+                'entries' => [],
+                'collections' => [],
+                'error' => lang('App.connection_error'),
             ]);
         }
 
-        $itemsResponse = $this->menuService->listItems(['menu_id' => $id, 'limit' => 1000, 'sort' => 'sort_order']);
-        $items = $this->extractItems($itemsResponse);
+        $menu = is_array($bootstrap['menu'] ?? null) ? $bootstrap['menu'] : [];
+        if ($menu === []) {
+            return $this->render('cms/menus/show', [
+                'title' => lang('Menus.menus_details'),
+                'menu' => [],
+                'items' => [],
+                'languages' => [],
+                'pages' => [],
+                'entries' => [],
+                'collections' => [],
+                'error' => lang('Menus.menus_not_found'),
+            ]);
+        }
+
+        $languages = is_array($bootstrap['languages'] ?? null) ? $bootstrap['languages'] : [];
+        $items = is_array($bootstrap['items'] ?? null) ? $bootstrap['items'] : [];
 
         return $this->render('cms/menus/show', [
             'title' => lang('Menus.menus_details'),
-            'menu' => $this->extractData($response),
+            'menu' => $menu,
             'items' => $items,
-            'languages' => $this->getLanguages(),
-            'pages' => $this->pagesOptions(),
-            'entries' => $this->entriesOptions(),
-            'collections' => $this->collectionsOptions(),
+            'languages' => $languages,
+            'pages' => is_array($bootstrap['pages'] ?? null) ? $this->pagesOptionsFromItems($bootstrap['pages']) : [],
+            'entries' => is_array($bootstrap['entries'] ?? null) ? $this->entriesOptionsFromItems($bootstrap['entries']) : [],
+            'collections' => is_array($bootstrap['collections'] ?? null) ? $this->collectionsOptionsFromItems($bootstrap['collections']) : [],
         ]);
     }
 
@@ -324,90 +339,6 @@ class MenuController extends BaseWebController
         return $this->extractItems($response);
     }
 
-    /** @return array<string, string> */
-    private function pagesOptions(?string $excludeId = null): array
-    {
-        $response = $this->safeApiCall(fn () => service('pageApiService')->pages(['limit' => 250]));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-        }
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-            if ($excludeId !== null && (string)$item['id'] === (string)$excludeId) {
-                continue;
-            }
-            $title = null;
-            if (! empty($item['translations']) && is_array($item['translations'])) {
-                foreach ($item['translations'] as $t) {
-                    if (is_array($t) && ! empty($t['title'])) {
-                        $title = $t['title'];
-                        break;
-                    }
-                }
-            }
-            $label = $title ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['email'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
-
-    /** @return array<string, string> */
-    private function entriesOptions(): array
-    {
-        $response = $this->safeApiCall(fn () => $this->entryService->list(['limit' => 250]));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-        }
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-
-            $label = null;
-            if (! empty($item['translations']) && is_array($item['translations'])) {
-                foreach ($item['translations'] as $translation) {
-                    if (is_array($translation) && ! empty($translation['title'])) {
-                        $label = $translation['title'];
-                        break;
-                    }
-                }
-            }
-
-            $label ??= $item['title'] ?? $item['name'] ?? $item['slug'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
-
-    /** @return array<string, string> */
-    private function collectionsOptions(): array
-    {
-        $response = $this->safeApiCall(fn () => $this->entryService->collections(['limit' => 100, 'is_active' => true]));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-        }
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-
-            $label = $item['collection_key'] ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
-
     /**
      * @param array<int|string, mixed> $items
      * @return array<string, string>
@@ -533,126 +464,26 @@ class MenuController extends BaseWebController
 
     public function saveItemsOrder(string $menuId): ResponseInterface
     {
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
+        if (! has_permission('cms.menus.write')) {
             return $this->response->setJSON([
                 'ok' => false,
-                'message' => 'Invalid request type',
+                'message' => lang('App.access_denied'),
+            ])->setStatusCode(403);
+        }
+
+        if (! is_numeric($menuId) || (int) $menuId < 1) {
+            return $this->response->setJSON([
+                'ok' => false,
+                'message' => 'A menu scope is required.',
             ])->setStatusCode(400);
         }
 
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
-
-        if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
-        }
-
-        $itemsResponse = $this->menuService->listItems(['menu_id' => $menuId, 'limit' => 1000]);
-        $existingItems = $this->extractItems($itemsResponse);
-        $itemsById = [];
-        foreach ($existingItems as $existingItem) {
-            $itemsById[(string) ($existingItem['id'] ?? '')] = $existingItem;
-        }
-
-        foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '' && isset($itemsById[$id])) {
-                $payload = [
-                    'sort_order'   => $value,
-                    'translations' => $itemsById[$id]['translations'] ?? [],
-                ];
-                // Call updateItem directly with partial payload and validate response
-                $response = $this->menuService->updateItem($id, $payload);
-                if (! isset($response['ok']) || ! $response['ok']) {
-                    return $this->response->setJSON([
-                        'ok' => false,
-                        'message' => $response['messages'][0] ?? $response['message'] ?? 'Error al guardar el orden del elemento #' . $id,
-                    ])->setStatusCode(400);
-                }
-            }
-        }
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'message' => lang('Files.gallery_save_success') ?? 'Order saved successfully.',
-        ]);
+        return $this->saveSortOrderFromJson(
+            'cms',
+            'menu_items',
+            ['menu_id' => (int) $menuId],
+            lang('Files.gallery_save_success') ?? 'Order saved successfully.',
+        );
     }
 
-    public function getCategoryUrlOptions(): ResponseInterface
-    {
-        /** @var \App\Modules\Cms\Services\CategoryApiService $categoryService */
-        $categoryService = service('categoryApiService');
-
-        $collectionsResponse = $this->safeApiCall(fn () => $this->entryService->collections(['limit' => 100, 'is_active' => true]));
-        $collections = $this->extractItems($collectionsResponse);
-
-        $result = [];
-
-        foreach ($collections as $collection) {
-            if (! is_array($collection) || ! isset($collection['id'])) {
-                continue;
-            }
-
-            $collectionId = (int) $collection['id'];
-            $collectionKey = (string) ($collection['collection_key'] ?? '');
-
-            // Fetch categories for this collection
-            $categoriesResponse = $this->safeApiCall(fn () => $categoryService->list(['collection_id' => $collectionId, 'limit' => 500]));
-            $categories = $this->extractItems($categoriesResponse);
-
-            $categoryOptions = [];
-            foreach ($categories as $cat) {
-                if (! is_array($cat) || ! isset($cat['id'])) {
-                    continue;
-                }
-
-                $catTranslations = [];
-                if (! empty($cat['translations']) && is_array($cat['translations'])) {
-                    foreach ($cat['translations'] as $trans) {
-                        $langId = (int) ($trans['language_id'] ?? 0);
-                        $catTranslations[$langId] = [
-                            'slug' => (string) ($trans['slug'] ?? ''),
-                            'name' => (string) ($trans['name'] ?? ''),
-                        ];
-                    }
-                }
-
-                $categoryOptions[] = [
-                    'id' => $cat['id'],
-                    'translations' => $catTranslations,
-                ];
-            }
-
-            $collectionTranslations = [];
-            if (! empty($collection['translations']) && is_array($collection['translations'])) {
-                foreach ($collection['translations'] as $trans) {
-                    $langId = (int) ($trans['language_id'] ?? 0);
-                    $collectionTranslations[$langId] = [
-                        'slug' => (string) ($trans['slug'] ?? ''),
-                        'name' => (string) ($trans['name'] ?? ''),
-                    ];
-                }
-            }
-
-            $result[] = [
-                'id' => $collectionId,
-                'key' => $collectionKey,
-                'name' => (string) ($collection['name'] ?? $collectionKey),
-                'translations' => $collectionTranslations,
-                'categories' => $categoryOptions,
-            ];
-        }
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'data' => $result,
-        ]);
-    }
 }

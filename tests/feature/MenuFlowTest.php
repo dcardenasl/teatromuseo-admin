@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\MenuApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -49,6 +50,38 @@ final class MenuFlowTest extends CIUnitTestCase
         ])->get('/admin/cms/menus');
 
         $result->assertStatus(200);
+    }
+
+    public function testShowUsesSingleMenuBootstrapProjection(): void
+    {
+        $fixtures = new AdminFixtureFactory(__METHOD__);
+        $menu = $fixtures->menu();
+        $item = $fixtures->menuItem($menu['id'], 1);
+
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsMenuEditorBootstrap')
+            ->with((int) $menu['id'], null)
+            ->willReturn($fixtures->response([
+                'sections' => [
+                    'menu' => $menu,
+                    'items' => [$item],
+                    'languages' => $fixtures->languages(),
+                    'pages' => [],
+                    'entries' => [],
+                    'collections' => [],
+                ],
+            ]));
+        Services::injectMock('bffApiClient', $bff);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'permissions_refreshed_at' => time(),
+            'user' => ['permissions' => ['cms.menus.read']],
+        ])->get('/admin/cms/menus/' . $menu['id']);
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString((string) $menu['menu_key'], (string) $result->getBody());
     }
 
     public function testDataUsesMenuProjectionCounts(): void

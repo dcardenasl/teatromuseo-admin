@@ -133,7 +133,6 @@ $routes->group('admin/cms', ['filter' => ['auth', 'admin']], static function (Ro
     // Menu
     $routes->get('menus', '\App\Modules\Cms\Controllers\MenuController::index', ['as' => 'admin.cms.menus', 'filter' => 'permission:cms.menus.read']);
     $routes->get('menus/data', '\App\Modules\Cms\Controllers\MenuController::data', ['as' => 'admin.cms.menus.data', 'filter' => 'permission:cms.menus.read']);
-    $routes->get('menus/category-options', '\App\Modules\Cms\Controllers\MenuController::getCategoryUrlOptions', ['as' => 'admin.cms.menus.category_options', 'filter' => 'permission:cms.menus.read']);
     $routes->get('menus/create', '\App\Modules\Cms\Controllers\MenuController::create', ['as' => 'admin.cms.menus.create', 'filter' => 'permission:cms.menus.write']);
     $routes->post('menus', '\App\Modules\Cms\Controllers\MenuController::store', ['as' => 'admin.cms.menus.store', 'filter' => 'permission:cms.menus.write']);
     $routes->get('menus/(:segment)', '\App\Modules\Cms\Controllers\MenuController::show/$1', ['as' => 'admin.cms.menus.show', 'filter' => 'permission:cms.menus.read']);
