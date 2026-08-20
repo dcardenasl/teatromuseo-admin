@@ -36,7 +36,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
      *
      * @return ApiResponse
      */
-    public function getAdminDashboard(int $maxRetries = 2): array
+    public function getAdminDashboard(int $maxRetries = 0): array
     {
         try {
             $response = $this->request('GET', '/me/admin-dashboard', [
@@ -70,7 +70,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
      *
      * @return ApiResponse
      */
-    public function getAdminMetricsWorkspace(string $period = '24h', int $maxRetries = 2): array
+    public function getAdminMetricsWorkspace(string $period = '24h', int $maxRetries = 0): array
     {
         if (! in_array($period, ['1h', '24h', '7d', '30d'], true)) {
             return $this->unavailableResponse();
@@ -103,7 +103,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminIamRoleWorkspace(int|string $roleId, int $maxRetries = 2): array
+    public function getAdminIamRoleWorkspace(int|string $roleId, int $maxRetries = 0): array
     {
         $normalizedId = (string) $roleId;
         if ($normalizedId === '' || ! ctype_digit($normalizedId) || (int) $normalizedId < 1) {
@@ -135,7 +135,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
      *
      * @return ApiResponse
      */
-    public function getAdminAnalytics(string $period = '7d', int $maxRetries = 2): array
+    public function getAdminAnalytics(string $period = '7d', int $maxRetries = 0): array
     {
         try {
             $response = $this->request('GET', '/me/admin-analytics', [
@@ -169,7 +169,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
      * @param int|string $fileId
      * @return ApiResponse
      */
-    public function getAdminFileUsages(int|string $fileId, int $maxRetries = 2): array
+    public function getAdminFileUsages(int|string $fileId, int $maxRetries = 0): array
     {
         $normalizedId = (string) $fileId;
         if ($normalizedId === '' || ! ctype_digit($normalizedId) || (int) $normalizedId < 1) {
@@ -202,7 +202,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminEventLookups(string $context, int $maxRetries = 2): array
+    public function getAdminEventLookups(string $context, int $maxRetries = 0): array
     {
         if (! in_array($context, self::ADMIN_EVENT_LOOKUP_CONTEXTS, true)) {
             return $this->unavailableResponse();
@@ -234,7 +234,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCatalogCollectionItemWorkspace(?int $itemId = null, int $maxRetries = 2): array
+    public function getAdminCatalogCollectionItemWorkspace(?int $itemId = null, int $maxRetries = 0): array
     {
         if ($itemId !== null && $itemId < 1) {
             return $this->unavailableResponse();
@@ -247,7 +247,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminEventWorkspace(?int $eventId = null, int $maxRetries = 2): array
+    public function getAdminEventWorkspace(?int $eventId = null, int $maxRetries = 0): array
     {
         if ($eventId !== null && $eventId < 1) {
             return $this->unavailableResponse();
@@ -260,7 +260,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsEntryFormOptions(?int $entryId = null, int $maxRetries = 2): array
+    public function getAdminCmsEntryFormOptions(?int $entryId = null, int $maxRetries = 0): array
     {
         $path = '/me/admin-cms/entry-form-options';
         if ($entryId !== null) {
@@ -274,7 +274,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsPageFormOptions(?int $pageId = null, int $maxRetries = 2): array
+    public function getAdminCmsPageFormOptions(?int $pageId = null, int $maxRetries = 0): array
     {
         $path = '/me/admin-cms/page-form-options';
         if ($pageId !== null) {
@@ -288,7 +288,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsMenuEditorBootstrap(int $menuId, ?int $itemId = null, int $maxRetries = 2): array
+    public function getAdminCmsMenuEditorBootstrap(int $menuId, ?int $itemId = null, int $maxRetries = 0): array
     {
         if ($menuId < 1 || ($itemId !== null && $itemId < 1)) {
             return $this->unavailableResponse();
@@ -303,7 +303,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsSiteIdentityBootstrap(int $maxRetries = 2): array
+    public function getAdminCmsSiteIdentityBootstrap(int $maxRetries = 0): array
     {
         return $this->adminCmsRequest(
             'site identity bootstrap',
@@ -313,7 +313,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsPageWorkspace(int|string $pageId, ?int $instanceId = null, int $maxRetries = 2): array
+    public function getAdminCmsPageWorkspace(int|string $pageId, ?int $instanceId = null, int $maxRetries = 0): array
     {
         $normalizedPageId = (string) $pageId;
         if ($normalizedPageId === '' || ! ctype_digit($normalizedPageId) || (int) $normalizedPageId < 1) {
@@ -352,7 +352,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsEntryWorkspace(int|string $entryId, ?int $instanceId = null, int $maxRetries = 2): array
+    public function getAdminCmsEntryWorkspace(int|string $entryId, ?int $instanceId = null, int $maxRetries = 0): array
     {
         $normalizedEntryId = (string) $entryId;
         if ($normalizedEntryId === '' || ! ctype_digit($normalizedEntryId) || (int) $normalizedEntryId < 1) {
@@ -379,13 +379,13 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsWizardBootstrap(int $maxRetries = 2): array
+    public function getAdminCmsWizardBootstrap(int $maxRetries = 0): array
     {
         return $this->adminCmsRequest('wizard bootstrap', '/me/admin-cms/wizard-bootstrap', $maxRetries);
     }
 
     /** @return ApiResponse */
-    public function getAdminCmsCategoryBootstrap(?int $categoryId = null, int $maxRetries = 2): array
+    public function getAdminCmsCategoryBootstrap(?int $categoryId = null, int $maxRetries = 0): array
     {
         if ($categoryId !== null && $categoryId < 1) {
             return $this->unavailableResponse();
@@ -399,7 +399,7 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminCatalogCollectionItemListBootstrap(int $maxRetries = 2): array
+    public function getAdminCatalogCollectionItemListBootstrap(int $maxRetries = 0): array
     {
         return $this->adminWorkspaceRequest(
             'Catalog collection item list bootstrap',
@@ -409,13 +409,13 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
-    public function getAdminEventListBootstrap(int $maxRetries = 2): array
+    public function getAdminEventListBootstrap(int $maxRetries = 0): array
     {
         return $this->adminWorkspaceRequest('Event list bootstrap', '/me/admin-event/events/list-bootstrap', $maxRetries);
     }
 
     /** @return ApiResponse */
-    public function getAdminCatalogTechniqueWorkspace(?int $techniqueId = null, int $maxRetries = 2): array
+    public function getAdminCatalogTechniqueWorkspace(?int $techniqueId = null, int $maxRetries = 0): array
     {
         if ($techniqueId !== null && $techniqueId < 1) {
             return $this->unavailableResponse();

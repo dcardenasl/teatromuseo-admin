@@ -14,6 +14,12 @@ class ApiClient extends BaseConfig
 
     public int $connectTimeout = 5;
 
+    /**
+     * A shared-host request must fail once instead of occupying another PHP
+     * process for a retry. Set explicitly only after measuring the real host.
+     */
+    public int $maxRetries = 0;
+
     public string $apiPrefix = '/api/v1';
 
     public string $appName = 'Teatromuseo Admin';
@@ -46,6 +52,14 @@ class ApiClient extends BaseConfig
         $connectTimeout = env('apiClient.connectTimeout') ?: env('API_CONNECT_TIMEOUT');
         if ($connectTimeout !== false && $connectTimeout !== null && $connectTimeout !== '') {
             $this->connectTimeout = (int) $connectTimeout;
+        }
+
+        $maxRetries = env('apiClient.maxRetries');
+        if (! is_numeric($maxRetries)) {
+            $maxRetries = env('API_MAX_RETRIES');
+        }
+        if (is_numeric($maxRetries)) {
+            $this->maxRetries = max(0, min(2, (int) $maxRetries));
         }
 
         $apiPrefix = env('apiClient.apiPrefix') ?: env('API_PREFIX');

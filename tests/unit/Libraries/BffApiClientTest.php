@@ -101,6 +101,31 @@ final class BffApiClientTest extends CIUnitTestCase
         $this->assertSame([], $result['data']);
     }
 
+    public function testDefaultBffReadDoesNotRetryOnServerFailure(): void
+    {
+        session()->set(SessionKeys::ACCESS_TOKEN->value, 'admin-access-token');
+
+        $config = new BffApiClientConfig();
+        $config->baseUrl = 'http://localhost:8188';
+        $hubClient = $this->createMock(ApiClientInterface::class);
+        $client = new BffApiClient($config, $hubClient);
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(503);
+        $response->method('getBody')->willReturn('{"message":"unavailable"}');
+
+        $http = $this->createMock(CURLRequest::class);
+        $http->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
+
+        $this->setProtectedProperty($client, 'http', $http);
+
+        $result = $client->getAdminDashboard();
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(503, $result['status']);
+    }
+
     public function testAdminAnalyticsReadUsesPeriodQueryAndRetryBudget(): void
     {
         session()->set(SessionKeys::ACCESS_TOKEN->value, 'admin-access-token');

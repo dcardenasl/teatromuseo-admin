@@ -164,7 +164,7 @@ class ApiClient implements ApiClientInterface
         $requestedRetries = $options['max_retries'] ?? null;
         unset($options['max_retries']);
         $maxRetries = in_array($method, ['GET', 'HEAD'], true)
-            ? max(0, min(2, is_numeric($requestedRetries) ? (int) $requestedRetries : 2))
+            ? max(0, min(2, is_numeric($requestedRetries) ? (int) $requestedRetries : $this->config->maxRetries))
             : 0;
         $attempt    = 0;
         do {

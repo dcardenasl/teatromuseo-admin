@@ -361,7 +361,7 @@ app/Views/
 - `app/Config/Routes.php` — All web routes (public, authenticated, admin)
 - `app/Config/Filters.php` — Filter registration and aliases (`auth`, `admin`, `locale`)
 - `app/Config/Autoload.php` — Helper auto-loading (`ui`, `form` loaded globally)
-- `app/Config/ApiClient.php` — API base URL, timeouts, API prefix, app name, `appKey` (reads `API_APP_KEY` env var)
+- `app/Config/ApiClient.php` — API base URL, timeouts, retry budget, API prefix, app name, `appKey` (reads `API_APP_KEY` env var)
 - `app/Config/Services.php` — Shared service factory for `apiClient`, `authApiService`, `fileApiService`, `userApiService`, `auditApiService`, `apiKeyApiService` and `metricsApiService`
 
 ## API App Key (`X-App-Key`)

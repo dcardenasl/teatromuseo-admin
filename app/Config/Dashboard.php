@@ -12,7 +12,12 @@ final class Dashboard extends BaseConfig
     public int $staleTtl = 3600;
     public int $failureCooldownTtl = 15;
     public int $lockMaxAge = 120;
-    public int $lockWaitMs = 250;
+    /**
+     * Do not make a PHP process wait for another dashboard builder. On the
+     * production host the process ceiling is five; a busy builder must make
+     * callers use stale data or fail fast instead of occupying a slot.
+     */
+    public int $lockWaitMs = 0;
     public int $upstreamMaxRetries = 0;
 
     public function __construct()

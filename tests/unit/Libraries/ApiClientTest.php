@@ -47,6 +47,7 @@ final class ApiClientTest extends CIUnitTestCase
         $this->assertSame('http://localhost:8180', $config->baseUrl);
         $this->assertSame(15, $config->timeout);
         $this->assertSame(5, $config->connectTimeout);
+        $this->assertSame(0, $config->maxRetries);
         $this->assertSame('/api/v1', $config->apiPrefix);
         $this->assertSame('Teatromuseo Admin', $config->appName);
     }
@@ -208,6 +209,25 @@ final class ApiClientTest extends CIUnitTestCase
         $this->setProtectedProperty($client, 'http', $http);
 
         $result = $client->request('GET', '/test', ['max_retries' => 0], true);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(503, $result['status']);
+    }
+
+    public function testDefaultReadDoesNotRetryOnServerFailure(): void
+    {
+        session()->set(SessionKeys::ACCESS_TOKEN->value, 'test-token');
+        $client  = new ApiClient(new ApiClientConfig());
+        $response = $this->createResponseMock(503, ['detail' => 'unavailable']);
+        $http = $this->createMock(\CodeIgniter\HTTP\CURLRequest::class);
+
+        $http->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
+
+        $this->setProtectedProperty($client, 'http', $http);
+
+        $result = $client->request('GET', '/test', [], true);
 
         $this->assertFalse($result['ok']);
         $this->assertSame(503, $result['status']);

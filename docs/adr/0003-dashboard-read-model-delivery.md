@@ -30,8 +30,8 @@ The dashboard uses a bounded read model:
    build. Its permission scope is part of the cache key, so one user's data
    cannot be served to another permission scope.
 5. The Admin uses a file cache by default, with a 300-second fresh TTL, a
-   3600-second stale TTL, a 15-second failure cooldown and a bounded
-   250-millisecond single-flight lock wait.
+   3600-second stale TTL, a 15-second failure cooldown and a non-blocking
+   single-flight lock.
 6. Stale data is used only for transport failures or upstream 5xx responses;
    4xx responses are never hidden by stale data. A cold outage is cached for
    the short failure cooldown to prevent sequential widget retry storms.
