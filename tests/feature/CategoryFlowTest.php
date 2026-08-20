@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\CategoryApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -41,16 +42,20 @@ final class CategoryFlowTest extends CIUnitTestCase
 
     public function testIndexRendersForAdmin(): void
     {
-        $mock = $this->createMock(CategoryApiService::class);
-        $mock->method('collections')->willReturn([
-            'ok' => true, 'status' => 200, 'data' => ['items' => []],
-            'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => []
-        ]);
-        $mock->method('categories')->willReturn([
-            'ok' => true, 'status' => 200, 'data' => ['items' => []],
-            'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => []
-        ]);
-        Services::injectMock('categoryApiService', $mock);
+        $mock = $this->createMock(BffApiClientInterface::class);
+        $mock->expects($this->once())
+            ->method('getAdminCmsCategoryBootstrap')
+            ->with(null)
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => ['sections' => ['collections' => [], 'categories' => [], 'languages' => []]],
+                'raw' => '',
+                'headers' => [],
+                'messages' => [],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $mock);
 
         $result = $this->withSession([
             'access_token' => 'token',

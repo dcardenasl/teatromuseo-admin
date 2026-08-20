@@ -7,6 +7,7 @@ namespace App\Modules\Museum\Controllers;
 use App\Controllers\BaseWebController;
 use App\Modules\Museum\Requests\TechniqueStoreRequest;
 use App\Modules\Museum\Requests\TechniqueUpdateRequest;
+use App\Modules\Museum\Services\CatalogTechniqueBffAdapter;
 use App\Modules\Museum\Services\TechniqueApiServiceInterface;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -16,11 +17,13 @@ use Psr\Log\LoggerInterface;
 class TechniqueController extends BaseWebController
 {
     protected TechniqueApiServiceInterface $techniqueService;
+    protected CatalogTechniqueBffAdapter $workspaceAdapter;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->techniqueService = service('museumTechniqueApiService');
+        $this->workspaceAdapter = service('catalogTechniqueBffAdapter');
     }
 
     public function index(): string
@@ -42,27 +45,34 @@ class TechniqueController extends BaseWebController
 
     public function show(string $id): string
     {
-        $response = $this->safeApiCall(fn () => $this->techniqueService->get($id));
+        $workspace = $this->workspaceAdapter->workspace((int) $id);
+        $technique = is_array($workspace['technique'] ?? null) ? $workspace['technique'] : [];
+        $languages = is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [];
 
-        if (! $response['ok']) {
+        if ($technique === []) {
             return $this->render('museum/techniques/show', [
                 'title'     => lang('Museum.techniques_details'),
                 'technique' => [],
-                'error'     => $this->firstMessage($response, lang('Museum.techniques_not_found')),
-                'languages' => $this->getLanguages(),
+                'error'     => $this->workspaceAdapter->wasUnavailable()
+                    ? lang('App.connection_error')
+                    : lang('Museum.techniques_not_found'),
+                'languages' => $languages,
             ]);
         }
 
         return $this->render('museum/techniques/show', [
             'title'     => lang('Museum.techniques_details'),
-            'technique' => $this->extractData($response),
-            'languages' => $this->getLanguages(),
+            'technique' => $technique,
+            'languages' => $languages,
         ]);
     }
 
     public function create(): string
     {
-        $languages = $this->getLanguages();
+        $workspace = $this->workspaceAdapter->workspace();
+        $languages = $workspace !== null && is_array($workspace['languages'] ?? null)
+            ? $workspace['languages']
+            : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && ! empty($languages))
@@ -101,12 +111,13 @@ class TechniqueController extends BaseWebController
 
     public function edit(string $id): string|RedirectResponse
     {
-        $response = $this->safeApiCall(fn () => $this->techniqueService->get($id));
-        if (! $response['ok']) {
+        $workspace = $this->workspaceAdapter->workspace((int) $id);
+        $item = is_array($workspace['technique'] ?? null) ? $workspace['technique'] : [];
+        if ($item === []) {
             return $this->withError(lang('Museum.techniques_not_found'), route_to('admin.museum.techniques'));
         }
 
-        $languages = $this->getLanguages();
+        $languages = is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $translateTargets = ($defaultLangId > 0 && ! empty($languages))
@@ -115,7 +126,7 @@ class TechniqueController extends BaseWebController
 
         return $this->render('museum/techniques/edit', [
             'title'            => lang('Museum.techniques_edit'),
-            'item'             => $this->extractData($response),
+            'item'             => $item,
             'languages'        => $languages,
             'defaultLangId'    => $defaultLangId,
             'defaultLangIndex' => $languageContext['defaultLangIndex'],
@@ -170,47 +181,12 @@ class TechniqueController extends BaseWebController
 
     public function saveOrder(): ResponseInterface
     {
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid request type',
-            ])->setStatusCode(400);
-        }
-
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
-
-        if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
-        }
-
-        foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '') {
-                $this->techniqueService->update($id, ['sort_order' => $value]);
-            }
-        }
-
-        $this->invalidatePublicSiteCache('techniques');
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'message' => lang('Museum.sort_order_saved'),
-        ]);
+        return $this->saveSortOrderFromJson(
+            'catalog',
+            'techniques',
+            [],
+            lang('Museum.sort_order_saved'),
+        );
     }
 
-    /** @return array<string, mixed> */
-    private function getLanguages(): array
-    {
-        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
-
-        return $response['ok'] ? $this->extractItems($response) : [];
-    }
 }

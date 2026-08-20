@@ -8,6 +8,7 @@ use App\Controllers\BaseWebController;
 use App\Modules\Cms\Requests\CategoryStoreRequest;
 use App\Modules\Cms\Requests\CategoryUpdateRequest;
 use App\Modules\Cms\Services\CategoryApiService;
+use App\Modules\Cms\Services\CmsCategoryBffAdapter;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -16,21 +17,25 @@ use Psr\Log\LoggerInterface;
 class CategoryController extends BaseWebController
 {
     protected CategoryApiService $categoryService;
+    protected CmsCategoryBffAdapter $categoryBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->categoryService = service('categoryApiService');
+        $this->categoryBootstrap = service('cmsCategoryBffAdapter');
     }
 
     public function index(): string
     {
+        $sections = $this->categoryBootstrap->bootstrap() ?? [];
+
         return $this->render('cms/categories/index', [
             'title'        => lang('Categories.categories_title'),
             'limitOptions' => [10, 25, 50, 100],
-            'collections' => $this->collectionsOptions(),
-            'categories' => $this->categoriesOptions(),
-            'languages'    => $this->getLanguages(),
+            'collections'  => $this->optionMap($sections['collections'] ?? []),
+            'categories'   => $this->optionMap($sections['categories'] ?? []),
+            'languages'    => is_array($sections['languages'] ?? null) ? $sections['languages'] : [],
         ]);
     }
 
@@ -45,31 +50,38 @@ class CategoryController extends BaseWebController
 
     public function show(string $id): string
     {
-        $response = $this->safeApiCall(fn () => $this->categoryService->get($id));
+        $sections = $this->categoryBootstrap->bootstrap((int) $id) ?? [];
+        $category = is_array($sections['category'] ?? null) ? $sections['category'] : [];
+        $collections = $this->optionMap($sections['collections'] ?? []);
+        $categories = $this->optionMap($sections['categories'] ?? []);
+        $languages = is_array($sections['languages'] ?? null) ? $sections['languages'] : [];
 
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
+        if ($category === []) {
             return $this->render('cms/categories/show', [
                 'title' => lang('Categories.categories_details'),
                 'category' => [],
-                'error' => $this->firstMessage($response, lang('Categories.categories_not_found')),
-            'collections' => $this->collectionsOptions(),
-            'categories' => $this->categoriesOptions(),
+                'error' => $this->categoryBootstrap->wasUnavailable()
+                    ? lang('App.connection_error')
+                    : lang('Categories.categories_not_found'),
+                'collections' => $collections,
+                'categories' => $categories,
+                'languages' => $languages,
             ]);
         }
 
         return $this->render('cms/categories/show', [
             'title' => lang('Categories.categories_details'),
-            'category' => $this->extractData($response),
-            'collections' => $this->collectionsOptions(),
-            'categories' => $this->categoriesOptions(),
-            'languages' => $this->getLanguages(),
+            'category' => $category,
+            'collections' => $collections,
+            'categories' => $categories,
+            'languages' => $languages,
         ]);
     }
 
     public function create(): string
     {
-        $languages = $this->getLanguages();
+        $sections = $this->categoryBootstrap->bootstrap() ?? [];
+        $languages = is_array($sections['languages'] ?? null) ? $sections['languages'] : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['name', 'meta_title', 'meta_description'];
@@ -79,8 +91,8 @@ class CategoryController extends BaseWebController
 
         return $this->render('cms/categories/create', [
             'title'            => lang('Categories.categories_create'),
-            'collections'      => $this->collectionsOptions(),
-            'categories'       => $this->categoriesOptions(),
+            'collections'      => $this->optionMap($sections['collections'] ?? []),
+            'categories'       => $this->optionMap($sections['categories'] ?? []),
             'languages'        => $languages,
             'defaultLangId'    => $languageContext['defaultLangId'],
             'defaultLangCode'  => $languageContext['defaultLangCode'],
@@ -111,13 +123,13 @@ class CategoryController extends BaseWebController
 
     public function edit(string $id): string|RedirectResponse
     {
-        $response = $this->safeApiCall(fn () => $this->categoryService->get($id));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
+        $sections = $this->categoryBootstrap->bootstrap((int) $id) ?? [];
+        $item = is_array($sections['category'] ?? null) ? $sections['category'] : [];
+        if ($item === []) {
             return $this->withError(lang('Categories.categories_not_found'), route_to('admin.cms.categories'));
         }
 
-        $languages = $this->getLanguages();
+        $languages = is_array($sections['languages'] ?? null) ? $sections['languages'] : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['name', 'meta_title', 'meta_description'];
@@ -132,9 +144,9 @@ class CategoryController extends BaseWebController
 
         return $this->render('cms/categories/edit', [
             'title'            => lang('Categories.categories_edit'),
-            'item'             => $this->extractData($response),
-            'collections'      => $this->collectionsOptions(),
-            'categories'       => $this->categoriesOptions($id),
+            'item'             => $item,
+            'collections'      => $this->optionMap($sections['collections'] ?? []),
+            'categories'       => $this->optionMap($sections['categories'] ?? [], $id),
             'languages'        => $languages,
             'focusLangId'      => $focusLangId,
             'defaultLangId'    => $languageContext['defaultLangId'],
@@ -222,80 +234,37 @@ class CategoryController extends BaseWebController
             return $this->response->setJSON([
                 'ok' => false,
                 'message' => lang('App.access_denied'),
-            ])->setStatusCode(403);
+                ])->setStatusCode(403);
         }
 
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid request type',
-            ])->setStatusCode(400);
-        }
+        return $this->saveSortOrderFromJson(
+            'cms',
+            'categories',
+            [],
+            lang('Files.gallery_save_success') ?? 'Order saved.',
+        );
+    }
 
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
 
+
+    /**
+     * @param mixed $items
+     * @return array<string, string>
+     */
+    private function optionMap(mixed $items, ?string $excludeId = null): array
+    {
+        $options = [];
         if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
+            return $options;
         }
-
         foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '') {
-                $this->categoryService->update($id, ['sort_order' => $value]);
-            }
-        }
-
-        $this->invalidatePublicSiteCache('categories');
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'message' => lang('Files.gallery_save_success') ?? 'Order saved.',
-        ]);
-    }
-
-
-
-    /** @return array<string, string> */
-    private function collectionsOptions(): array
-    {
-        $response = $this->safeApiCall(fn () => $this->categoryService->collections(['limit' => 100, 'is_active' => true]));
-        $this->maybeFlashDevError($response);
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-            $label = $item['collection_key'] ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
-
-    /** @return array<string, string> */
-    private function categoriesOptions(?string $excludeId = null): array
-    {
-        $response = $this->safeApiCall(fn () => $this->categoryService->categories(['limit' => 100]));
-        $this->maybeFlashDevError($response);
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
             if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
             if ($excludeId !== null && (string) $item['id'] === $excludeId) {
                 continue;
             }
-            $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
+            $label = $item['name'] ?? $item['collection_key'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
             $options[(string) $item['id']] = (string) $label;
         }
 
@@ -310,13 +279,4 @@ class CategoryController extends BaseWebController
         return null;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function getLanguages(): array
-    {
-        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
-        $this->maybeFlashDevError($response);
-        return $this->extractItems($response);
-    }
 }
