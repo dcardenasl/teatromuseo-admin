@@ -4,7 +4,7 @@
             <label for="collection_id" class="block text-sm font-semibold text-gray-700 mb-2"><?= esc(lang('Entries.field_collection_id') ?? 'Colección') ?></label>
             <select name="collection_id" id="collection_id" 
                     class="<?= input_class('collection_id') ?> max-w-xs" 
-                    onchange="document.getElementById('collection-filter-form').submit()">
+                    @change="$el.form.submit()">
                 <?php foreach ($collections as $id => $label): ?>
                     <option value="<?= esc($id, 'attr') ?>" <?= (string)$selectedCollectionId === (string)$id ? 'selected' : '' ?>>
                         <?= esc($label) ?>

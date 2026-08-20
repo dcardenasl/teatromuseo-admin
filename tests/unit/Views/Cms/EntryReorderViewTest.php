@@ -26,6 +26,8 @@ final class EntryReorderViewTest extends CIUnitTestCase
             '\\x3Fcollection_id\\x3D7',
             $html,
         );
+        $this->assertStringContainsString('@change="$el.form.submit()"', $html);
+        $this->assertStringNotContainsString('onchange=', $html);
         $this->assertStringContainsString('Primera entrada', $html);
         $this->assertStringNotContainsString('$saveOrderUrl', $html);
     }
