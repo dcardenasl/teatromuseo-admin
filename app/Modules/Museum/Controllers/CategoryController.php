@@ -170,40 +170,12 @@ class CategoryController extends BaseWebController
 
     public function saveOrder(): ResponseInterface
     {
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
-            return $this->response->setJSON([
-                'ok'      => false,
-                'message' => 'Invalid request type',
-            ])->setStatusCode(400);
-        }
-
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
-
-        if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok'      => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
-        }
-
-        foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '') {
-                $this->categoryService->update($id, ['sort_order' => $value]);
-            }
-        }
-
-        $this->invalidatePublicSiteCache('categories');
-
-        return $this->response->setJSON([
-            'ok'      => true,
-            'message' => lang('Museum.sort_order_saved'),
-        ]);
+        return $this->saveSortOrderFromJson(
+            'catalog',
+            'categories',
+            [],
+            lang('Museum.sort_order_saved'),
+        );
     }
 
     /** @return array<string, mixed> */

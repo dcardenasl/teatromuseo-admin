@@ -165,30 +165,12 @@ final class EventTypeController extends BaseWebController
 
     public function saveOrder(): ResponseInterface
     {
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
-            return $this->response->setJSON(['ok' => false, 'message' => lang('App.invalid_request')])->setStatusCode(400);
-        }
-
-        $json = $request->getJSON(true);
-        $items = is_array($json) && is_array($json['items'] ?? null) ? $json['items'] : null;
-        if ($items === null) {
-            return $this->response->setJSON(['ok' => false, 'message' => lang('App.invalid_request')])->setStatusCode(400);
-        }
-
-        foreach ($items as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-
-            $this->eventTypeService->update((string) $item['id'], [
-                'sort_order' => (int) ($item['sort_order'] ?? 0),
-            ]);
-        }
-
-        $this->invalidatePublicSiteCache('event_types');
-
-        return $this->response->setJSON(['ok' => true, 'message' => lang('Events.event_types_order_saved')]);
+        return $this->saveSortOrderFromJson(
+            'events',
+            'event_types',
+            [],
+            lang('Events.event_types_order_saved'),
+        );
     }
 
     /** @return array<string, mixed> */

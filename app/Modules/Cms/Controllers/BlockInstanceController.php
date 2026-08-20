@@ -747,36 +747,23 @@ class BlockInstanceController extends BaseWebController
         $orders    = is_array($ordersRaw) ? $ordersRaw : [];
 
         $ownerType = $this->ownerTypeFromRequest();
-        $failed    = [];
-
-        foreach ($orders as $id => $order) {
-            $blockResponse = $this->safeApiCall(fn () => $this->blockInstanceService->get($ownerId, $ownerType, $id));
-            if (!$blockResponse['ok']) {
-                $failed[] = $id;
-                continue;
-            }
-
-            $block          = $this->extractData($blockResponse);
-            $updateResponse = $this->safeApiCall(fn () => $this->blockInstanceService->update($ownerId, $ownerType, $id, [
-                'block_id'     => (int) $block['block_id'],
-                'owner_type'   => $ownerType,
-                'owner_id'     => (int) $ownerId,
-                'sort_order'   => (int) $order,
-                'is_active'    => (bool) ($block['is_active'] ?? true),
-                'block_config' => $block['block_config'] ?? [],
-                'translations' => $block['translations'] ?? []
-            ]));
-
-            if (!$updateResponse['ok']) {
-                $failed[] = $id;
-            }
+        $response = $this->blockSortOrderResponse($ownerId, $ownerType, $orders);
+        $failed = ($response['ok'] ?? false)
+            ? []
+            : array_values(array_map(static fn (int|string $id): string => (string) $id, array_keys($orders)));
+        if ($failed === [] && ! ($response['ok'] ?? false)) {
+            $failed = ['unknown'];
         }
 
         if ($this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
             return $this->response
                 ->setStatusCode($failed === [] ? 200 : 422)
                 ->setContentType('application/json')
-                ->setBody(json_encode(['ok' => $failed === [], 'failed' => $failed]) ?: '{}');
+                ->setBody(json_encode([
+                    'ok' => $failed === [],
+                    'failed' => $failed,
+                    'message' => $this->firstMessage($response, lang('Blocks.blocks_reorder_error')),
+                ]) ?: '{}');
         }
 
         if ($failed !== []) {
@@ -797,37 +784,23 @@ class BlockInstanceController extends BaseWebController
         $orders    = is_array($ordersRaw) ? $ordersRaw : [];
 
         $ownerType = $this->ownerTypeFromRequest();
-        $failed    = [];
-
-        foreach ($orders as $id => $order) {
-            $blockResponse = $this->safeApiCall(fn () => $this->blockInstanceService->get($ownerId, $ownerType, $id));
-            if (!$blockResponse['ok']) {
-                $failed[] = $id;
-                continue;
-            }
-
-            $block          = $this->extractData($blockResponse);
-            $updateResponse = $this->safeApiCall(fn () => $this->blockInstanceService->update($ownerId, $ownerType, $id, [
-                'block_id'           => (int) $block['block_id'],
-                'owner_type'         => $ownerType,
-                'owner_id'           => (int) $ownerId,
-                'parent_instance_id' => (int) $instanceId,
-                'sort_order'         => (int) $order,
-                'is_active'          => (bool) ($block['is_active'] ?? true),
-                'block_config'       => $block['block_config'] ?? [],
-                'translations'       => $block['translations'] ?? [],
-            ]));
-
-            if (!$updateResponse['ok']) {
-                $failed[] = $id;
-            }
+        $response = $this->blockSortOrderResponse($ownerId, $ownerType, $orders, $instanceId);
+        $failed = ($response['ok'] ?? false)
+            ? []
+            : array_values(array_map(static fn (int|string $id): string => (string) $id, array_keys($orders)));
+        if ($failed === [] && ! ($response['ok'] ?? false)) {
+            $failed = ['unknown'];
         }
 
         if ($this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
             return $this->response
                 ->setStatusCode($failed === [] ? 200 : 422)
                 ->setContentType('application/json')
-                ->setBody(json_encode(['ok' => $failed === [], 'failed' => $failed]) ?: '{}');
+                ->setBody(json_encode([
+                    'ok' => $failed === [],
+                    'failed' => $failed,
+                    'message' => $this->firstMessage($response, lang('Blocks.child_reorder_error')),
+                ]) ?: '{}');
         }
 
         if ($failed !== []) {
@@ -835,6 +808,47 @@ class BlockInstanceController extends BaseWebController
         }
 
         return redirect()->to(route_to(BlockOwnerRouting::routes($ownerType)['children'], $ownerId, $instanceId))->with('success', lang('Blocks.child_reorder_success'));
+    }
+
+    /**
+     * Reorder blocks without fetching/updating each full block payload.
+     *
+     * @param array<int|string, mixed> $orders
+     * @return array<string, mixed>
+     */
+    private function blockSortOrderResponse(
+        string $ownerId,
+        string $ownerType,
+        array $orders,
+        ?string $parentInstanceId = null,
+    ): array {
+        $items = [];
+        foreach ($orders as $id => $order) {
+            if (! is_numeric($id) || ! is_numeric($order)) {
+                return [
+                    'ok' => false,
+                    'status' => 400,
+                    'data' => [],
+                    'raw' => '',
+                    'headers' => [],
+                    'messages' => ['Invalid payload structure'],
+                    'fieldErrors' => [],
+                ];
+            }
+            $items[] = ['id' => (int) $id, 'sort_order' => (int) $order];
+        }
+
+        $scope = [
+            'owner_type' => $ownerType,
+            'owner_id' => (int) $ownerId,
+        ];
+        if ($parentInstanceId !== null) {
+            $scope['parent_instance_id'] = (int) $parentInstanceId;
+        }
+
+        return $this->safeApiCall(
+            fn () => $this->sortOrderApiCall('cms', 'block_instances', $items, $scope)
+        );
     }
 
     public function entryOptions(): ResponseInterface
