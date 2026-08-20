@@ -74,6 +74,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Hub/BFF request retries and the dashboard lock wait could each occupy an extra PHP process
+  on the production shared host** — `apiClient.maxRetries` (Hub) and `BffApiClient`'s per-call
+  `maxRetries` default now default to `0` instead of `2`, and `ADMIN_DASHBOARD_LOCK_WAIT_MS`
+  defaults to `0` (non-blocking `FileDashboardLock`) instead of `250`. A failed read now fails
+  once instead of retrying or waiting on another PHP process, matching the host's five
+  concurrent Entry Process ceiling.
+
 - **Dates displayed in UTC instead of the venue's local time** — `appTimezone` now defaults to
   `America/Santiago`; `format_date()` and the JS date formatter convert technical UTC timestamps
   to the configured display timezone at render time, while date-only values and event/occurrence
