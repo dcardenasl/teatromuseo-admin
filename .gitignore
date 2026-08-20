@@ -102,4 +102,5 @@ npm-debug.log*
 .deploy/.env.deploy
 .deploy/.last_ftp_deploy
 .deploy/.rollback/
-.deploy/__pycache__/
+__pycache__/
+*.pyc
