@@ -20,11 +20,6 @@ class ApiClient extends BaseConfig
 
     public string $appKey = '';
 
-    /**
-     * @var list<string>
-     */
-    public array $healthPaths = ['/health'];
-
     public bool $logRequests = false;
 
     public function __construct()
@@ -67,14 +62,6 @@ class ApiClient extends BaseConfig
         $appKey = env('apiClient.appKey') ?: env('API_APP_KEY');
         if (is_string($appKey) && trim($appKey) !== '') {
             $this->appKey = $appKey;
-        }
-
-        $val = env('apiClient.healthPaths') ?: env('API_HEALTH_PATHS');
-        if ($val) {
-            $paths = array_values(array_filter(array_map('trim', explode(',', (string) $val))));
-            if ($paths !== []) {
-                $this->healthPaths = $paths;
-            }
         }
 
         $logRequests = env('apiClient.logRequests') ?: env('API_LOG_REQUESTS');

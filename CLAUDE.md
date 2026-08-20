@@ -280,7 +280,6 @@ API communication is abstracted into service classes in `app/Services/`. All ser
 - `AuditApiService.php` — Audit log endpoints (list, get, byEntity)
 - `ApiKeyApiService.php` — Admin API key management (list, get, create, update, delete)
 - `MetricsApiService.php` — Metrics (summary, timeseries with `/metrics/timeseries` → `/metrics` fallback)
-- `HealthApiService.php` — API health check across configured paths; returns `up` / `degraded` / `down` state with latency
 
 Services are registered in `app/Config/Services.php` as shared singletons. Access via `service('authApiService')`, `service('apiClient')`, etc.
 
@@ -363,7 +362,7 @@ app/Views/
 - `app/Config/Filters.php` — Filter registration and aliases (`auth`, `admin`, `locale`)
 - `app/Config/Autoload.php` — Helper auto-loading (`ui`, `form` loaded globally)
 - `app/Config/ApiClient.php` — API base URL, timeouts, API prefix, app name, `appKey` (reads `API_APP_KEY` env var)
-- `app/Config/Services.php` — Shared service factory for `apiClient`, `authApiService`, `fileApiService`, `userApiService`, `auditApiService`, `apiKeyApiService`, `metricsApiService`, `healthApiService`
+- `app/Config/Services.php` — Shared service factory for `apiClient`, `authApiService`, `fileApiService`, `userApiService`, `auditApiService`, `apiKeyApiService` and `metricsApiService`
 
 ## API App Key (`X-App-Key`)
 
@@ -501,7 +500,7 @@ This app consumes **ci4-website-builder-api** (https://github.com/yourusername/c
   - `Libraries/ApiClientTest.php` — interface contract and config defaults
   - `Filters/AuthFilterTest.php` — redirect when no token / allow when token present
   - `Helpers/UiHelperTest.php` — `has_active_filters()` logic
-  - `Services/AuthApiServiceTest.php`, `ApiKeyApiServiceTest.php`, `HealthApiServiceTest.php`, `MetricsApiServiceTest.php`
+  - `Services/AuthApiServiceTest.php`, `ApiKeyApiServiceTest.php`, `MetricsApiServiceTest.php`
   - `Views/ErrorViewsSmokeTest.php` — 404/500 error page rendering
 - **Feature tests** in `tests/feature/`:
   - `FileUploadFlowTest.php` — upload, download, delete, auth protection, data endpoint

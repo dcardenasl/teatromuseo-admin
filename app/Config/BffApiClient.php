@@ -6,11 +6,8 @@ namespace Config;
 
 /**
  * Configuration for the HTTP client that talks to a ci4-bff-starter gateway
- * (port 8088 by default). Mirrors {@see DomainApiClient} but reads a distinct
- * set of environment variables so a single admin instance can monitor hub,
- * domain, and BFF health independently.
- *
- * Leave $baseUrl empty (the default) to disable BFF health monitoring.
+ * (port 8188 by default). Mirrors {@see DomainApiClient} but reads a distinct
+ * set of environment variables for the authenticated composite Admin reads.
  */
 class BffApiClient extends ApiClient
 {
@@ -53,14 +50,6 @@ class BffApiClient extends ApiClient
         $appKey = env('bffApiClient.appKey') ?: env('BFF_API_APP_KEY');
         if (is_string($appKey) && trim($appKey) !== '') {
             $this->appKey = $appKey;
-        }
-
-        $val = env('bffApiClient.healthPaths') ?: env('BFF_API_HEALTH_PATHS');
-        if ($val) {
-            $paths = array_values(array_filter(array_map('trim', explode(',', (string) $val))));
-            if ($paths !== []) {
-                $this->healthPaths = $paths;
-            }
         }
 
         $logRequests = env('BFF_API_LOG_REQUESTS') ?: env('bffApiClient.logRequests');

@@ -1,4 +1,3 @@
-import { createFetchQueue } from './utils/fetchQueue.js';
 import { bootLucideIcons } from './utils/lucide.js';
 import { bootSlugFields } from './utils/slug.js';
 import { bestFilePreviewUrl, resolveTranslatableFilePreviewUrl } from './utils/fileUrl.js';
@@ -50,11 +49,6 @@ import {
 } from './components/langTabs.js';
 import { wizard } from './components/wizard/index.js';
 import { structureWizard } from './components/wizard/structureIndex.js';
-
-// Caps how many dashboard widgets fetch concurrently — loading all of them
-// at once fans out into dozens of upstream API calls and can exhaust a
-// small server's CPU/RAM (2026-08-07 incident).
-window.dashboardFetchQueue = createFetchQueue(1);
 
 document.addEventListener('alpine:init', () => {
     Alpine.store('confirm', confirmStore());

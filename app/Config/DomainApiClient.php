@@ -57,14 +57,6 @@ class DomainApiClient extends ApiClient
             $this->appKey = $appKey;
         }
 
-        $val = env('domainApiClient.healthPaths') ?: env('DOMAIN_API_HEALTH_PATHS');
-        if ($val) {
-            $paths = array_values(array_filter(array_map('trim', explode(',', (string) $val))));
-            if ($paths !== []) {
-                $this->healthPaths = $paths;
-            }
-        }
-
         $logRequests = env('domainApiClient.logRequests') ?: env('DOMAIN_API_LOG_REQUESTS');
         if ($logRequests !== null && $logRequests !== '') {
             $this->logRequests = filter_var($logRequests, FILTER_VALIDATE_BOOLEAN);

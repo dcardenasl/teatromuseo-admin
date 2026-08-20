@@ -8,7 +8,7 @@
  * visible without forcing the detail open.
  *
  * Expected variables:
- *   $health  array — result from HealthApiService::check()
+ *   $health  array — source-state projection from the dashboard aggregate
  *   $name    string — display name of the upstream service
  */
 

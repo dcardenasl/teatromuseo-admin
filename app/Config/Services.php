@@ -12,8 +12,6 @@ use App\Libraries\DomainApiClient;
 use App\Libraries\DomainApiClientInterface;
 use App\Libraries\PermissionsSessionRefresher;
 use App\Libraries\PublicSiteCacheInvalidator;
-use App\Libraries\WebApiClient;
-use App\Libraries\WebApiClientInterface;
 use App\Modules\ApiKeys\Services\ApiKeyApiService;
 use App\Modules\Audit\Services\AuditApiService;
 use App\Modules\Auth\Services\AuthApiService;
@@ -39,7 +37,6 @@ use App\Modules\Cms\Services\TagApiService;
 use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Dashboard\Services\DashboardDataService;
 use App\Modules\Dashboard\Services\FileDashboardLock;
-use App\Modules\Dashboard\Services\HealthApiService;
 use App\Modules\EventReferences\Services\EventReferenceApiService;
 use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
 use App\Modules\Events\Services\EventApiService;
@@ -261,56 +258,6 @@ class Services extends BaseService
         }
 
         return new MetricsWorkspaceBffAdapter(static::bffApiClient());
-    }
-
-    public static function healthApiService(bool $getShared = true): HealthApiService
-    {
-        if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('healthApiService');
-        }
-
-        return new HealthApiService(static::apiClient(), config('ApiClient')->healthPaths);
-    }
-
-    public static function domainHealthApiService(bool $getShared = true): HealthApiService
-    {
-        if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('domainHealthApiService');
-        }
-
-        return new HealthApiService(static::domainApiClient(), config('DomainApiClient')->healthPaths);
-    }
-
-    public static function bffHealthApiService(bool $getShared = true): HealthApiService
-    {
-        if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('bffHealthApiService');
-        }
-
-        return new HealthApiService(static::bffApiClient(), config('BffApiClient')->healthPaths);
-    }
-
-    public static function webApiClient(bool $getShared = true): WebApiClientInterface
-    {
-        if ($getShared) {
-            /** @var WebApiClientInterface */
-            return static::getSharedInstance('webApiClient');
-        }
-
-        return new WebApiClient(config('WebApiClient'));
-    }
-
-    public static function webHealthApiService(bool $getShared = true): HealthApiService
-    {
-        if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('webHealthApiService');
-        }
-
-        return new HealthApiService(static::webApiClient(), config('WebApiClient')->healthPaths);
     }
 
     public static function publicSiteCacheInvalidator(bool $getShared = true): PublicSiteCacheInvalidator

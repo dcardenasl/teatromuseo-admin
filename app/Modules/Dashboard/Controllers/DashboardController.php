@@ -6,8 +6,6 @@ namespace App\Modules\Dashboard\Controllers;
 
 use App\Controllers\BaseWebController;
 use App\Modules\Dashboard\Services\DashboardDataService;
-use App\Modules\Dashboard\Services\HealthApiService;
-use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -15,18 +13,17 @@ use Psr\Log\LoggerInterface;
 class DashboardController extends BaseWebController
 {
     protected DashboardDataService $dashboardDataService;
-    protected HealthApiService $healthService;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
-        $this->dashboardDataService     = service('dashboardDataService');
-        $this->healthService = service('healthApiService');
+        $this->dashboardDataService = service('dashboardDataService');
     }
 
     public function index(): string
     {
         $user = is_array(session('user')) ? session('user') : [];
+        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
         $displayName = trim((string) ($user['first_name'] ?? ''));
         if ($displayName === '') {
             $displayName = trim((string) ($user['username'] ?? ''));
@@ -38,16 +35,31 @@ class DashboardController extends BaseWebController
             $displayName = lang('Dashboard.user_fallback');
         }
 
+        $canViewAnalytics = has_permission('cms.analytics.read');
+        $widgets = [
+            'stats' => $this->renderStats($dashboard),
+            'summary' => $this->renderSummary($dashboard),
+            'translations' => $this->renderTranslations($dashboard),
+            'activity' => $this->renderCmsActivity($dashboard),
+            'analytics' => $this->renderAnalytics($dashboard),
+            'health' => $this->renderSourceHealth($dashboard),
+            'recentFiles' => $this->renderRecentFiles($dashboard),
+        ];
+
+        $this->closeSessionSafely();
+
         return $this->render('dashboard/index', [
             'title'       => lang('Dashboard.title'),
             'user'        => $user,
             'displayName' => $displayName,
+            'widgets'     => $widgets,
+            'canViewAnalytics' => $canViewAnalytics,
         ]);
     }
 
-    public function widgetStats(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderStats(array $dashboard): string
     {
-        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
         $hub       = $this->dashboardSection($dashboard, 'hub');
         $hubState  = $this->dashboardSourceState($dashboard, 'hub');
         $metrics   = is_array($hub['metrics'] ?? null) ? $hub['metrics'] : [];
@@ -67,72 +79,50 @@ class DashboardController extends BaseWebController
             $stats['uptime'] = ['label' => lang('Dashboard.api_uptime'), 'value' => $uptime . '%', 'icon' => 'activity'];
         }
 
-        $this->closeSessionSafely();
-
-        return $this->response->setBody(view('dashboard/partials/widget_stats', [
+        return view('dashboard/partials/widget_stats', [
             'stats' => $stats,
             'sourceState' => $hubState,
-        ]));
+        ]);
     }
 
-    public function widgetHealth(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderSourceHealth(array $dashboard): string
     {
-        $cache = service('cache');
-
-        $hubHealth = $this->fetchCachedHealth('dashboard_health_hub', $this->healthService, $cache);
-
-        $domainUrl    = config('DomainApiClient')->baseUrl;
-        $domainHealth = ($domainUrl !== '')
-            ? $this->fetchCachedHealth('dashboard_health_domain', service('domainHealthApiService'), $cache)
-            : null;
-
-        $bffUrl    = config('BffApiClient')->baseUrl;
-        $bffHealth = ($bffUrl !== '')
-            ? $this->fetchCachedHealth('dashboard_health_bff', service('bffHealthApiService'), $cache)
-            : null;
-
-        $webUrl    = config('WebApiClient')->baseUrl;
-        $webHealth = ($webUrl !== '')
-            ? $this->fetchCachedHealth('dashboard_health_web', service('webHealthApiService'), $cache)
-            : null;
-
-        $healthServices = [
-            ['name' => lang('Dashboard.service_hub'), 'health' => $hubHealth],
+        $labels = [
+            'hub' => lang('Dashboard.service_hub'),
+            'cms' => lang('Dashboard.source_cms'),
+            'catalog' => lang('Dashboard.source_catalog'),
+            'event' => lang('Dashboard.source_event'),
         ];
-        if ($domainHealth !== null) {
-            $healthServices[] = ['name' => lang('Dashboard.service_domain'), 'health' => $domainHealth];
-        }
-        if ($bffHealth !== null) {
-            $healthServices[] = ['name' => lang('Dashboard.service_bff'), 'health' => $bffHealth];
-        }
-        if ($webHealth !== null) {
-            $healthServices[] = ['name' => lang('Dashboard.service_web'), 'health' => $webHealth];
+        $healthServices = [];
+        foreach ($labels as $source => $label) {
+            $state = $this->dashboardSourceState($dashboard, $source);
+            $healthServices[] = [
+                'name' => $label,
+                'health' => [
+                    'state' => $state === 'fresh' ? 'up' : ($state === 'stale' ? 'degraded' : 'down'),
+                    'status' => $state === 'unavailable' ? 503 : 200,
+                    'latency_ms' => 0,
+                    'data' => [
+                        'timestamp' => $dashboard['generated_at'] ?? null,
+                    ],
+                ],
+            ];
         }
 
-        $devPanel = $this->renderDevApiErrorPanel($hubHealth)
-            . ($domainHealth !== null ? $this->renderDevApiErrorPanel($domainHealth) : '')
-            . ($bffHealth !== null ? $this->renderDevApiErrorPanel($bffHealth) : '')
-            . ($webHealth !== null ? $this->renderDevApiErrorPanel($webHealth) : '');
-
-        $this->closeSessionSafely();
-
-        return $this->response->setBody($devPanel . view('dashboard/partials/widget_health', [
-            'healthServices' => $healthServices,
-        ]));
+        return view('dashboard/partials/widget_health', ['healthServices' => $healthServices]);
     }
 
-    public function widgetRecentFiles(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderRecentFiles(array $dashboard): string
     {
-        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
         $hub       = $this->dashboardSection($dashboard, 'hub');
         $hubState  = $this->dashboardSourceState($dashboard, 'hub');
 
-        $this->closeSessionSafely();
-
-        return $this->response->setBody(view('dashboard/partials/widget_recent_files', [
+        return view('dashboard/partials/widget_recent_files', [
             'recentFiles' => is_array($hub['files']['recent'] ?? null) ? $hub['files']['recent'] : [],
             'sourceState' => $hubState,
-        ]));
+        ]);
     }
 
     /**
@@ -140,20 +130,18 @@ class DashboardController extends BaseWebController
      * stat cards) so the dashboard surfaces the project's actual translation
      * health instead of only generic ops metrics.
      */
-    public function widgetTranslations(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderTranslations(array $dashboard): string
     {
-        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
         $section  = $this->dashboardSection($dashboard, 'translations');
         $state    = $this->dashboardSourceState($dashboard, 'translations');
         $stats    = $state === 'unavailable'
             ? null
             : (is_array($section['translations'] ?? null) ? $section['translations'] : []);
 
-        $this->closeSessionSafely();
-
-        return $this->response->setBody(view('dashboard/partials/widget_translations', [
+        return view('dashboard/partials/widget_translations', [
             'stats' => $stats,
-        ]));
+        ]);
     }
 
     /**
@@ -162,20 +150,18 @@ class DashboardController extends BaseWebController
      * endpoint the full Analytics page uses for its KPI cards — never the
      * heavier per-page/referrer/timeseries breakdowns.
      */
-    public function widgetAnalytics(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderAnalytics(array $dashboard): string
     {
-        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
         $section  = $this->dashboardSection($dashboard, 'analytics');
         $state    = $this->dashboardSourceState($dashboard, 'analytics');
         $overview = $state === 'unavailable'
             ? null
             : (is_array($section['analytics'] ?? null) ? $section['analytics'] : []);
 
-        $this->closeSessionSafely();
-
-        return $this->response->setBody(view('dashboard/partials/widget_analytics', [
+        return view('dashboard/partials/widget_analytics', [
             'overview' => $overview,
-        ]));
+        ]);
     }
 
     /**
@@ -190,9 +176,9 @@ class DashboardController extends BaseWebController
      * counter here added no information: it was removed in favor of the one
      * real actionable signal (submissions) living directly on its card.
      */
-    public function widgetSummary(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderSummary(array $dashboard): string
     {
-        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
         $cms       = $this->dashboardSection($dashboard, 'cms');
         $catalog    = $this->dashboardSection($dashboard, 'catalog');
         $event      = $this->dashboardSection($dashboard, 'event');
@@ -397,21 +383,19 @@ class DashboardController extends BaseWebController
             ];
         }
 
-        $this->closeSessionSafely();
-
-        return $this->response->setBody(view('dashboard/partials/widget_summary', [
+        return view('dashboard/partials/widget_summary', [
             'items' => $items,
             'warnings' => $warnings,
-        ]));
+        ]);
     }
 
     /**
      * Most recently updated Pages and Entries, merged and sorted — the
      * project-relevant equivalent of a generic "recent activity" feed.
      */
-    public function widgetCmsActivity(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderCmsActivity(array $dashboard): string
     {
-        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
         $cms       = $this->dashboardSection($dashboard, 'cms');
         $catalog   = $this->dashboardSection($dashboard, 'catalog');
         $event     = $this->dashboardSection($dashboard, 'event');
@@ -470,16 +454,14 @@ class DashboardController extends BaseWebController
 
         usort($entries, static fn (array $a, array $b): int => strcmp((string) $b['updated_at'], (string) $a['updated_at']));
 
-        $this->closeSessionSafely();
-
-        return $this->response->setBody(view('dashboard/partials/widget_cms_activity', [
+        return view('dashboard/partials/widget_cms_activity', [
             'items' => array_slice($entries, 0, 6),
             'sourceStates' => [
                 'cms' => $this->dashboardSourceState($dashboard, 'cms'),
                 'catalog' => $this->dashboardSourceState($dashboard, 'catalog'),
                 'event' => $this->dashboardSourceState($dashboard, 'event'),
             ],
-        ]));
+        ]);
     }
 
     /**
@@ -501,24 +483,6 @@ class DashboardController extends BaseWebController
             'url'        => $url,
             'updated_at' => (string) ($resource['updated_at'] ?? ''),
         ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function fetchCachedHealth(string $cacheKey, HealthApiService $service, CacheInterface $cache): array
-    {
-        $cached = $cache->get($cacheKey);
-        if (is_array($cached)) {
-            return $cached;
-        }
-
-        $response = $this->safeApiCall(fn () => $service->check());
-        if ($response['ok'] ?? false) {
-            $cache->save($cacheKey, $response, 30);
-        }
-
-        return $response;
     }
 
     private function currentUserId(): int

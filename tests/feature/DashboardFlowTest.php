@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Libraries\BffApiClientInterface;
-use App\Modules\Dashboard\Services\HealthApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
@@ -39,11 +38,11 @@ final class DashboardFlowTest extends CIUnitTestCase
 
         $result->assertStatus(200);
         $this->assertStringContainsString(lang('Dashboard.title'), $result->getBody());
-        $this->assertStringContainsString('dashboard/widgets/stats', $result->getBody());
-        $this->assertStringContainsString('dashboard/widgets/health', $result->getBody());
+        $this->assertStringContainsString(lang('Dashboard.system_status'), $result->getBody());
+        $this->assertStringNotContainsString('dashboard/widgets/', $result->getBody());
     }
 
-    public function testWidgetStatsAggregatesAdminMetrics(): void
+    public function testDashboardAggregatesAdminMetrics(): void
     {
         $this->injectDashboardSummary(
             hubSections: [
@@ -56,7 +55,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['users.read', 'metrics.read']],
-        ])->get('/dashboard/widgets/stats');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -64,48 +63,32 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('99.9%', $body);
     }
 
-    public function testWidgetStatsStillRendersWhenUserSummaryFails(): void
+    public function testDashboardStillRendersWhenUserSummaryFails(): void
     {
         $this->injectDashboardSummary(hubOk: false);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['users.read']],
-        ])->get('/dashboard/widgets/stats');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
     }
 
-    public function testWidgetHealthReturnsHealthCard(): void
+    public function testDashboardProjectsSourceHealthFromAggregate(): void
     {
-        $healthService = $this->createMock(HealthApiService::class);
-        $healthService->expects($this->once())
-            ->method('check')
-            ->willReturn([
-                'ok'         => true,
-                'state'      => 'up',
-                'status'     => 200,
-                'path'       => '/health',
-                'latency_ms' => 42,
-                'data'       => ['state' => 'up'],
-                'raw'        => '',
-                'headers'    => [],
-                'messages'   => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('healthApiService', $healthService);
+        $this->injectDashboardSummary(hubOk: false);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/health');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
-        $this->assertStringContainsString('42', $result->getBody());
+        $this->assertStringContainsString(lang('Dashboard.status_down'), $result->getBody());
     }
 
-    public function testWidgetRecentFilesReturnsFileList(): void
+    public function testDashboardRendersRecentFiles(): void
     {
         $this->injectDashboardSummary(
             hubSections: [
@@ -126,13 +109,13 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/recent-files');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $this->assertStringContainsString('report.pdf', $result->getBody());
     }
 
-    public function testWidgetRecentFilesPrefixesHubBaseUrlForRelativeImageVariants(): void
+    public function testDashboardPrefixesHubBaseUrlForRelativeImageVariants(): void
     {
         $relativeVariant = '/uploads/2026/01/01/example_sm.webp';
         $this->injectDashboardSummary(
@@ -155,7 +138,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/recent-files');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -164,7 +147,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringNotContainsString('src="' . $relativeVariant . '"', $body);
     }
 
-    public function testWidgetTranslationsRendersLanguageBarsWhenPermitted(): void
+    public function testDashboardRendersLanguageBarsWhenPermitted(): void
     {
         $this->injectDashboardSummary(
             translationsSections: [
@@ -175,7 +158,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.languages.read']],
-        ])->get('/dashboard/widgets/translations');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -184,19 +167,19 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('1%', $body);
     }
 
-    public function testWidgetTranslationsSkipsTheApiCallWithoutPermission(): void
+    public function testDashboardRendersWithoutTranslationPermission(): void
     {
         $this->injectDashboardSummary();
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/translations');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
     }
 
-    public function testWidgetAnalyticsRendersTrafficOverviewWhenPermitted(): void
+    public function testDashboardRendersTrafficOverviewWhenPermitted(): void
     {
         $this->injectDashboardSummary(
             analyticsSections: [
@@ -214,7 +197,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.analytics.read']],
-        ])->get('/dashboard/widgets/analytics');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -224,26 +207,26 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('google.com', $body);
     }
 
-    public function testWidgetAnalyticsSkipsTheApiCallWithoutPermission(): void
+    public function testDashboardRendersWithoutAnalyticsPermission(): void
     {
         $this->injectDashboardSummary();
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/analytics');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
     }
 
-    public function testWidgetSummaryOnlyQueriesPermittedResources(): void
+    public function testDashboardSummaryOnlyQueriesPermittedResources(): void
     {
         $this->injectDashboardSummary(cmsSections: ['counts' => ['pages' => 7]]);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.pages.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -251,14 +234,14 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('>7<', $body);
     }
 
-    public function testWidgetSummaryCountsFormsFromTheUnpaginatedListResponse(): void
+    public function testDashboardSummaryCountsFormsFromTheUnpaginatedListResponse(): void
     {
         $this->injectDashboardSummary(cmsSections: ['counts' => ['forms' => 2]]);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.forms.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -266,7 +249,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertMatchesRegularExpression('/text-xl font-bold text-gray-900">\s*2\s*</', $body);
     }
 
-    public function testWidgetSummaryShowsSubmissionsTotalAndPendingBadgeWhenPermitted(): void
+    public function testDashboardSummaryShowsSubmissionsTotalAndPendingBadgeWhenPermitted(): void
     {
         $this->injectDashboardSummary(cmsSections: [
             'submissions' => ['new' => 3, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
@@ -275,7 +258,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.submissions.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -286,7 +269,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('admin/cms/form-submissions?status=new', $body);
     }
 
-    public function testWidgetSummaryOmitsSubmissionsBadgeWhenNothingIsPending(): void
+    public function testDashboardSummaryOmitsSubmissionsBadgeWhenNothingIsPending(): void
     {
         $this->injectDashboardSummary(cmsSections: [
             'submissions' => ['new' => 0, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
@@ -295,7 +278,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.submissions.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -303,7 +286,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringNotContainsString('bg-red-500', $body);
     }
 
-    public function testWidgetCmsActivityMergesPagesAndEntriesSortedByRecency(): void
+    public function testDashboardCmsActivityMergesPagesAndEntriesSortedByRecency(): void
     {
         $this->injectDashboardSummary(cmsSections: [
             'recent_activity' => [
@@ -315,7 +298,7 @@ final class DashboardFlowTest extends CIUnitTestCase
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.pages.read', 'cms.entries.read']],
-        ])->get('/dashboard/widgets/cms-activity');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -345,18 +328,20 @@ final class DashboardFlowTest extends CIUnitTestCase
         array $translationsSections = [],
     ): void {
         $bff = $this->createMock(BffApiClientInterface::class);
-        $bff->method('getAdminDashboard')->willReturn($this->aggregateResponse(
-            [
-                'hub' => $hubSections,
-                'cms' => $cmsSections,
-                'analytics' => $analyticsSections,
-                'translations' => $translationsSections,
-                'catalog' => $catalogSections,
-                'event' => $eventSections,
-            ],
-            $hubOk,
-            $cmsOk,
-        ));
+        $bff->expects($this->once())
+            ->method('getAdminDashboard')
+            ->willReturn($this->aggregateResponse(
+                [
+                    'hub' => $hubSections,
+                    'cms' => $cmsSections,
+                    'analytics' => $analyticsSections,
+                    'translations' => $translationsSections,
+                    'catalog' => $catalogSections,
+                    'event' => $eventSections,
+                ],
+                $hubOk,
+                $cmsOk,
+            ));
         Services::injectMock('bffApiClient', $bff);
     }
 
