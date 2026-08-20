@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dashboard hosting diagnostics** — the API-health widget now shows per-source
+  latency and a "Hosting (BFF)" check group (disk/writable-path status), sourced
+  from `GET /me/admin-dashboard`'s new `diagnostics` field.
 - **Table view and density preferences** — `remoteTable` list views can now expose a table/grid
   view toggle and a compact/default/spacious density toggle via `table_toolbar.php` flags, backed
   by per-module `sessionStorage` state. `Users` gained a card view; `Files` and 30 other list
@@ -213,6 +216,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CMS categories, entries, menus, catalog techniques/collection items, and event
+  types now reorder via one atomic batch request** — `SortOrderApiService` replaces
+  the previous per-row update loop with a single call to each domain's
+  `POST /{domain}/sort-orders`, and the CMS category/entry/menu list, edit, and
+  bootstrap screens now resolve their filter/option data from the BFF's new
+  `me/admin-cms/categories/*`, `me/admin-catalog/collection-items/list-bootstrap`,
+  `me/admin-catalog/techniques/*`, and `me/admin-event/events/list-bootstrap`
+  projections instead of one request per option source.
 - **CMS validation and editor feedback** — request rules now match domain field limits and nested
   translation contracts, while editors, file translations, site identity, and the structure wizard
   preserve submitted values and map server errors back to the correct field or language row.
