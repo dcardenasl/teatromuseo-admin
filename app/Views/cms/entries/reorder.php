@@ -15,9 +15,14 @@
     </div>
 <?php endif; ?>
 
+$saveOrderUrl = route_to('admin.cms.entries.save_order');
+if (! empty($selectedCollectionId)) {
+    $saveOrderUrl .= '?collection_id=' . rawurlencode((string) $selectedCollectionId);
+}
+
 <?= view('components/display/reorder', [
     'items'        => $items ?? [],
-    'saveUrl'      => route_to('admin.cms.entries.save_order'),
+    'saveUrl'      => $saveOrderUrl,
     'displayKey'   => 'title',
     'subtitleKeys' => ['collection_key', 'slug'],
     'backUrl'      => route_to('admin.cms.entries'),

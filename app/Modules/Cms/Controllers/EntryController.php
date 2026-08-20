@@ -37,11 +37,17 @@ class EntryController extends BaseWebController
 
     public function index(): string
     {
+        $bootstrap = $this->entryListBootstrap();
+
         return $this->render('cms/entries/index', [
             'title'        => lang('Entries.entries_title'),
             'limitOptions' => [10, 25, 50, 100],
-            'collections' => $this->collectionsOptions(),
-            'languages'   => $this->getLanguages(),
+            'collections'  => is_array($bootstrap['collections'] ?? null)
+                ? $this->optionMap($bootstrap['collections'], 'collection_key')
+                : [],
+            'languages'    => is_array($bootstrap['languages'] ?? null)
+                ? $bootstrap['languages']
+                : [],
         ]);
     }
 
@@ -420,7 +426,10 @@ class EntryController extends BaseWebController
             return $deny;
         }
 
-        $collections = $this->collectionsOptions();
+        $bootstrap = $this->entryListBootstrap();
+        $collections = is_array($bootstrap['collections'] ?? null)
+            ? $this->optionMap($bootstrap['collections'], 'collection_key')
+            : [];
         $collectionIdParam = $this->request->getGet('collection_id');
         $collectionId = is_numeric($collectionIdParam) ? (int) $collectionIdParam : null;
 
@@ -461,38 +470,20 @@ class EntryController extends BaseWebController
             ])->setStatusCode(403);
         }
 
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
+        $collectionId = $this->request->getGet('collection_id');
+        if (! is_numeric($collectionId) || (int) $collectionId < 1) {
             return $this->response->setJSON([
                 'ok' => false,
-                'message' => 'Invalid request type',
+                'message' => 'A collection scope is required.',
             ])->setStatusCode(400);
         }
 
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
-
-        if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
-        }
-
-        foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '') {
-                $this->entryService->update($id, ['sort_order' => $value]);
-            }
-        }
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'message' => lang('Files.gallery_save_success') ?? 'Order saved.',
-        ]);
+        return $this->saveSortOrderFromJson(
+            'cms',
+            'entries',
+            ['collection_id' => (int) $collectionId],
+            lang('Files.gallery_save_success') ?? 'Order saved.',
+        );
     }
 
 
@@ -519,30 +510,6 @@ class EntryController extends BaseWebController
     }
 
 
-    /** @return array<string, string> */
-    private function collectionsOptions(): array
-    {
-        $response = $this->safeApiCall(fn () => $this->entryService->collections([
-            'limit' => 100,
-            'is_active' => true,
-            'projection' => 'list',
-        ]));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-        }
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-            $label = $item['collection_key'] ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
-
     private function requireWrite(): ?RedirectResponse
     {
         if (! has_permission('cms.entries.write')) {
@@ -552,14 +519,22 @@ class EntryController extends BaseWebController
     }
 
     /**
+     * The list only requests optional filter metadata when the caller can
+     * read all of those metadata sources. The entries table itself remains
+     * available with just cms.entries.read and never falls back to direct
+     * one-request-per-filter reads.
+     *
      * @return array<string, mixed>
      */
-    private function getLanguages(): array
+    private function entryListBootstrap(): array
     {
-        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
+        foreach (['cms.entries.read', 'cms.languages.read', 'cms.collections.read'] as $permission) {
+            if (! has_permission($permission)) {
+                return [];
+            }
         }
-        return $this->extractItems($response);
+
+        return $this->cmsBootstrap->entryFormOptions() ?? [];
     }
+
 }
