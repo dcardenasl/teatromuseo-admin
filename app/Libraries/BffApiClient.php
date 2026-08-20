@@ -385,6 +385,49 @@ class BffApiClient extends SecondaryApiClient implements BffApiClientInterface
     }
 
     /** @return ApiResponse */
+    public function getAdminCmsCategoryBootstrap(?int $categoryId = null, int $maxRetries = 2): array
+    {
+        if ($categoryId !== null && $categoryId < 1) {
+            return $this->unavailableResponse();
+        }
+        $path = '/me/admin-cms/categories/bootstrap';
+        if ($categoryId !== null) {
+            $path .= '/' . $categoryId;
+        }
+
+        return $this->adminCmsRequest('category bootstrap', $path, $maxRetries);
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCatalogCollectionItemListBootstrap(int $maxRetries = 2): array
+    {
+        return $this->adminWorkspaceRequest(
+            'Catalog collection item list bootstrap',
+            '/me/admin-catalog/collection-items/list-bootstrap',
+            $maxRetries,
+        );
+    }
+
+    /** @return ApiResponse */
+    public function getAdminEventListBootstrap(int $maxRetries = 2): array
+    {
+        return $this->adminWorkspaceRequest('Event list bootstrap', '/me/admin-event/events/list-bootstrap', $maxRetries);
+    }
+
+    /** @return ApiResponse */
+    public function getAdminCatalogTechniqueWorkspace(?int $techniqueId = null, int $maxRetries = 2): array
+    {
+        if ($techniqueId !== null && $techniqueId < 1) {
+            return $this->unavailableResponse();
+        }
+        $path = $techniqueId === null
+            ? '/me/admin-catalog/techniques/workspace'
+            : '/me/admin-catalog/techniques/' . $techniqueId . '/workspace';
+
+        return $this->adminWorkspaceRequest('Catalog technique workspace', $path, $maxRetries);
+    }
+
+    /** @return ApiResponse */
     private function unavailableResponse(): array
     {
         return [

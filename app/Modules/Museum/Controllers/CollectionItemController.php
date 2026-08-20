@@ -8,6 +8,7 @@ use App\Controllers\BaseWebController;
 use App\Modules\Museum\Requests\CollectionItemStoreRequest;
 use App\Modules\Museum\Requests\CollectionItemUpdateRequest;
 use App\Modules\Museum\Services\CatalogCollectionItemBffAdapter;
+use App\Modules\Museum\Services\CatalogCollectionItemListBffAdapter;
 use App\Modules\Museum\Services\CollectionItemApiServiceInterface;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -18,20 +19,24 @@ class CollectionItemController extends BaseWebController
 {
     protected CollectionItemApiServiceInterface $collectionItemService;
     protected CatalogCollectionItemBffAdapter $workspaceAdapter;
+    protected CatalogCollectionItemListBffAdapter $listBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->collectionItemService = service('museumCollectionItemApiService');
         $this->workspaceAdapter = service('catalogCollectionItemBffAdapter');
+        $this->listBootstrap = service('catalogCollectionItemListBffAdapter');
     }
 
     public function index(): string
     {
+        $sections = $this->listBootstrap->bootstrap() ?? [];
+
         return $this->render('museum/collection_items/index', [
             'title'        => lang('Museum.collection_items_title'),
             'limitOptions' => [10, 25, 50, 100],
-            'categories'   => $this->categoriesOptions(),
+            'categories'   => $this->workspaceOptions($sections['categories'] ?? []),
         ]);
     }
 
@@ -175,27 +180,6 @@ class CollectionItemController extends BaseWebController
         $this->invalidatePublicSiteCache('collection_items');
 
         return redirect()->to(route_to('admin.museum.collection_items'))->with('success', lang('Museum.collection_items_delete_success'));
-    }
-
-    /** @return array<string, string> */
-    private function categoriesOptions(): array
-    {
-        $categoryService = service('museumCategoryApiService');
-        $response = $this->safeApiCall(fn () => $categoryService->list([
-            'per_page' => 100,
-            'projection' => 'list',
-        ]));
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-            $label = $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['email'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
     }
 
     /**

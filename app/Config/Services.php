@@ -24,6 +24,7 @@ use App\Modules\Cms\Services\BlockTypeApiService;
 use App\Modules\Cms\Services\BlockTypeOptionsResolver;
 use App\Modules\Cms\Services\CategoryApiService;
 use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
+use App\Modules\Cms\Services\CmsCategoryBffAdapter;
 use App\Modules\Cms\Services\CmsWorkspaceBffAdapter;
 use App\Modules\Cms\Services\CollectionApiService;
 use App\Modules\Cms\Services\EntryApiService;
@@ -41,6 +42,7 @@ use App\Modules\EventReferences\Services\EventReferenceApiService;
 use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
 use App\Modules\Events\Services\EventApiService;
 use App\Modules\Events\Services\EventApiServiceInterface;
+use App\Modules\Events\Services\EventListBffAdapter;
 use App\Modules\Events\Services\EventLookupBffAdapter;
 use App\Modules\Events\Services\EventTypeApiService;
 use App\Modules\Events\Services\EventTypeApiServiceInterface;
@@ -54,6 +56,8 @@ use App\Modules\Iam\Services\RoleWorkspaceBffAdapter;
 use App\Modules\Metrics\Services\MetricsApiService;
 use App\Modules\Metrics\Services\MetricsWorkspaceBffAdapter;
 use App\Modules\Museum\Services\CatalogCollectionItemBffAdapter;
+use App\Modules\Museum\Services\CatalogCollectionItemListBffAdapter;
+use App\Modules\Museum\Services\CatalogTechniqueBffAdapter;
 use App\Modules\Museum\Services\CategoryApiService as MuseumCategoryApiService;
 use App\Modules\Museum\Services\CategoryApiServiceInterface;
 use App\Modules\Museum\Services\CollectionItemApiService;
@@ -521,6 +525,15 @@ class Services extends BaseService
         return new EventWorkspaceBffAdapter(static::bffApiClient());
     }
 
+    public static function eventListBffAdapter(bool $getShared = true): EventListBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('eventListBffAdapter');
+        }
+
+        return new EventListBffAdapter(static::bffApiClient());
+    }
+
     public static function cmsBootstrapBffAdapter(bool $getShared = true): CmsBootstrapBffAdapter
     {
         if ($getShared) {
@@ -528,6 +541,15 @@ class Services extends BaseService
         }
 
         return new CmsBootstrapBffAdapter(static::bffApiClient());
+    }
+
+    public static function cmsCategoryBffAdapter(bool $getShared = true): CmsCategoryBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cmsCategoryBffAdapter');
+        }
+
+        return new CmsCategoryBffAdapter(static::bffApiClient());
     }
 
     public static function cmsWorkspaceBffAdapter(bool $getShared = true): CmsWorkspaceBffAdapter
@@ -625,5 +647,23 @@ class Services extends BaseService
         }
 
         return new CatalogCollectionItemBffAdapter(static::bffApiClient());
+    }
+
+    public static function catalogCollectionItemListBffAdapter(bool $getShared = true): CatalogCollectionItemListBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('catalogCollectionItemListBffAdapter');
+        }
+
+        return new CatalogCollectionItemListBffAdapter(static::bffApiClient());
+    }
+
+    public static function catalogTechniqueBffAdapter(bool $getShared = true): CatalogTechniqueBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('catalogTechniqueBffAdapter');
+        }
+
+        return new CatalogTechniqueBffAdapter(static::bffApiClient());
     }
 }

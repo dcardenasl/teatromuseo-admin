@@ -8,6 +8,7 @@ use App\Controllers\BaseWebController;
 use App\Modules\Events\Requests\EventStoreRequest;
 use App\Modules\Events\Requests\EventUpdateRequest;
 use App\Modules\Events\Services\EventApiServiceInterface;
+use App\Modules\Events\Services\EventListBffAdapter;
 use App\Modules\Events\Services\EventWorkspaceBffAdapter;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -17,21 +18,25 @@ use Psr\Log\LoggerInterface;
 class EventController extends BaseWebController
 {
     protected EventApiServiceInterface $eventService;
+    protected EventListBffAdapter $listBootstrap;
     protected EventWorkspaceBffAdapter $workspaceAdapter;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->eventService = service('eventApiService');
+        $this->listBootstrap = service('eventListBffAdapter');
         $this->workspaceAdapter = service('eventWorkspaceBffAdapter');
     }
 
     public function index(): string
     {
+        $sections = $this->listBootstrap->bootstrap() ?? [];
+
         return $this->render('events/events/index', [
             'title'        => lang('Events.events_title'),
             'limitOptions' => [10, 25, 50, 100],
-            'eventTypeLabels' => $this->eventTypeLabels(),
+            'eventTypeLabels' => $this->eventTypeLabelsFromWorkspace($sections['eventTypes'] ?? []),
 
         ]);
     }
@@ -165,32 +170,11 @@ class EventController extends BaseWebController
      * view shape when the projection is empty; no direct CMS read is made.
      *
      * @param array<string, mixed> $item
-     * @param array<int|string, mixed>|null $languages
+     * @param array<int|string, mixed> $languages
      * @return array{languages: list<array<string, mixed>>, defaultLangCode: string, defaultLangIndex: int, translations: array<string, array<string, string>>}
      */
-    private function contentLanguageContext(array $item = [], ?array $languages = null): array
+    private function contentLanguageContext(array $item = [], array $languages = []): array
     {
-        if ($languages === null) {
-            $response = $this->safeApiCall(
-                fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true])
-            );
-            $languages = [];
-
-            foreach ($this->extractItems($response) as $language) {
-                if (! is_array($language) || ! isset($language['code']) || ! is_scalar($language['code'])) {
-                    continue;
-                }
-
-                $code = strtolower(str_replace('_', '-', trim((string) $language['code'])));
-                if (preg_match('/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $code) !== 1) {
-                    continue;
-                }
-
-                $language['code'] = $code;
-                $languages[] = $language;
-            }
-        }
-
         $languages = array_values(array_filter(
             $languages,
             static fn (mixed $language): bool => is_array($language),
@@ -240,29 +224,6 @@ class EventController extends BaseWebController
             'defaultLangIndex' => $defaultIndex,
             'translations' => $translationValues,
         ];
-    }
-
-    /** @return array<string, string> */
-    private function eventTypeLabels(): array
-    {
-        $response = $this->safeApiCall(fn () => $this->eventService->listTypes());
-        $labels = [];
-
-        foreach ($this->extractItems($response) as $type) {
-            if (! is_array($type)) {
-                continue;
-            }
-
-            $slug = trim((string) ($type['slug'] ?? ''));
-            if ($slug === '') {
-                continue;
-            }
-
-            $localized = is_array($type['localized'] ?? null) ? $type['localized'] : [];
-            $labels[$slug] = (string) ($localized['name'] ?? $type['name'] ?? $slug);
-        }
-
-        return $labels;
     }
 
     /**
