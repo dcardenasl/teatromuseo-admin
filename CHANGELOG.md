@@ -221,3 +221,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CMS metadata and site identity configuration** — resolved CMS metadata is reused across
   admin views, while site identity settings are organized behind the centralized configuration
   flow.
+- **Dashboard rendering** — the dashboard now renders all widgets server-side from a single
+  permission-aware snapshot instead of fanning out into seven client-side AJAX calls per load;
+  removed the per-widget skeleton/loading states, the client-side fetch queue that capped
+  concurrency, and the standalone Hub/domain/BFF/Web health-check clients in favor of source
+  state already carried by the dashboard aggregate.
