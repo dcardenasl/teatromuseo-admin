@@ -1,5 +1,6 @@
 import { devError } from '../utils/dev.js';
 import { uiLabels, localePrefix } from '../utils/labels.js';
+import { bootLucideIcons } from '../utils/lucide.js';
 
 export const filePickerStore = {
     open: false,
@@ -143,6 +144,7 @@ export const filePickerStore = {
             total_items: filtered.length,
             per_page: perPage,
         };
+        if (typeof window !== 'undefined' && window.lucide) bootLucideIcons();
     },
 
     isSelected(file) { return this.selected.some((f) => String(f.id) === String(file.id)); },

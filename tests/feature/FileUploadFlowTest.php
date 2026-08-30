@@ -40,6 +40,9 @@ final class FileUploadFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('name="file"', $body);
         $this->assertStringContainsString('onFileChange(event)', $body);
         $this->assertStringContainsString(lang('Files.file_ready'), $body);
+        $this->assertStringContainsString('file-grid', $body);
+        $this->assertStringContainsString('file-type-visual', $body);
+        $this->assertStringContainsString('filePresentation(row).theme', $body);
     }
 
     public function testIndexRedirectsToLoginWithoutSession(): void

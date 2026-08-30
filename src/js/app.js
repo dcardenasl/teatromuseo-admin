@@ -1,6 +1,7 @@
 import { bootLucideIcons } from './utils/lucide.js';
 import { bootSlugFields } from './utils/slug.js';
 import { bestFilePreviewUrl, resolveTranslatableFilePreviewUrl } from './utils/fileUrl.js';
+import { fileTypePresentation } from './utils/fileType.js';
 import { formValuesToObject } from './utils/formSerialization.js';
 import { buildConfirmDeleteMessage } from './utils/labels.js';
 import { resolveCmsTranslationEditUrl } from './utils/translationNavigation.js';
@@ -86,6 +87,7 @@ document.addEventListener('alpine:init', () => {
     window.formFieldBuilder = formFieldBuilderFactory;
     window.confirmDeleteMessage = buildConfirmDeleteMessage;
     window.bestFilePreviewUrl = bestFilePreviewUrl;
+    window.filePresentation = fileTypePresentation;
     window.resolveTranslatableFilePreviewUrl = resolveTranslatableFilePreviewUrl;
     window.resolveCmsTranslationEditUrl = resolveCmsTranslationEditUrl;
     window.copyDefaultToAll = copyDefaultToAll;

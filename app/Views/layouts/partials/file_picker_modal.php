@@ -155,8 +155,13 @@
                                              class="w-full h-full object-cover">
                                     </template>
                                     <template x-if="!file.is_image">
-                                        <div class="w-full h-full flex items-center justify-center bg-gray-50">
-                                            <?= ui_icon('file', 'h-8 w-8 text-gray-400') ?>
+                                        <div class="file-type-visual file-type-picker w-full h-full"
+                                             :class="filePresentation(file).theme"
+                                             role="img"
+                                             :aria-label="filePresentation(file).label"
+                                             :title="filePresentation(file).label">
+                                            <i :data-lucide="filePresentation(file).icon" class="h-8 w-8" aria-hidden="true"></i>
+                                            <span class="file-type-label" x-text="filePresentation(file).label"></span>
                                         </div>
                                     </template>
                                     <template x-if="file.category">

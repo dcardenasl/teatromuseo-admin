@@ -4,6 +4,7 @@ import { statusBadgeClass, auditActionBadgeClass, auditResultBadgeClass, auditSe
 import { statusLabel, auditActionLabel, auditResultLabel, auditSeverityLabel } from '../utils/labels.js';
 import { formatDate } from '../utils/date.js';
 import { bootLucideIcons } from '../utils/lucide.js';
+import { fileTypePresentation } from '../utils/fileType.js';
 import { devError } from '../utils/dev.js';
 import { extractListItems, extractListSummary, extractListPagination } from '../utils/listResponse.js';
 
@@ -65,6 +66,7 @@ export const remoteTableFactory = (config = {}) => {
             if (!VIEW_MODES.has(viewMode)) return;
             this.viewMode = viewMode;
             writeSessionPreference(viewStorageKey, viewMode);
+            if (typeof this.$nextTick === 'function') this.$nextTick(() => bootLucideIcons());
         },
 
         setDensity(density) {
@@ -72,6 +74,8 @@ export const remoteTableFactory = (config = {}) => {
             this.density = density;
             writeSessionPreference(densityStorageKey, density);
         },
+
+        filePresentation: fileTypePresentation,
 
         init() {
             this.form = this.$el.querySelector('form[data-table-filter-form="1"]');

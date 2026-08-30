@@ -216,8 +216,13 @@ unset($tabsBaseQuery['page'], $tabsBaseQuery['cursor'], $tabsBaseQuery['category
                                     </button>
                                 </template>
                                 <template x-if="!(row.is_image || (row.variants && row.variants.sm && row.variants.sm.url))">
-                                    <div class="h-10 w-10 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200">
-                                        <?= ui_icon('file', 'h-5 w-5 text-gray-400') ?>
+                                    <div class="file-type-visual file-type-table h-10 w-10"
+                                         :class="filePresentation(row).theme"
+                                         role="img"
+                                         :aria-label="filePresentation(row).label"
+                                         :title="filePresentation(row).label">
+                                        <i :data-lucide="filePresentation(row).icon" class="h-4 w-4" aria-hidden="true"></i>
+                                        <span class="file-type-label" x-text="filePresentation(row).label"></span>
                                     </div>
                                 </template>
                             </td>
@@ -259,10 +264,10 @@ unset($tabsBaseQuery['page'], $tabsBaseQuery['cursor'], $tabsBaseQuery['category
 
     <!-- GRID VIEW -->
     <template x-if="!loading && !error && rows.length > 0 && viewMode === 'grid'">
-        <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="file-grid mt-4" :class="'density-' + density">
             <template x-for="row in rows" :key="String(row.id ?? Math.random())">
-                <a :href="'<?= route_to('files') ?>/' + (row.id ?? '') + '/show'" class="group block rounded-lg border border-gray-200 bg-gray-50 p-2 hover:border-brand-300 hover:shadow-sm transition-all">
-                    <div class="aspect-square w-full overflow-hidden rounded-md bg-white border border-gray-100 flex items-center justify-center">
+                <a :href="'<?= route_to('files') ?>/' + (row.id ?? '') + '/show'" class="file-grid-card group block rounded-lg border border-gray-200 bg-gray-50 p-2 hover:border-brand-300 hover:shadow-sm transition-all">
+                    <div class="file-grid-preview aspect-square w-full overflow-hidden rounded-md bg-white border border-gray-100 flex items-center justify-center">
                         <template x-if="row.is_image || (row.variants && row.variants.sm && row.variants.sm.url)">
                             <img :src="(row.variants && row.variants.sm && row.variants.sm.url) || ('<?= route_to('files') ?>/' + (row.id ?? '') + '/view')"
                                  loading="lazy"
@@ -271,8 +276,13 @@ unset($tabsBaseQuery['page'], $tabsBaseQuery['cursor'], $tabsBaseQuery['category
                                  class="w-full h-full object-cover">
                         </template>
                         <template x-if="!(row.is_image || (row.variants && row.variants.sm && row.variants.sm.url))">
-                            <div class="text-gray-300">
-                                <?= ui_icon('file', 'h-12 w-12') ?>
+                            <div class="file-type-visual file-type-grid w-full h-full"
+                                 :class="filePresentation(row).theme"
+                                 role="img"
+                                 :aria-label="filePresentation(row).label"
+                                 :title="filePresentation(row).label">
+                                <i :data-lucide="filePresentation(row).icon" class="h-12 w-12" aria-hidden="true"></i>
+                                <span class="file-type-label" x-text="filePresentation(row).label"></span>
                             </div>
                         </template>
                     </div>
