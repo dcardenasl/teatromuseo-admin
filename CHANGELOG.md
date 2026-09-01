@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-09-01
+
 ### Added
 
 - **Dashboard hosting diagnostics** — the API-health widget now shows per-source
@@ -74,6 +76,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **File type cues and grid density controls** — the files list/grid/picker views showed a
+  generic file icon for every non-image file regardless of type; a new `filePresentation()`
+  helper (`src/js/utils/fileType.js`) maps MIME type/extension to a distinct Lucide icon,
+  label, and color theme per file kind (spreadsheet, archive, code, audio, video,
+  presentation, etc.), rendered via a shared `.file-type-visual` component across the table,
+  grid, and file-picker modal. The grid view also gained a `density-*` layout class driven by
+  the existing compact/default/spacious toggle.
 - **CMS entries reorder screen leaked raw PHP source and lost its collection scope** —
   `cms/entries/reorder.php` built `$saveOrderUrl` outside of `<?php ?>` tags, so the
   assignment/if-block rendered as literal text on the page instead of executing; the
