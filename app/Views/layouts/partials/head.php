@@ -3,6 +3,12 @@ $appName ??= config('App')->appName;
 ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="<?= esc(asset_url('favicon.svg')) ?>">
+<link rel="icon" type="image/x-icon" href="<?= esc(asset_url('favicon.ico')) ?>">
+<link rel="icon" type="image/png" sizes="96x96" href="<?= esc(asset_url('favicon-96x96.png')) ?>">
+<link rel="apple-touch-icon" href="<?= esc(asset_url('apple-touch-icon.png')) ?>">
+<link rel="manifest" href="<?= esc(asset_url('site.webmanifest')) ?>">
+<meta name="theme-color" content="#ffffff">
 <title><?= esc($title ?? $appName) ?></title>
 <?php if (!empty($sessionExpiresAt ?? null)): ?>
 <meta name="session-expires-at" content="<?= esc((string) (int) $sessionExpiresAt) ?>">
@@ -38,15 +44,6 @@ $tiptapLocal   = file_exists(FCPATH . 'assets/vendor/tiptap.bundle.js');
 <?php else: ?>
 <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.539.0/dist/umd/lucide.min.js" integrity="sha384-Ui80VKnKTTUky8NmDUdXcnOrP66fD6bYHb7J1+kL+Zx517BmW5a6kvGDwY3BKt+w" crossorigin="anonymous"></script>
 <?php endif; ?>
-<style <?= csp_style_nonce() ?>>
-    /* Brand tokens live in src/css/app.css (@theme) — compiled into the
-       CSS custom properties below at build time. This block only carries
-       the Alpine x-cloak rule, which must be available before the first
-       Alpine paint to suppress FOUC. */
-    [x-cloak] {
-        display: none !important;
-    }
-</style>
 <script <?= csp_script_nonce() ?>>
   <?php
   // Inject UI labels from lang() files into JavaScript globals
@@ -177,6 +174,7 @@ $componentConfigJson = json_encode([
   window.auditSeverityLabels = <?= $auditSeverityLabelsJson ?>;
   window.paginationLabels = <?= $paginationLabelsJson ?>;
   window.__componentConfig = <?= $componentConfigJson ?>;
+  window.appTimezone = <?= json_encode(app_timezone(), JSON_THROW_ON_ERROR) ?>;
 </script>
 <?php // tailwind.config script removed as we now use compiled CSS?>
 <?php if (isset($extraHead)) {

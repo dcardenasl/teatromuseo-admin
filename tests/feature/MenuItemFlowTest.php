@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Modules\Cms\Services\EntryApiService;
-use App\Modules\Cms\Services\LanguageApiService;
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\MenuApiService;
-use App\Modules\Cms\Services\PageApiService;
+use App\Services\SortOrderApiServiceInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
@@ -35,31 +34,21 @@ final class MenuItemFlowTest extends CIUnitTestCase
         $collection = $fixtures->collection([]);
         $languages = $fixtures->languages();
 
-        $menuMock = $this->createMock(MenuApiService::class);
-        $menuMock->method('get')
-            ->with((string) $menu['id'])
-            ->willReturn($fixtures->response($menu));
-        $menuMock->method('listItems')
-            ->with($this->callback(static fn (array $filters): bool => ($filters['menu_id'] ?? null) === (string) $menu['id']))
-            ->willReturn($fixtures->response([]));
-        Services::injectMock('menuApiService', $menuMock);
-
-        $pageMock = $this->createMock(PageApiService::class);
-        $pageMock->method('pages')
-            ->willReturn($fixtures->response(['items' => [$page]]));
-        Services::injectMock('pageApiService', $pageMock);
-
-        $entryMock = $this->createMock(EntryApiService::class);
-        $entryMock->method('list')
-            ->willReturn($fixtures->response(['items' => [$entry]]));
-        $entryMock->method('collections')
-            ->willReturn($fixtures->response(['items' => [$collection]]));
-        Services::injectMock('entryApiService', $entryMock);
-
-        $langMock = $this->createMock(LanguageApiService::class);
-        $langMock->method('list')
-            ->willReturn($fixtures->response($languages));
-        Services::injectMock('languageApiService', $langMock);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsMenuEditorBootstrap')
+            ->with((int) $menu['id'], null)
+            ->willReturn($fixtures->response([
+                'sections' => [
+                    'menu' => $menu,
+                    'items' => [],
+                    'pages' => [$page],
+                    'entries' => [$entry],
+                    'collections' => [$collection],
+                    'languages' => $languages,
+                ],
+            ]));
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -71,6 +60,7 @@ final class MenuItemFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('name="collection_id"', (string) $result->getBody());
         $this->assertStringContainsString('value="entry"', (string) $result->getBody());
         $this->assertStringContainsString('value="collection_listing"', (string) $result->getBody());
+        $this->assertStringContainsString('value="event_listing"', (string) $result->getBody());
     }
 
     public function testCreateStillRendersWhenOptionServicesFail(): void
@@ -87,26 +77,12 @@ final class MenuItemFlowTest extends CIUnitTestCase
             'fieldErrors' => [],
         ];
 
-        $menuMock = $this->createMock(MenuApiService::class);
-        $menuMock->method('get')
-            ->with((string) $menu['id'])
-            ->willReturn($fixtures->response($menu));
-        $menuMock->method('listItems')
-            ->willReturn($fixtures->response([]));
-        Services::injectMock('menuApiService', $menuMock);
-
-        $pageMock = $this->createMock(PageApiService::class);
-        $pageMock->method('pages')->willReturn($failure);
-        Services::injectMock('pageApiService', $pageMock);
-
-        $entryMock = $this->createMock(EntryApiService::class);
-        $entryMock->method('list')->willReturn($failure);
-        $entryMock->method('collections')->willReturn($failure);
-        Services::injectMock('entryApiService', $entryMock);
-
-        $langMock = $this->createMock(LanguageApiService::class);
-        $langMock->method('list')->willReturn($failure);
-        Services::injectMock('languageApiService', $langMock);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsMenuEditorBootstrap')
+            ->with((int) $menu['id'], null)
+            ->willReturn($failure);
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -167,6 +143,54 @@ final class MenuItemFlowTest extends CIUnitTestCase
         $result->assertRedirectTo(site_url('admin/cms/menus/' . $menu['id']));
     }
 
+    public function testUpdateAcceptsEventListingTarget(): void
+    {
+        $fixtures = new AdminFixtureFactory(__METHOD__);
+        $menu = $fixtures->menu();
+        $item = $fixtures->menuItem($menu['id'], 4);
+        $label = $fixtures->value('menu-label');
+
+        $menuMock = $this->createMock(MenuApiService::class);
+        $menuMock->expects($this->once())
+            ->method('updateItem')
+            ->with((string) $item['id'], $this->callback(static function (array $payload) use ($menu, $label): bool {
+                return $payload['menu_id'] === $menu['id']
+                    && $payload['link_type'] === 'event_listing'
+                    && $payload['page_id'] === null
+                    && $payload['entry_id'] === null
+                    && $payload['collection_id'] === null
+                    && $payload['sort_order'] === 4
+                    && $payload['translations'][0]['label'] === $label;
+            }))
+            ->willReturn($fixtures->response(['id' => $item['id']]));
+        Services::injectMock('menuApiService', $menuMock);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['cms.menus.write', 'cms.menus.read']],
+        ])->post('/admin/cms/menus/' . $menu['id'] . '/items/' . $item['id'], [
+            csrf_token() => csrf_hash(),
+            'menu_id' => (string) $menu['id'],
+            'parent_id' => '',
+            'link_type' => 'event_listing',
+            'page_id' => '',
+            'entry_id' => '',
+            'collection_id' => '',
+            'link_target' => '_self',
+            'icon' => '',
+            'css_class' => '',
+            'sort_order' => '4',
+            'is_active' => '1',
+            'translations' => [
+                1 => [
+                    'label' => $label,
+                ],
+            ],
+        ]);
+
+        $result->assertRedirectTo(site_url('admin/cms/menus/' . $menu['id']));
+    }
+
     public function testReorderItemsRendersComponent(): void
     {
         $fixtures = new AdminFixtureFactory(__METHOD__);
@@ -195,31 +219,26 @@ final class MenuItemFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('Reordenar', (string) $result->getBody());
     }
 
-    public function testSaveItemsOrderUpdatesAndReturnsOk(): void
+    public function testSaveItemsOrderUsesOneBatchRequestAndReturnsOk(): void
     {
         $fixtures = new AdminFixtureFactory(__METHOD__);
         $menu = $fixtures->menu();
         $firstItem = $fixtures->menuItem($menu['id'], 1);
         $secondItem = $fixtures->menuItem($menu['id'], 0);
 
-        $menuMock = $this->createMock(MenuApiService::class);
-        $menuMock->method('listItems')
-            ->with($this->callback(static fn (array $filters): bool => ($filters['menu_id'] ?? null) === (string) $menu['id']))
-            ->willReturn($fixtures->response([
-                $firstItem + ['translations' => []],
-                $secondItem + ['translations' => []],
-            ]));
-        $menuMock->expects($this->exactly(2))
-            ->method('updateItem')
-            ->willReturnCallback(static function (string $id, array $payload) use ($secondItem, $firstItem): array {
-                if ($id === (string) $secondItem['id']) {
-                    self::assertSame(0, $payload['sort_order']);
-                } elseif ($id === (string) $firstItem['id']) {
-                    self::assertSame(1, $payload['sort_order']);
-                }
-                return ['ok' => true];
-            });
-        Services::injectMock('menuApiService', $menuMock);
+        $sortOrderMock = $this->createMock(SortOrderApiServiceInterface::class);
+        $sortOrderMock->expects($this->once())
+            ->method('cms')
+            ->with(
+                'menu_items',
+                [
+                    ['id' => (int) $secondItem['id'], 'sort_order' => 0],
+                    ['id' => (int) $firstItem['id'], 'sort_order' => 1],
+                ],
+                ['menu_id' => (int) $menu['id']],
+            )
+            ->willReturn($fixtures->response(['updated' => 2]));
+        Services::injectMock('sortOrderApiService', $sortOrderMock);
 
         $result = $this->withSession([
             'access_token' => 'token',

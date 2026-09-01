@@ -4,17 +4,19 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.cms.categories.data') ?>',
         pageUrl: '<?= route_to('admin.cms.categories') ?>',
+        mode: 'cms_categories',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.cms.categories') ?>',
             editBase: '<?= route_to('admin.cms.categories') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Categories.categories_title'),
         'actionsView' => 'cms/categories/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     
 
@@ -59,7 +61,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>">

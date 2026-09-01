@@ -36,6 +36,14 @@
     progress {
         appearance: none;
     }
+
+    /* Must ship in the compiled stylesheet, not an inline <style> block: an
+       inline tag needs a CSP nonce, and once style-src carries a nonce on a
+       response, browsers ignore its 'unsafe-inline' too — breaking Alpine's
+       x-show (which toggles visibility via inline el.style.display). */
+    [x-cloak] {
+        display: none !important;
+    }
 }
 
 @layer components {
@@ -67,6 +75,134 @@
     .badge {
         @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
     }
+
+    /* File previews use a real type cue when no thumbnail is available. The
+       themes are fixed classes; the file metadata only selects between them. */
+    .file-type-visual {
+        @apply flex flex-col items-center justify-center gap-1 overflow-hidden;
+    }
+
+    .file-type-table {
+        @apply rounded-lg border;
+    }
+
+    .file-type-grid,
+    .file-type-picker {
+        border: 0;
+    }
+
+    .file-type-label {
+        @apply max-w-full truncate font-extrabold uppercase tracking-wide leading-none;
+    }
+
+    .file-type-table .file-type-label {
+        @apply text-[8px];
+    }
+
+    .file-type-grid .file-type-label,
+    .file-type-picker .file-type-label {
+        @apply text-[10px];
+    }
+
+    .file-type-pdf {
+        @apply border-red-200 bg-red-50 text-red-600;
+    }
+
+    .file-type-word {
+        @apply border-blue-200 bg-blue-50 text-blue-600;
+    }
+
+    .file-type-spreadsheet {
+        @apply border-green-200 bg-green-50 text-green-700;
+    }
+
+    .file-type-presentation {
+        @apply border-orange-200 bg-orange-50 text-orange-600;
+    }
+
+    .file-type-archive {
+        @apply border-amber-200 bg-amber-50 text-amber-700;
+    }
+
+    .file-type-code {
+        @apply border-violet-200 bg-violet-50 text-violet-700;
+    }
+
+    .file-type-text {
+        @apply border-slate-200 bg-slate-50 text-slate-600;
+    }
+
+    .file-type-document {
+        @apply border-sky-200 bg-sky-50 text-sky-700;
+    }
+
+    .file-type-image {
+        @apply border-cyan-200 bg-cyan-50 text-cyan-700;
+    }
+
+    .file-type-audio {
+        @apply border-pink-200 bg-pink-50 text-pink-700;
+    }
+
+    .file-type-video {
+        @apply border-indigo-200 bg-indigo-50 text-indigo-700;
+    }
+
+    .file-type-generic {
+        @apply border-gray-200 bg-gray-100 text-gray-600;
+    }
+}
+
+/* Table density preferences are applied after the server-rendered utility
+   classes. Keeping these rules outside a cascade layer lets the client-side
+   preference override the default table padding without an emergency
+   specificity escape hatch. */
+.density-sm th,
+.density-sm td {
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+}
+
+.density-lg th,
+.density-lg td {
+    padding-block: 1.25rem;
+    padding-inline: 1.5rem;
+}
+
+/* A table density is also meaningful in the files grid: compact shows more
+   assets at once, while spacious gives each preview more room. */
+.file-grid {
+    --file-grid-min-width: 168px;
+    --file-grid-gap: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--file-grid-min-width)), 1fr));
+    gap: var(--file-grid-gap);
+}
+
+.file-grid.density-sm {
+    --file-grid-min-width: 120px;
+    --file-grid-gap: 0.5rem;
+}
+
+.file-grid.density-lg {
+    --file-grid-min-width: 224px;
+    --file-grid-gap: 1rem;
+}
+
+.file-grid-card {
+    min-width: 0;
+}
+
+.file-grid.density-sm .file-grid-card {
+    padding: 0.375rem;
+}
+
+.file-grid.density-lg .file-grid-card {
+    padding: 0.75rem;
+}
+
+.file-grid-card p {
+    min-width: 0;
 }
 
 /* ─── Rich Text Editor (Tiptap) ─────────────────────────────────────────── */

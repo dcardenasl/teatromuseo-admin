@@ -14,16 +14,17 @@ class ApiClient extends BaseConfig
 
     public int $connectTimeout = 5;
 
+    /**
+     * A shared-host request must fail once instead of occupying another PHP
+     * process for a retry. Set explicitly only after measuring the real host.
+     */
+    public int $maxRetries = 0;
+
     public string $apiPrefix = '/api/v1';
 
-    public string $appName = 'CI4 Website Builder Admin';
+    public string $appName = 'Teatromuseo Admin';
 
     public string $appKey = '';
-
-    /**
-     * @var list<string>
-     */
-    public array $healthPaths = ['/health'];
 
     public bool $logRequests = false;
 
@@ -53,6 +54,14 @@ class ApiClient extends BaseConfig
             $this->connectTimeout = (int) $connectTimeout;
         }
 
+        $maxRetries = env('apiClient.maxRetries');
+        if (! is_numeric($maxRetries)) {
+            $maxRetries = env('API_MAX_RETRIES');
+        }
+        if (is_numeric($maxRetries)) {
+            $this->maxRetries = max(0, min(2, (int) $maxRetries));
+        }
+
         $apiPrefix = env('apiClient.apiPrefix') ?: env('API_PREFIX');
         if (is_string($apiPrefix) && trim($apiPrefix) !== '') {
             $normalizedPrefix = '/' . trim($apiPrefix, '/');
@@ -67,14 +76,6 @@ class ApiClient extends BaseConfig
         $appKey = env('apiClient.appKey') ?: env('API_APP_KEY');
         if (is_string($appKey) && trim($appKey) !== '') {
             $this->appKey = $appKey;
-        }
-
-        $val = env('apiClient.healthPaths') ?: env('API_HEALTH_PATHS');
-        if ($val) {
-            $paths = array_values(array_filter(array_map('trim', explode(',', (string) $val))));
-            if ($paths !== []) {
-                $this->healthPaths = $paths;
-            }
         }
 
         $logRequests = env('apiClient.logRequests') ?: env('API_LOG_REQUESTS');

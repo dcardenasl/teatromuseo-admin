@@ -11,8 +11,60 @@ class TranslateController extends BaseWebController
 {
     private const GOOGLE_TRANSLATE_URL = 'https://translate.googleapis.com/translate_a/single';
 
+    /**
+     * `translate()` is a generic on-demand-translation utility embedded in
+     * content forms across CMS, Museum and Events (see the
+     * `route_to('admin.cms.translate')` call sites in those modules'
+     * views/JS) — including the CMS Wizard, whose `cms.entries.read` gate is
+     * intentionally sufficient by itself to draft and translate content
+     * before anything is saved (`cms.entries.write` is enforced separately
+     * by the API on the actual create/update call). A single
+     * `permission:<code>` route filter can't express "any read-or-write
+     * permission belonging to one of these content modules", so the check
+     * lives here instead — same OR-of-permissions pattern as
+     * StructureWizardController::index()/config(). This intentionally
+     * excludes unrelated broad-admin-section codes such as `iam.admin-access`
+     * or `metrics.read`: holding one of those alone must not be enough to
+     * reach this proxy (2026-08-12 audit finding).
+     *
+     * @var list<string>
+     */
+    private const REQUIRED_ANY_PERMISSION = [
+        'cms.pages.read',
+        'cms.pages.write',
+        'cms.entries.read',
+        'cms.entries.write',
+        'cms.menus.read',
+        'cms.menus.write',
+        'cms.collections.read',
+        'cms.collections.write',
+        'cms.categories.read',
+        'cms.categories.write',
+        'cms.tags.read',
+        'cms.tags.write',
+        'cms.forms.read',
+        'cms.forms.write',
+        'cms.settings.read',
+        'cms.settings.write',
+        'catalog.category.read',
+        'catalog.category.create',
+        'catalog.category.update',
+        'catalog.technique.read',
+        'catalog.technique.create',
+        'catalog.technique.update',
+        'catalog.collectionItem.read',
+        'catalog.collectionItem.create',
+        'catalog.collectionItem.update',
+        'event.event-types.read',
+        'event.event-types.write',
+    ];
+
     public function translate(): ResponseInterface
     {
+        if (! $this->hasAnyContentPermission()) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => lang('App.access_denied')]);
+        }
+
         $textRaw       = $this->request->getGet('text');
         $sourceLangRaw = $this->request->getGet('source_lang');
         $targetLangRaw = $this->request->getGet('target_lang');
@@ -32,21 +84,22 @@ class TranslateController extends BaseWebController
             'q'      => $text,
         ]);
 
-        $ch = curl_init($url);
-        if ($ch === false) {
-            return $this->response->setJSON(['error' => 'Translation service unavailable.'])->setStatusCode(503);
-        }
-
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
-            CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            CURLOPT_TIMEOUT        => 10,
+        $client = \Config\Services::curlrequest([
+            'timeout'     => 10,
+            'http_errors' => false,
+            'headers'     => [
+                'User-Agent' => 'TeatroMuseoAdmin/1.0',
+                'Accept'     => 'application/json',
+            ],
         ]);
 
-        $body   = curl_exec($ch);
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        try {
+            $response = $client->get($url);
+            $status   = $response->getStatusCode();
+            $body     = $response->getBody();
+        } catch (\Throwable $e) {
+            return $this->response->setJSON(['error' => 'Translation service unavailable.'])->setStatusCode(503);
+        }
 
         if (! is_string($body)) {
             return $this->response->setJSON(['error' => 'No response from translation service.'])->setStatusCode(503);
@@ -70,5 +123,16 @@ class TranslateController extends BaseWebController
         }
 
         return $this->response->setJSON(['translated' => $translated]);
+    }
+
+    private function hasAnyContentPermission(): bool
+    {
+        foreach (self::REQUIRED_ANY_PERMISSION as $code) {
+            if (has_permission($code)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

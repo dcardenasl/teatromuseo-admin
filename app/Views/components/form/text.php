@@ -22,8 +22,15 @@ $help         = $help ?? '';
 $autocomplete = $autocomplete ?? 'off';
 $maxlength    = isset($maxlength) ? (int) $maxlength : null;
 $attributes   = is_array($attributes ?? null) ? $attributes : [];
+$textValue    = $value;
+
+if (is_array($textValue) || is_object($textValue)) {
+    $encodedValue = json_encode($textValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $textValue = $encodedValue !== false ? $encodedValue : '';
+}
+$valueLength = function_exists('mb_strlen') ? mb_strlen((string) $textValue) : strlen((string) $textValue);
 ?>
-<div<?= $maxlength !== null ? ' x-data="{ _len: ' . strlen((string) $value) . ' }"' : '' ?>>
+<div<?= $maxlength !== null ? ' x-data="{ _len: ' . $valueLength . ' }"' : '' ?>>
     <div class="flex items-center justify-between">
         <label class="block text-sm font-medium text-gray-700" for="<?= esc($name, 'attr') ?>">
             <?= lang($label) ?>
@@ -32,14 +39,14 @@ $attributes   = is_array($attributes ?? null) ? $attributes : [];
             <?php endif; ?>
         </label>
         <?php if ($maxlength !== null): ?>
-            <span class="text-xs text-gray-400" x-text="''+_len+'/<?= $maxlength ?>'"><?= strlen((string) $value) ?>/<?= $maxlength ?></span>
+            <span class="text-xs text-gray-400" x-text="''+_len+'/<?= $maxlength ?>'"><?= $valueLength ?>/<?= $maxlength ?></span>
         <?php endif; ?>
     </div>
     <input
         id="<?= esc($name, 'attr') ?>"
         name="<?= esc($name, 'attr') ?>"
         type="text"
-        value="<?= esc($value) ?>"
+        value="<?= esc($textValue) ?>"
         class="<?= input_class($name) ?>"
         placeholder="<?= esc(lang($placeholder), 'attr') ?>"
         autocomplete="<?= esc($autocomplete, 'attr') ?>"

@@ -21,3 +21,13 @@ $routes->group('admin', ['filter' => 'auth'], static function (RouteCollection $
         ]);
     }
 });
+
+$routes->group('admin/system', ['filter' => ['auth', 'permission:system.public-cache.read']], static function (RouteCollection $routes): void {
+    $routes->get('cache', '\\App\\Modules\\System\\Controllers\\CacheController::index', [
+        'as' => 'admin.system.cache',
+    ]);
+    $routes->post('cache/invalidate', '\\App\\Modules\\System\\Controllers\\CacheController::invalidate', [
+        'as' => 'admin.system.cache.invalidate',
+        'filter' => 'permission:system.public-cache.invalidate',
+    ]);
+});

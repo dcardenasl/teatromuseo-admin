@@ -60,7 +60,7 @@
     <?php $actionsContent = ob_get_clean(); ?>
 
     <?php ob_start(); ?>
-    <?php if (has_permission('cms.redirects.write')): ?>
+    <?php if (has_permission('cms.redirects.admin')): ?>
         <form method="post" action="<?= route_to('admin.cms.redirects.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($redirect['old_path'] ?? $redirect['new_url'] ?? null), 'js') ?>', () => $el.submit())">
             <?= csrf_field() ?>
             <button type="submit" class="<?= esc(action_button_class('danger')) ?> w-full justify-center">

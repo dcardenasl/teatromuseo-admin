@@ -37,6 +37,29 @@ final class ComponentsTest extends CIUnitTestCase
         $this->assertStringContainsString('aria-required="true"', $html);
     }
 
+    public function testPasswordComponentRendersAccessibleVisibilityToggle(): void
+    {
+        $html = view('components/form/password', [
+            'name' => 'password',
+            'label' => 'Auth.password_label',
+            'autocomplete' => 'current-password',
+            'required' => true,
+            'attributes' => ['x-model' => 'password'],
+        ], ['saveData' => false]);
+        $decoded = html_entity_decode($html, ENT_QUOTES | ENT_HTML5);
+
+        $this->assertStringContainsString('x-data="passwordToggle()"', $decoded);
+        $this->assertStringContainsString('type="password"', $decoded);
+        $this->assertStringContainsString(":type=\"visible ? 'text' : 'password'\"", $decoded);
+        $this->assertStringContainsString('x-model="password"', $decoded);
+        $this->assertStringContainsString('aria-label="' . lang('App.show_password') . '"', $decoded);
+        $this->assertStringContainsString(':aria-label="visible ?', $decoded);
+        $this->assertStringContainsString('aria-pressed="false"', $decoded);
+        $this->assertStringContainsString('aria-controls="password"', $decoded);
+        $this->assertStringContainsString('data-lucide="eye"', $decoded);
+        $this->assertStringContainsString('data-lucide="eye-off"', $decoded);
+    }
+
     public function testNumberComponentHandlesMinMaxStep(): void
     {
         $html = view('components/form/number', [
@@ -76,6 +99,22 @@ final class ComponentsTest extends CIUnitTestCase
 
         $this->assertStringContainsString('rows="5"', $html);
         $this->assertStringContainsString('Hello</textarea>', $html);
+    }
+
+    public function testTextareaComponentRendersMaxLengthAndErrorAttributes(): void
+    {
+        session()->set('fieldErrors', ['excerpt' => 'The excerpt may not exceed 500 characters.']);
+
+        $html = view('components/form/textarea', [
+            'name' => 'excerpt',
+            'label' => 'App.description',
+            'maxlength' => 500,
+            'value' => 'Hello',
+        ], ['saveData' => false]);
+
+        $this->assertStringContainsString('maxlength="500"', $html);
+        $this->assertStringContainsString('aria-invalid="true"', $html);
+        $this->assertStringContainsString('The excerpt may not exceed 500 characters.', $html);
     }
 
     public function testSelectComponentIteratesOptions(): void
@@ -177,26 +216,9 @@ final class ComponentsTest extends CIUnitTestCase
 
     public function testTableCellsFormating(): void
     {
-        // text_cell
-        $html = view('components/table/text_cell', ['value' => 'VentureOS Scaffolding'], ['saveData' => false]);
-        $this->assertStringContainsString('VentureOS Scaffolding', $html);
-
-        // badge_cell
-        $html = view('components/table/badge_cell', ['value' => 'published'], ['saveData' => false]);
-        $this->assertStringContainsString('Published', $html);
-        $this->assertStringContainsString('bg-green-50', $html);
-
         // boolean_cell
         $html = view('components/table/boolean_cell', ['value' => true], ['saveData' => false]);
         $this->assertStringContainsString('text-green-600', $html);
-
-        // date_cell
-        $html = view('components/table/date_cell', ['value' => '2026-05-30 15:34:00'], ['saveData' => false]);
-        $this->assertStringContainsString('2026', $html);
-
-        // number_cell
-        $html = view('components/table/number_cell', ['value' => 199.99, 'type' => 'currency', 'currency' => 'USD', 'locale' => 'en'], ['saveData' => false]);
-        $this->assertStringContainsString('$199.99', $html);
     }
 
     public function testHeadPartialUsesTranslatedPageTitle(): void

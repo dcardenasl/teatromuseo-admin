@@ -11,8 +11,10 @@
  * @var mixed|null  $currentId   Current model ID to skip inside uniqueness check on edits
  * @var bool|null   $required   Whether the field is required (default: true)
  * @var string|null $help       Help text below the field
+ * @var int|null    $maxlength   Maximum number of characters
  * @var string|null $attrs      Extra HTML attributes for the input
  * @var string|null $invalidMessage Custom validation message for pattern mismatches
+ * @var string|null $alpineErrorField Client-side field error key used by wizard flows
  */
 
 helper('form');
@@ -22,10 +24,17 @@ $label     = $label ?? 'App.slug';
 $value     = old($name, $value ?? '');
 $required  = $required ?? true;
 $currentId = $currentId ?? '';
+$sourceId = $sourceId ?? '';
 $help      = $help ?? '';
+$maxlength = isset($maxlength) ? (int) $maxlength : 255;
 $attrs     = $attrs ?? '';
 $invalidMessage = $invalidMessage ?? '';
 $languageSelector = $languageSelector ?? '';
+$checkUrl = $checkUrl ?? '';
+$alpineErrorField = $alpineErrorField ?? null;
+$alpineErrorExpression = $alpineErrorField !== null && $alpineErrorField !== ''
+    ? 'fieldHasError(' . json_encode((string) $alpineErrorField, JSON_THROW_ON_ERROR) . ')'
+    : null;
 ?>
 
 <div data-slug-field>
@@ -49,9 +58,11 @@ $languageSelector = $languageSelector ?? '';
             data-slug-invalid-message="<?= esc($invalidMessage, 'attr') ?>"
             <?= $required ? 'required' : '' ?>
             minlength="2" 
-            maxlength="255" 
+            maxlength="<?= $maxlength ?>"
             pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
             <?= field_aria_attrs($name, $required) ?>
+            <?= $alpineErrorExpression !== null ? ':class="' . esc($alpineErrorExpression . " ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''", 'attr') . '"' : '' ?>
+            <?= $alpineErrorExpression !== null ? ':aria-invalid="' . esc($alpineErrorExpression . " ? 'true' : null", 'attr') . '"' : '' ?>
             <?= $attrs ?>
         >
         <!-- Status icons indicating async check state -->
@@ -72,5 +83,8 @@ $languageSelector = $languageSelector ?? '';
     <p class="mt-1 text-xs text-gray-500">
         <?= $help ? esc(lang($help)) : (safe_lang('Catalog.help_slug', 'Ejemplo: titulo-del-recurso')) ?>
     </p>
+    <?php if ($alpineErrorExpression !== null): ?>
+        <p x-show="fieldErrorFor(<?= esc(json_encode((string) $alpineErrorField, JSON_THROW_ON_ERROR), 'attr') ?>)" x-text="fieldErrorFor(<?= esc(json_encode((string) $alpineErrorField, JSON_THROW_ON_ERROR), 'attr') ?>)" x-cloak role="alert" class="mt-1 text-xs text-red-600"></p>
+    <?php endif; ?>
     <?= render_field_error($name) ?>
 </div>

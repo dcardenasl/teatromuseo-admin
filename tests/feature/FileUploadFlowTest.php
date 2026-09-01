@@ -20,7 +20,7 @@ final class FileUploadFlowTest extends CIUnitTestCase
 
     private array $authSession = [
         'access_token' => 'test-token',
-        'user'         => ['id' => 1, 'email' => 'user@test.com', 'permissions' => []],
+        'user'         => ['id' => 1, 'email' => 'user@test.com', 'permissions' => ['files.read']],
     ];
 
     protected function tearDown(): void
@@ -40,12 +40,32 @@ final class FileUploadFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('name="file"', $body);
         $this->assertStringContainsString('onFileChange(event)', $body);
         $this->assertStringContainsString(lang('Files.file_ready'), $body);
+        $this->assertStringContainsString('file-grid', $body);
+        $this->assertStringContainsString('file-type-visual', $body);
+        $this->assertStringContainsString('filePresentation(row).theme', $body);
     }
 
     public function testIndexRedirectsToLoginWithoutSession(): void
     {
         $result = $this->get('/files');
         $result->assertRedirectTo(site_url('login'));
+    }
+
+    public function testPickerManifestIsLoadedAsOneRequest(): void
+    {
+        $mock = $this->createMock(FileApiService::class);
+        $mock->expects($this->once())
+            ->method('pickerManifest')
+            ->willReturn($this->apiOkResponse([
+                'items' => [['id' => 1, 'preview_url' => '/uploads/one_thumb.webp']],
+                'total' => 1,
+            ]));
+        Services::injectMock('fileApiService', $mock);
+
+        $result = $this->withSession($this->authSession)->get('/files/picker-manifest');
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString('one_thumb.webp', $result->getBody());
     }
 
     // ─── Download ─────────────────────────────────────────────────
@@ -71,8 +91,14 @@ final class FileUploadFlowTest extends CIUnitTestCase
         $result = $this->withSession($this->authSession)->get('/files/abc-123/download');
 
         $result->assertStatus(200);
-        $this->assertStringContainsString('%PDF-1.7 content', $result->getBody());
         $result->assertHeader('Content-Type', 'application/pdf');
+
+        // Binary bodies are streamed via DownloadResponse (CI4's debug toolbar
+        // crashes on non-UTF8 bodies otherwise), so the content isn't reachable
+        // through the normal getBody()/$body property — assert its length instead.
+        $response = $result->response();
+        $this->assertInstanceOf(\CodeIgniter\HTTP\DownloadResponse::class, $response);
+        $this->assertSame(strlen('%PDF-1.7 content'), $response->getContentLength());
     }
 
     public function testDownloadApiFailureReturnsNotFound(): void
@@ -114,14 +140,47 @@ final class FileUploadFlowTest extends CIUnitTestCase
             )
             ->willReturn($this->apiOkResponse(['id' => 1], 201));
 
-        $mockDomainClient = $this->createMock(\App\Libraries\DomainApiClientInterface::class);
-        $mockDomainClient->method('get')->willReturn($this->apiOkResponse([]));
+        $mockDomainClient = $this->createMock(\App\Libraries\BffApiClientInterface::class);
+        $mockDomainClient->method('getAdminFileUsages')->willReturn($this->apiOkResponse([]));
 
         $service = new FileApiService($mockClient, $mockDomainClient);
         $result = $service->upload('file', $tmpFile, 'test.txt', 'text/plain', []);
 
         $this->assertTrue($result['ok']);
         @unlink($tmpFile);
+    }
+
+    public function testFileDetailsShowsIncompleteUsageWarningAndNoDeleteAction(): void
+    {
+        $mock = $this->createMock(FileApiService::class);
+        $mock->expects($this->never())->method('usages');
+        $mock->method('getInfo')->willReturn($this->apiOkResponse([
+            'id' => 7,
+            'original_name' => 'image.jpg',
+            'variants' => [],
+        ]));
+        $mock->method('usages')->willReturn([
+            'ok' => true,
+            'status' => 200,
+            'data' => [
+                'complete' => false,
+                'data' => [],
+            ],
+            'raw' => '',
+            'headers' => [],
+            'messages' => [],
+            'fieldErrors' => [],
+        ]);
+        Services::injectMock('fileApiService', $mock);
+
+        $result = $this->withSession($this->authSession)->get('/files/7/show');
+
+        $result->assertStatus(200);
+        $body = html_entity_decode($result->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $this->assertStringContainsString(lang('Files.usages_unavailable_body'), $body);
+        $this->assertStringNotContainsString('action="/files/7/delete"', $body);
+        $this->assertStringContainsString('data-file-usages', $body);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────

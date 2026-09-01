@@ -25,7 +25,7 @@ class MenuStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'menu_key' => 'required|min_length[2]|max_length[255]',
+            'menu_key' => 'required|min_length[2]|max_length[50]',
             'location' => 'required|min_length[2]|max_length[50]',
             'is_active' => 'permit_empty|in_list[0,1]',
             'translations' => 'permit_empty',

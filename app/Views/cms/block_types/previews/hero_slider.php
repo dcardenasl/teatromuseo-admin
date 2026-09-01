@@ -11,10 +11,9 @@
 // Showing a clear message beats faking a hardcoded slide.
 ?>
 <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-    <p class="text-sm font-semibold text-slate-700">Vista previa no disponible sin conexión al sitio público</p>
+    <p class="text-sm font-semibold text-slate-700"><?= esc(lang('BlockPreview.hero.slider_unavailable')) ?></p>
     <p class="mx-auto mt-2 max-w-md text-xs text-slate-500">
-        El Carrusel Hero se compone de diapositivas hijas (bloques "Diapositiva") en cantidad
-        ilimitada. Esta vista previa local de respaldo no tiene acceso a esos datos — conecta
-        con el sitio público para ver el carrusel real con sus diapositivas.
+        <?= esc(lang('BlockPreview.hero.slider_children')) ?>
+        <?= esc(lang('BlockPreview.hero.slider_help')) ?>
     </p>
 </div>

@@ -1,9 +1,9 @@
 <?php
 /** @var array<string, mixed> $config */
 /** @var array<string, mixed> $data */
-$heading  = esc($data['heading'] ?? '¿Listo para comenzar?');
+$heading  = esc($data['heading'] ?? lang('BlockPreview.cta.heading'));
 $text     = esc($data['text'] ?? '');
-$label    = esc($data['label'] ?? 'Comenzar ahora');
+$label    = esc($data['label'] ?? lang('BlockPreview.cta.label'));
 $url      = esc($data['url'] ?? '#');
 $cssClass = esc($config['css_class'] ?? '');
 $variant  = $config['variant'] ?? 'blue';

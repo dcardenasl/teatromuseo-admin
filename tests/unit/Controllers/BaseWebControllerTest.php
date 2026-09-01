@@ -210,6 +210,21 @@ final class BaseWebControllerTest extends CIUnitTestCase
         $this->assertStringNotContainsString('ApiErrors.', $result['email']);
     }
 
+    public function testGetFieldErrorsNormalizesNestedRawApiErrors(): void
+    {
+        $response = [
+            'errors' => [
+                'translations' => [
+                    0 => ['excerpt' => ['The excerpt may not exceed 500 characters.']],
+                ],
+            ],
+        ];
+
+        $this->assertSame([
+            'translations.0.excerpt' => lang('ApiErrors.validation_max_length'),
+        ], $this->ctrl->callGetFieldErrors($response));
+    }
+
     public function testGetFieldErrorsReturnsEmptyArrayWhenKeyAbsent(): void
     {
         $this->assertSame([], $this->ctrl->callGetFieldErrors([]));

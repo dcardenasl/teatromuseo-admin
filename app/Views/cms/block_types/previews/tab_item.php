@@ -5,9 +5,9 @@ $title = $data['title'] ?? '';
 $content = $data['content'] ?? '';
 ?>
 <div class="border border-slate-200 bg-white rounded-lg p-3">
-    <div class="text-[10px] font-bold text-violet-500 uppercase mb-1">Pestaña Individual</div>
+    <div class="text-[10px] font-bold text-violet-500 uppercase mb-1"><?= esc(lang('BlockPreview.tabs.item_label')) ?></div>
     <div class="text-xs font-bold text-slate-800 mb-1">
-        <?= $title !== '' ? esc($title) : 'Pestaña sin título' ?>
+        <?= $title !== '' ? esc($title) : esc(lang('BlockPreview.tabs.empty_title')) ?>
     </div>
     <?php if ($content !== ''): ?>
         <div class="text-[10px] text-slate-500 border-t border-slate-50 pt-2 line-clamp-2">

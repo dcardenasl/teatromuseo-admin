@@ -25,7 +25,7 @@ $oldPermIdsStr         = array_map('strval', $oldPermIds);
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700" for="application_id"><?= esc(lang('Iam.field_application')) ?></label>
-                <select id="application_id" name="application_id" class="<?= esc(input_class('application_id')) ?>">
+                <select id="application_id" name="application_id" class="<?= esc(input_class('application_id')) ?>" <?= field_aria_attrs('application_id') ?>>
                     <option value="" <?= ((string) $selectedApp === '') ? 'selected' : '' ?>><?= esc(lang('Iam.role_global_label')) ?></option>
                     <?php foreach ($applications as $app): ?>
                         <option value="<?= esc((string) $app['id']) ?>" <?= ((string) $selectedApp === (string) $app['id']) ? 'selected' : '' ?>>
@@ -41,7 +41,7 @@ $oldPermIdsStr         = array_map('strval', $oldPermIds);
                 <input id="code" name="code" type="text" required maxlength="100"
                     value="<?= esc(old('code', '')) ?>"
                     placeholder="editor"
-                    class="<?= esc(input_class('code')) ?>">
+                    class="<?= esc(input_class('code')) ?>" <?= field_aria_attrs('code', required: true) ?>>
                 <?= render_field_error('code') ?>
             </div>
             <div class="md:col-span-2">
@@ -49,13 +49,13 @@ $oldPermIdsStr         = array_map('strval', $oldPermIds);
                 <input id="name" name="name" type="text" required maxlength="100"
                     value="<?= esc(old('name', '')) ?>"
                     placeholder="Editor"
-                    class="<?= esc(input_class('name')) ?>">
+                    class="<?= esc(input_class('name')) ?>" <?= field_aria_attrs('name', required: true) ?>>
                 <?= render_field_error('name') ?>
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700" for="description"><?= esc(lang('Iam.field_description')) ?></label>
                 <textarea id="description" name="description" rows="3" maxlength="500"
-                    class="<?= esc(input_class('description')) ?>"><?= esc(old('description', '')) ?></textarea>
+                    class="<?= esc(input_class('description')) ?>" <?= field_aria_attrs('description') ?>><?= esc(old('description', '')) ?></textarea>
                 <?= render_field_error('description') ?>
             </div>
         </div>
@@ -75,7 +75,8 @@ $oldPermIdsStr         = array_map('strval', $oldPermIds);
                             <input type="checkbox" name="permission_ids[]" value="<?= esc($pid) ?>"
                                 <?= in_array($pid, $oldPermIdsStr, true) ? 'checked' : '' ?>
                                 <?= $grantable ? '' : 'disabled' ?>
-                                class="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                                class="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500 <?= esc(field_error_class('permission_ids', 'ring-2 ring-red-500'), 'attr') ?>"
+                                <?= field_aria_attrs('permission_ids') ?>>
                             <span>
                                 <code class="font-medium text-gray-900"><?= esc((string) ($perm['code'] ?? '-')) ?></code>
                                 <?php if (! $grantable): ?><span class="ml-1 text-xs text-amber-600" aria-hidden="true">locked</span><?php endif; ?>

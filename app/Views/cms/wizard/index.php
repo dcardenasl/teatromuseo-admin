@@ -7,7 +7,7 @@
 $csrfName  ??= csrf_token();
 $csrfToken ??= csrf_hash();
 ?>
-<div class="max-w-6xl mx-auto space-y-6" x-data="wizard()" x-init="init()">
+<div class="max-w-6xl mx-auto space-y-6" x-data="wizard()">
 
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-4">
@@ -97,8 +97,8 @@ $wizardBootJson = json_encode([
         'add_block'                 => lang('Wizard.add_block'),
         'block_fallback'            => lang('Wizard.block_fallback'),
         'content_fallback'          => lang('Wizard.content_fallback'),
-        'owner_label_entry'         => lang('Pages.owner_label_entry'),
-        'owner_label_page'          => lang('Pages.owner_label_page'),
+        'owner_label_entry'         => lang('Blocks.owner_label_entry'),
+        'owner_label_page'          => lang('Blocks.owner_label_page'),
         'blocks_description_entry'  => lang('Wizard.blocks_description_entry'),
         'blocks_description_page'   => lang('Wizard.blocks_description_page'),
         'no_blocks_entry'           => lang('Wizard.no_blocks_entry'),

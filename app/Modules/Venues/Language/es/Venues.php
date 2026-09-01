@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'venues_title' => 'Recintos',
+    'venues_new' => 'Nuevo recinto',
+    'venues_create' => 'Crear recinto',
+    'venues_edit' => 'Editar recinto',
+    'venues_details' => 'Detalle del recinto',
+    'venues_not_found' => 'Recinto no encontrado.',
+    'venues_loading' => 'Cargando recintos…',
+    'venues_search_placeholder' => 'Buscar recintos…',
+    'venues_create_success' => 'Recinto creado correctamente.',
+    'venues_create_failed' => 'No se pudo crear el recinto.',
+    'venues_update_success' => 'Recinto actualizado correctamente.',
+    'venues_update_failed' => 'No se pudo actualizar el recinto.',
+    'venues_delete_success' => 'Recinto eliminado correctamente.',
+    'venues_delete_failed' => 'No se pudo eliminar el recinto.',
+    'field_name' => 'Nombre',
+    'field_name_placeholder' => 'Nombre del recinto',
+    'field_name_help' => 'Nombre operativo del recinto.',
+    'field_slug' => 'Slug',
+    'field_slug_placeholder' => 'Identificador URL',
+    'field_slug_help' => 'Identificador estable y compatible con URLs.',
+    'field_description' => 'Descripción',
+    'field_description_placeholder' => 'Notas del recinto…',
+    'field_description_help' => 'Información operativa del recinto.',
+    'field_capacity' => 'Capacidad',
+    'field_capacity_placeholder' => 'Capacidad máxima',
+    'field_capacity_help' => 'Capacidad predeterminada del recinto.',
+    'field_is_active' => 'Activo',
+    'field_is_active_placeholder' => 'Activar o desactivar',
+    'field_is_active_help' => 'Indica si puede seleccionarse para nuevas funciones.',
+    'sidebar_label' => 'Recintos',
+];

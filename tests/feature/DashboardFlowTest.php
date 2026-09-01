@@ -4,20 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Modules\Analytics\Services\AnalyticsApiService;
-use App\Modules\Cms\Services\CategoryApiService;
-use App\Modules\Cms\Services\CollectionApiService;
-use App\Modules\Cms\Services\EntryApiService;
-use App\Modules\Cms\Services\FormApiService;
-use App\Modules\Cms\Services\FormSubmissionApiService;
-use App\Modules\Cms\Services\MenuApiService;
-use App\Modules\Cms\Services\PageApiService;
-use App\Modules\Cms\Services\TagApiService;
-use App\Modules\Cms\Services\TranslationAuditApiService;
-use App\Modules\Dashboard\Services\HealthApiService;
-use App\Modules\Files\Services\FileApiService;
-use App\Modules\Metrics\Services\MetricsApiService;
-use App\Modules\Users\Services\UserApiService;
+use App\Libraries\BffApiClientInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
@@ -29,8 +16,15 @@ final class DashboardFlowTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        cache()->clean();
+    }
+
     protected function tearDown(): void
     {
+        cache()->clean();
         Services::reset();
         parent::tearDown();
     }
@@ -44,61 +38,24 @@ final class DashboardFlowTest extends CIUnitTestCase
 
         $result->assertStatus(200);
         $this->assertStringContainsString(lang('Dashboard.title'), $result->getBody());
-        $this->assertStringContainsString('dashboard/widgets/stats', $result->getBody());
-        $this->assertStringContainsString('dashboard/widgets/health', $result->getBody());
+        $this->assertStringContainsString(lang('Dashboard.system_status'), $result->getBody());
+        $this->assertStringNotContainsString('dashboard/widgets/', $result->getBody());
     }
 
-    public function testWidgetStatsAggregatesAdminMetrics(): void
+    public function testDashboardAggregatesAdminMetrics(): void
     {
-        $userService = $this->createMock(UserApiService::class);
-        $userService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 1])
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['meta' => ['total' => 42]],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        $fileService = $this->createMock(FileApiService::class);
-        $fileService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 5])
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['meta' => ['total' => 5], 'data' => []],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        $metricsService = $this->createMock(MetricsApiService::class);
-        $metricsService->expects($this->once())
-            ->method('summary')
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['request_stats' => ['availability_percent' => 99.9]],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('userApiService', $userService);
-        Services::injectMock('fileApiService', $fileService);
-        Services::injectMock('metricsApiService', $metricsService);
+        $this->injectDashboardSummary(
+            hubSections: [
+                'users' => ['total' => 42],
+                'files' => ['total' => 5, 'recent' => []],
+                'metrics' => ['request_stats' => ['availability_percent' => 99.9]],
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['users.read', 'metrics.read']],
-        ])->get('/dashboard/widgets/stats');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -106,136 +63,102 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('99.9%', $body);
     }
 
-    public function testWidgetStatsStillRendersWhenUserSummaryFails(): void
+    public function testDashboardStillRendersWhenUserSummaryFails(): void
     {
-        $userService = $this->createMock(UserApiService::class);
-        $userService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok'          => false,
-                'status'      => 500,
-                'data'        => [],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => ['failed'],
-                'fieldErrors' => [],
-            ]);
-
-        $fileService = $this->createMock(FileApiService::class);
-        $fileService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => ['meta' => ['total' => 0], 'data' => []],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        $metricsService = $this->createMock(MetricsApiService::class);
-        $metricsService->expects($this->once())
-            ->method('summary')
-            ->willReturn([
-                'ok'          => true,
-                'status'      => 200,
-                'data'        => [],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('userApiService', $userService);
-        Services::injectMock('fileApiService', $fileService);
-        Services::injectMock('metricsApiService', $metricsService);
+        $this->injectDashboardSummary(hubOk: false);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['users.read']],
-        ])->get('/dashboard/widgets/stats');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
     }
 
-    public function testWidgetHealthReturnsHealthCard(): void
+    public function testDashboardProjectsSourceHealthFromAggregate(): void
     {
-        $healthService = $this->createMock(HealthApiService::class);
-        $healthService->expects($this->once())
-            ->method('check')
-            ->willReturn([
-                'ok'         => true,
-                'state'      => 'up',
-                'status'     => 200,
-                'path'       => '/health',
-                'latency_ms' => 42,
-                'data'       => ['state' => 'up'],
-                'raw'        => '',
-                'headers'    => [],
-                'messages'   => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('healthApiService', $healthService);
+        $this->injectDashboardSummary(hubOk: false);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/health');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
-        $this->assertStringContainsString('42', $result->getBody());
+        $this->assertStringContainsString(lang('Dashboard.status_down'), $result->getBody());
     }
 
-    public function testWidgetRecentFilesReturnsFileList(): void
+    public function testDashboardRendersRecentFiles(): void
     {
-        $fileService = $this->createMock(FileApiService::class);
-        $fileService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 5])
-            ->willReturn([
-                'ok'     => true,
-                'status' => 200,
-                'data'   => [
-                    'meta' => ['total' => 1],
-                    'data' => [
-                        ['id' => 99, 'original_name' => 'report.pdf', 'category' => 'document', 'human_size' => '1 MB', 'uploaded_at' => '2026-01-01 00:00:00', 'is_image' => false],
-                    ],
+        $this->injectDashboardSummary(
+            hubSections: [
+                'files' => [
+                    'total' => 1,
+                    'recent' => [[
+                        'id' => 99,
+                        'original_name' => 'report.pdf',
+                        'category' => 'document',
+                        'human_size' => '1 MB',
+                        'uploaded_at' => '2026-01-01 00:00:00',
+                        'is_image' => false,
+                    ]],
                 ],
-                'raw'         => '',
-                'headers'     => [],
-                'messages'    => [],
-                'fieldErrors' => [],
-            ]);
-
-        Services::injectMock('fileApiService', $fileService);
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/recent-files');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $this->assertStringContainsString('report.pdf', $result->getBody());
     }
 
-    public function testWidgetTranslationsRendersLanguageBarsWhenPermitted(): void
+    public function testDashboardPrefixesHubBaseUrlForRelativeImageVariants(): void
     {
-        $translationService = $this->createMock(TranslationAuditApiService::class);
-        $translationService->expects($this->once())
-            ->method('getStats')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => [['code' => 'fr', 'name' => 'French', 'percentage' => 1, 'is_default' => false]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('translationAuditApiService', $translationService);
+        $relativeVariant = '/uploads/2026/01/01/example_sm.webp';
+        $this->injectDashboardSummary(
+            hubSections: [
+                'files' => [
+                    'total' => 1,
+                    'recent' => [[
+                        'id' => 100,
+                        'original_name' => 'example.webp',
+                        'category' => 'image',
+                        'human_size' => '1 MB',
+                        'uploaded_at' => '2026-01-01 00:00:00',
+                        'is_image' => true,
+                        'variants' => ['sm' => ['url' => $relativeVariant]],
+                    ]],
+                ],
+            ],
+        );
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
+        ])->get('/dashboard');
+
+        $result->assertStatus(200);
+        $body = $result->getBody();
+        $expectedUrl = rtrim((string) config('ApiClient')->baseUrl, '/') . $relativeVariant;
+        $this->assertStringContainsString($expectedUrl, $body);
+        $this->assertStringNotContainsString('src="' . $relativeVariant . '"', $body);
+    }
+
+    public function testDashboardRendersLanguageBarsWhenPermitted(): void
+    {
+        $this->injectDashboardSummary(
+            translationsSections: [
+                'translations' => [['code' => 'fr', 'name' => 'French', 'percentage' => 1, 'is_default' => false]],
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.languages.read']],
-        ])->get('/dashboard/widgets/translations');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -244,29 +167,23 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('1%', $body);
     }
 
-    public function testWidgetTranslationsSkipsTheApiCallWithoutPermission(): void
+    public function testDashboardRendersWithoutTranslationPermission(): void
     {
-        $translationService = $this->createMock(TranslationAuditApiService::class);
-        $translationService->expects($this->never())->method('getStats');
-        Services::injectMock('translationAuditApiService', $translationService);
+        $this->injectDashboardSummary();
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/translations');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
     }
 
-    public function testWidgetAnalyticsRendersTrafficOverviewWhenPermitted(): void
+    public function testDashboardRendersTrafficOverviewWhenPermitted(): void
     {
-        $analyticsService = $this->createMock(AnalyticsApiService::class);
-        $analyticsService->expects($this->once())
-            ->method('overview')
-            ->with(['period' => '7d'])
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => [
+        $this->injectDashboardSummary(
+            analyticsSections: [
+                'analytics' => [
                     'total_views'     => 1234,
                     'unique_visitors' => 567,
                     'top_page'        => '/inicio',
@@ -274,14 +191,13 @@ final class DashboardFlowTest extends CIUnitTestCase
                     'top_referrer'    => 'google.com',
                     'period'          => '7d',
                 ],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('analyticsApiService', $analyticsService);
+            ],
+        );
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.analytics.read']],
-        ])->get('/dashboard/widgets/analytics');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -291,58 +207,26 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('google.com', $body);
     }
 
-    public function testWidgetAnalyticsSkipsTheApiCallWithoutPermission(): void
+    public function testDashboardRendersWithoutAnalyticsPermission(): void
     {
-        $analyticsService = $this->createMock(AnalyticsApiService::class);
-        $analyticsService->expects($this->never())->method('overview');
-        Services::injectMock('analyticsApiService', $analyticsService);
+        $this->injectDashboardSummary();
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => []],
-        ])->get('/dashboard/widgets/analytics');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
     }
 
-    public function testWidgetSummaryOnlyQueriesPermittedResources(): void
+    public function testDashboardSummaryOnlyQueriesPermittedResources(): void
     {
-        $pageService = $this->createMock(PageApiService::class);
-        $pageService->expects($this->once())
-            ->method('list')
-            ->with(['limit' => 1])
-            ->willReturn([
-                'ok' => true, 'status' => 200, 'data' => ['meta' => ['total' => 7]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('pageApiService', $pageService);
-
-        $entryService = $this->createMock(EntryApiService::class);
-        $entryService->expects($this->never())->method('list');
-        Services::injectMock('entryApiService', $entryService);
-        $collectionService = $this->createMock(CollectionApiService::class);
-        $collectionService->expects($this->never())->method('list');
-        Services::injectMock('collectionApiService', $collectionService);
-        $menuService = $this->createMock(MenuApiService::class);
-        $menuService->expects($this->never())->method('list');
-        Services::injectMock('menuApiService', $menuService);
-        $categoryService = $this->createMock(CategoryApiService::class);
-        $categoryService->expects($this->never())->method('list');
-        Services::injectMock('categoryApiService', $categoryService);
-        $tagService = $this->createMock(TagApiService::class);
-        $tagService->expects($this->never())->method('list');
-        Services::injectMock('tagApiService', $tagService);
-        $formService = $this->createMock(FormApiService::class);
-        $formService->expects($this->never())->method('list');
-        Services::injectMock('formApiService', $formService);
-        $submissionService = $this->createMock(FormSubmissionApiService::class);
-        $submissionService->expects($this->never())->method('counts');
-        Services::injectMock('formSubmissionApiService', $submissionService);
+        $this->injectDashboardSummary(cmsSections: ['counts' => ['pages' => 7]]);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.pages.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -350,31 +234,14 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('>7<', $body);
     }
 
-    public function testWidgetSummaryCountsFormsFromTheUnpaginatedListResponse(): void
+    public function testDashboardSummaryCountsFormsFromTheUnpaginatedListResponse(): void
     {
-        // Unlike Pages/Entries/etc, the domain's /cms/forms endpoint ignores
-        // filters and always returns a flat array with no `meta.total` — a
-        // regression test for the bug where the dashboard showed "0
-        // Formularios Dinámicos" despite forms existing, because it was
-        // looking for a pagination envelope that this endpoint never sends.
-        $formService = $this->createMock(FormApiService::class);
-        $formService->expects($this->once())
-            ->method('list')
-            ->with([])
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => [
-                    ['id' => 1, 'form_key' => 'contact'],
-                    ['id' => 2, 'form_key' => 'gdpr_rights'],
-                ],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('formApiService', $formService);
+        $this->injectDashboardSummary(cmsSections: ['counts' => ['forms' => 2]]);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.forms.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -382,22 +249,16 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertMatchesRegularExpression('/text-xl font-bold text-gray-900">\s*2\s*</', $body);
     }
 
-    public function testWidgetSummaryShowsSubmissionsTotalAndPendingBadgeWhenPermitted(): void
+    public function testDashboardSummaryShowsSubmissionsTotalAndPendingBadgeWhenPermitted(): void
     {
-        $submissionService = $this->createMock(FormSubmissionApiService::class);
-        $submissionService->expects($this->once())
-            ->method('counts')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['new' => 3, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('formSubmissionApiService', $submissionService);
+        $this->injectDashboardSummary(cmsSections: [
+            'submissions' => ['new' => 3, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.submissions.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -408,22 +269,16 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringContainsString('admin/cms/form-submissions?status=new', $body);
     }
 
-    public function testWidgetSummaryOmitsSubmissionsBadgeWhenNothingIsPending(): void
+    public function testDashboardSummaryOmitsSubmissionsBadgeWhenNothingIsPending(): void
     {
-        $submissionService = $this->createMock(FormSubmissionApiService::class);
-        $submissionService->expects($this->once())
-            ->method('counts')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['new' => 0, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('formSubmissionApiService', $submissionService);
+        $this->injectDashboardSummary(cmsSections: [
+            'submissions' => ['new' => 0, 'read' => 5, 'replied' => 2, 'spam' => 0, 'archived' => 1],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.submissions.read']],
-        ])->get('/dashboard/widgets/summary');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -431,36 +286,19 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertStringNotContainsString('bg-red-500', $body);
     }
 
-    public function testWidgetCmsActivityMergesPagesAndEntriesSortedByRecency(): void
+    public function testDashboardCmsActivityMergesPagesAndEntriesSortedByRecency(): void
     {
-        $pageService = $this->createMock(PageApiService::class);
-        $pageService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['data' => [
-                    ['id' => 1, 'slug' => 'inicio', 'updated_at' => '2026-07-01 00:00:00', 'translations' => [['title' => 'Old Home Page']]],
-                ]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('pageApiService', $pageService);
-
-        $entryService = $this->createMock(EntryApiService::class);
-        $entryService->expects($this->once())
-            ->method('list')
-            ->willReturn([
-                'ok' => true, 'status' => 200,
-                'data' => ['data' => [
-                    ['id' => 5, 'slug' => 'noticia-reciente', 'updated_at' => '2026-07-20 12:00:00', 'translations' => [['title' => 'Recent News']]],
-                ]],
-                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-            ]);
-        Services::injectMock('entryApiService', $entryService);
+        $this->injectDashboardSummary(cmsSections: [
+            'recent_activity' => [
+                ['type' => 'page', 'id' => 1, 'updated_at' => '2026-07-01 00:00:00', 'translations' => [['title' => 'Old Home Page']]],
+                ['type' => 'entry', 'id' => 5, 'updated_at' => '2026-07-20 12:00:00', 'translations' => [['title' => 'Recent News']]],
+            ],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
             'user'         => ['id' => 1, 'first_name' => 'Admin', 'permissions' => ['cms.pages.read', 'cms.entries.read']],
-        ])->get('/dashboard/widgets/cms-activity');
+        ])->get('/dashboard');
 
         $result->assertStatus(200);
         $body = $result->getBody();
@@ -469,5 +307,75 @@ final class DashboardFlowTest extends CIUnitTestCase
         $this->assertNotFalse($recentPos);
         $this->assertNotFalse($oldPos);
         $this->assertLessThan($oldPos, $recentPos, 'The more recently updated entry should be listed first.');
+    }
+
+    /**
+     * @param array<string, mixed> $hubSections
+     * @param array<string, mixed> $cmsSections
+     * @param array<string, mixed> $catalogSections
+     * @param array<string, mixed> $eventSections
+     * @param array<string, mixed> $analyticsSections
+     * @param array<string, mixed> $translationsSections
+     */
+    private function injectDashboardSummary(
+        array $hubSections = [],
+        array $cmsSections = [],
+        bool $hubOk = true,
+        bool $cmsOk = true,
+        array $catalogSections = [],
+        array $eventSections = [],
+        array $analyticsSections = [],
+        array $translationsSections = [],
+    ): void {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminDashboard')
+            ->willReturn($this->aggregateResponse(
+                [
+                    'hub' => $hubSections,
+                    'cms' => $cmsSections,
+                    'analytics' => $analyticsSections,
+                    'translations' => $translationsSections,
+                    'catalog' => $catalogSections,
+                    'event' => $eventSections,
+                ],
+                $hubOk,
+                $cmsOk,
+            ));
+        Services::injectMock('bffApiClient', $bff);
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $sections
+     */
+    private function aggregateResponse(array $sections, bool $hubOk, bool $cmsOk): array
+    {
+        $source = [
+            'hub' => $hubOk ? 'ok' : 'unavailable',
+            'cms' => $cmsOk ? 'ok' : 'unavailable',
+            'analytics' => 'ok',
+            'translations' => 'ok',
+            'catalog' => 'ok',
+            'event' => 'ok',
+        ];
+        $source['state'] = in_array('unavailable', $source, true) ? 'partial' : 'ok';
+
+        return [
+            'ok'          => true,
+            'status'      => 200,
+            'data'        => [
+                'status' => 'success',
+                'data' => [
+                    'version' => 1,
+                    'generated_at' => date(DATE_ATOM),
+                    'source' => $source,
+                    'sections' => $sections,
+                ],
+            ],
+            'raw'         => '',
+            'headers'     => [],
+            'messages'    => [],
+            'fieldErrors' => [],
+        ];
     }
 }

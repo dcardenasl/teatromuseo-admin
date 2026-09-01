@@ -24,17 +24,19 @@ foreach ($languages ?? [] as $key => $language) {
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.cms.pages.data') ?>',
         pageUrl: '<?= route_to('admin.cms.pages') ?>',
+        mode: 'cms_pages',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.cms.pages') ?>',
             editBase: '<?= route_to('admin.cms.pages') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Pages.pages_title'),
         'actionsView' => 'cms/pages/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     
 
@@ -78,7 +80,7 @@ foreach ($languages ?? [] as $key => $language) {
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>">
@@ -131,7 +133,7 @@ foreach ($languages ?? [] as $key => $language) {
                             <td class="<?= esc(table_td_class()) ?>">
                                 <span
                                     class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
-                                    x-text="row.page_type === 'home' ? '<?= esc(lang('Pages.page_type_home'), 'js') ?>' : row.page_type === 'generic' ? '<?= esc(lang('Pages.page_type_generic'), 'js') ?>' : row.page_type === 'contact' ? '<?= esc(lang('Pages.page_type_contact'), 'js') ?>' : row.page_type === 'privacy' ? '<?= esc(lang('Pages.page_type_privacy'), 'js') ?>' : row.page_type === 'terms' ? '<?= esc(lang('Pages.page_type_terms'), 'js') ?>' : row.page_type === 'about' ? '<?= esc(lang('Pages.page_type_about'), 'js') ?>' : row.page_type === 'history' ? '<?= esc(lang('Pages.page_type_history'), 'js') ?>' : row.page_type === 'events' ? '<?= esc(lang('Pages.page_type_events'), 'js') ?>' : row.page_type === 'maintenance' ? '<?= esc(lang('Pages.page_type_maintenance'), 'js') ?>' : String(row.page_type ?? '-')"
+                                    x-text="row.page_type === 'home' ? '<?= esc(lang('Pages.page_type_home'), 'js') ?>' : row.page_type === 'generic' ? '<?= esc(lang('Pages.page_type_generic'), 'js') ?>' : row.page_type === 'contact' ? '<?= esc(lang('Pages.page_type_contact'), 'js') ?>' : row.page_type === 'privacy' ? '<?= esc(lang('Pages.page_type_privacy'), 'js') ?>' : row.page_type === 'terms' ? '<?= esc(lang('Pages.page_type_terms'), 'js') ?>' : row.page_type === 'about' ? '<?= esc(lang('Pages.page_type_about'), 'js') ?>' : row.page_type === 'history' ? '<?= esc(lang('Pages.page_type_history'), 'js') ?>' : row.page_type === 'events' ? '<?= esc(lang('Pages.page_type_events'), 'js') ?>' : row.page_type === 'maintenance' ? '<?= esc(lang('Pages.page_type_maintenance'), 'js') ?>' : row.page_type === 'collection_index' ? '<?= esc(lang('Pages.page_type_collection_index'), 'js') ?>' : row.page_type === 'press' ? '<?= esc(lang('Pages.page_type_press'), 'js') ?>' : row.page_type === 'publications' ? '<?= esc(lang('Pages.page_type_publications'), 'js') ?>' : row.page_type === 'transparency' ? '<?= esc(lang('Pages.page_type_transparency'), 'js') ?>' : row.page_type === 'template_catalog_item' ? '<?= esc(lang('Pages.page_type_template_catalog_item'), 'js') ?>' : row.page_type === 'template_event_item' ? '<?= esc(lang('Pages.page_type_template_event_item'), 'js') ?>' : String(row.page_type ?? '-')"
                                 ></span>
                             </td>
                             <td class="<?= esc(table_td_class()) ?>">

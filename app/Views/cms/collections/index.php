@@ -4,17 +4,19 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.cms.collections.data') ?>',
         pageUrl: '<?= route_to('admin.cms.collections') ?>',
+        mode: 'cms_collections',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.cms.collections') ?>',
             editBase: '<?= route_to('admin.cms.collections') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Collections.collections_title'),
         'actionsView' => 'cms/collections/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     
 
@@ -58,7 +60,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('collection_key')">
@@ -172,9 +174,11 @@
                                     <a :href="showUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.view') ?></a>
                                     <?php if (has_permission('cms.collections.write')): ?>
                                         <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                        <?php if (has_permission('cms.collections.admin')): ?>
                                         <button type="button" class="<?= esc(action_button_class('danger')) ?>"
                                             @click="$store.confirm.show(window.confirmDeleteMessage(String(row.collection_key ?? row.name ?? row.slug ?? '')), () => { const f = document.createElement('form'); f.method = 'post'; f.action = `<?= rtrim(route_to('admin.cms.collections'), '/') ?>/${row.id}/delete`; const i=document.createElement('input');i.type='hidden';i.name='<?= csrf_token() ?>';i.value='<?= csrf_hash() ?>';f.appendChild(i); document.body.appendChild(f); f.submit(); })"
                                         ><?= lang('App.delete') ?></button>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </td>

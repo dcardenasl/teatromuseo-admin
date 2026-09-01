@@ -85,6 +85,44 @@ final class CmsPresetCatalogTest extends CIUnitTestCase
         $this->assertSame([], $result);
     }
 
+    public function testExposesTemplatePageTypes(): void
+    {
+        $pageTypes = CmsPresetCatalog::pageTypes();
+
+        $this->assertContains('template_catalog_item', $pageTypes);
+        $this->assertContains('template_event_item', $pageTypes);
+        $this->assertContains('catalog_listing', $pageTypes);
+    }
+
+    public function testHomePresetSeedsCollectionGridAspectRatio(): void
+    {
+        $homePreset = null;
+        foreach (CmsPresetCatalog::pagePresets() as $preset) {
+            if (($preset['type_key'] ?? '') === 'home') {
+                $homePreset = $preset;
+                break;
+            }
+        }
+
+        $this->assertIsArray($homePreset);
+
+        $blocks = $homePreset['block_template']['blocks'] ?? [];
+        $this->assertNotEmpty($blocks);
+
+        $collectionGrid = null;
+        foreach ($blocks as $block) {
+            if (($block['block_key'] ?? '') === 'collection_grid') {
+                $collectionGrid = $block;
+                break;
+            }
+        }
+
+        $this->assertIsArray($collectionGrid);
+        $defaults = json_decode(json_encode($collectionGrid['block_config_defaults'] ?? new \stdClass(), JSON_THROW_ON_ERROR), true);
+        $this->assertIsArray($defaults);
+        $this->assertSame('1/1', $defaults['image_aspect_ratio'] ?? null);
+    }
+
     public function testKeepsPresetWithoutBlocksAsIsAndDeclaresNothingMissing(): void
     {
         $presets = [

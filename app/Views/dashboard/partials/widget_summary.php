@@ -1,10 +1,19 @@
 <?php
 /**
  * @var list<array{label: string, count: int, url: string, icon: string, badge: ?array{count: int, label: string, url: string}}> $items
+ * @var list<string> $warnings
  */
 ?>
+<?php foreach ($warnings ?? [] as $warning): ?>
+    <div class="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <?= ui_icon('triangle-alert', 'h-4 w-4 shrink-0') ?>
+        <span><?= esc($warning) ?></span>
+    </div>
+<?php endforeach; ?>
 <?php if (empty($items)): ?>
-    <p class="text-sm text-gray-500 text-center py-4"><?= esc(lang('Dashboard.no_summary_visible')) ?></p>
+    <p class="text-sm text-gray-500 text-center py-4">
+        <?= esc(empty($warnings ?? []) ? lang('Dashboard.no_summary_visible') : lang('Dashboard.source_unavailable')) ?>
+    </p>
 <?php else: ?>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3">
         <?php foreach ($items as $item): ?>

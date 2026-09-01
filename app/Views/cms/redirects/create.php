@@ -19,6 +19,7 @@
             'value' => $item['old_path'] ?? '',
             'placeholder' => 'Redirects.field_old_path_placeholder',
             'help' => 'Redirects.field_old_path_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -29,6 +30,7 @@
             'value' => $item['new_url'] ?? '',
             'placeholder' => 'Redirects.field_new_url_placeholder',
             'help' => 'Redirects.field_new_url_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -39,6 +41,7 @@
             'value' => $item['note'] ?? '',
             'placeholder' => 'Redirects.field_note_placeholder',
             'help' => 'Redirects.field_note_help',
+            'maxlength' => 255,
             'errors' => $errors ?? []
         ]) ?>
         <?php $mainFields = ob_get_clean(); ?>

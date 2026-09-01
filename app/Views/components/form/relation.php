@@ -84,8 +84,9 @@ $hasOptions = is_array($options) && $options !== [];
         <button 
             type="button" 
             @click="open = !open; if(open) { $nextTick(() => $refs.searchField.focus()) }"
-            class="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            class="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 <?= esc(field_error_class($name), 'attr') ?>"
             <?= $required ? 'required' : '' ?>
+            <?= field_aria_attrs($name, $required) ?>
         >
             <span x-text="label || '<?= esc($placeholderText, 'js') ?>'" :class="!label && 'text-gray-400'"></span>
             <span class="pointer-events-none flex items-center">

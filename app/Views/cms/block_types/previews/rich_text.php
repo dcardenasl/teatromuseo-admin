@@ -1,7 +1,7 @@
 <?php
 /** @var array<string, mixed> $config */
 /** @var array<string, mixed> $data */
-$content  = block_text_content($data, '<p class="text-gray-400 italic">Sin contenido todavía.</p>');
+$content  = block_text_content($data, '<p class="text-gray-400 italic">' . esc(lang('BlockPreview.common.empty_content')) . '</p>');
 $content  = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 $cssClass = esc($config['css_class'] ?? '');
 ?>

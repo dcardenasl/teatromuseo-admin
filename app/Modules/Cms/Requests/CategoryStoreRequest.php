@@ -11,7 +11,7 @@ class CategoryStoreRequest extends BaseFormRequest
 {
     protected function fields(): array
     {
-        return ['collection_id', 'parent_id', 'is_active'];
+        return ['collection_id', 'parent_id', 'is_active', 'translations'];
     }
 
     public function rules(): array
@@ -21,6 +21,8 @@ class CategoryStoreRequest extends BaseFormRequest
             'parent_id' => 'permit_empty',
             'is_active' => 'permit_empty|in_list[0,1]',
             'translations' => 'permit_empty',
+            'translations.*.slug' => 'permit_empty|string|max_length[150]',
+            'translations.*.name' => 'permit_empty|string|max_length[150]',
         ];
     }
 

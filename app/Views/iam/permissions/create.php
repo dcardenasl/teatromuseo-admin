@@ -25,7 +25,7 @@ $selectedApp  = (int) old('application_id', $applications[0]['id'] ?? 0);
                     <p class="mt-2 text-sm text-amber-700"><?= esc(lang('Iam.no_applications')) ?></p>
                     <input type="hidden" name="application_id" value="">
                 <?php else: ?>
-                    <select id="application_id" name="application_id" required class="<?= esc(input_class('application_id')) ?>">
+                    <select id="application_id" name="application_id" required class="<?= esc(input_class('application_id')) ?>" <?= field_aria_attrs('application_id', required: true) ?>>
                         <?php foreach ($applications as $app): ?>
                             <option value="<?= esc((string) $app['id']) ?>" <?= $selectedApp === (int) $app['id'] ? 'selected' : '' ?>>
                                 <?= esc($app['name']) ?> <span class="text-gray-500">(#<?= (int) $app['id'] ?>)</span>
@@ -41,7 +41,7 @@ $selectedApp  = (int) old('application_id', $applications[0]['id'] ?? 0);
                 <input id="code" name="code" type="text" required maxlength="100"
                     value="<?= esc(old('code', '')) ?>"
                     placeholder="users.write"
-                    class="<?= esc(input_class('code')) ?>">
+                    class="<?= esc(input_class('code')) ?>" <?= field_aria_attrs('code', required: true) ?>>
                 <?= render_field_error('code') ?>
             </div>
             <div>
@@ -49,7 +49,7 @@ $selectedApp  = (int) old('application_id', $applications[0]['id'] ?? 0);
                 <input id="resource" name="resource" type="text" required maxlength="50"
                     value="<?= esc(old('resource', '')) ?>"
                     placeholder="users"
-                    class="<?= esc(input_class('resource')) ?>">
+                    class="<?= esc(input_class('resource')) ?>" <?= field_aria_attrs('resource', required: true) ?>>
                 <?= render_field_error('resource') ?>
             </div>
             <div>
@@ -57,7 +57,7 @@ $selectedApp  = (int) old('application_id', $applications[0]['id'] ?? 0);
                 <input id="action" name="action" type="text" required maxlength="50"
                     value="<?= esc(old('action', '')) ?>"
                     placeholder="write"
-                    class="<?= esc(input_class('action')) ?>">
+                    class="<?= esc(input_class('action')) ?>" <?= field_aria_attrs('action', required: true) ?>>
                 <?= render_field_error('action') ?>
             </div>
         </div>
@@ -65,7 +65,7 @@ $selectedApp  = (int) old('application_id', $applications[0]['id'] ?? 0);
         <div>
             <label class="block text-sm font-medium text-gray-700" for="description"><?= esc(lang('Iam.field_description')) ?></label>
             <textarea id="description" name="description" rows="3" maxlength="500"
-                class="<?= esc(input_class('description')) ?>"><?= esc(old('description', '')) ?></textarea>
+                class="<?= esc(input_class('description')) ?>" <?= field_aria_attrs('description') ?>><?= esc(old('description', '')) ?></textarea>
             <?= render_field_error('description') ?>
         </div>
 

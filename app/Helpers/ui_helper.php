@@ -10,7 +10,14 @@ if (! function_exists('active_nav')) {
 }
 
 if (! function_exists('format_date')) {
-    function format_date(mixed $date, ?string $format = null): string
+    /**
+     * Format a timestamp for the Admin's configured display timezone.
+     *
+     * API/database timestamps without an explicit offset are technical UTC
+     * values. Wall-clock schedule values can opt into their own source
+     * timezone (for example, America/Santiago for event occurrences).
+     */
+    function format_date(mixed $date, ?string $format = null, ?string $sourceTimezone = 'UTC'): string
     {
         if ($format === null) {
             $appConfig = config('App');
@@ -25,14 +32,46 @@ if (! function_exists('format_date')) {
             $date = $date['date'] ?? $date[0] ?? null;
         }
 
-        if (empty($date) || ! is_string($date)) {
+        if (empty($date)) {
             return '-';
         }
 
+        $displayTimezone = (string) config('App')->appTimezone;
+
         try {
-            return (new DateTime($date))->format($format);
+            if ($date instanceof DateTimeInterface) {
+                $parsed = DateTimeImmutable::createFromInterface($date);
+            } elseif (is_string($date)) {
+                $raw = trim($date);
+                if ($raw === '') {
+                    return '-';
+                }
+
+                // Date-only values have no instant and must not move to the
+                // previous day merely because the display zone is west of UTC.
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw) === 1) {
+                    $parsed = DateTimeImmutable::createFromFormat(
+                        '!Y-m-d',
+                        $raw,
+                        new DateTimeZone($displayTimezone),
+                    );
+                } else {
+                    $hasExplicitTimezone = preg_match('/(?:Z|[+-]\d{2}:?\d{2})$/i', $raw) === 1;
+                    $parsed = $hasExplicitTimezone
+                        ? new DateTimeImmutable($raw)
+                        : new DateTimeImmutable($raw, new DateTimeZone($sourceTimezone ?: 'UTC'));
+                }
+            } else {
+                return '-';
+            }
+
+            if ($parsed === false) {
+                return is_string($date) ? $date : '-';
+            }
+
+            return $parsed->setTimezone(new DateTimeZone($displayTimezone))->format($format);
         } catch (Throwable) {
-            return $date;
+            return is_scalar($date) ? (string) $date : '-';
         }
     }
 }
@@ -304,11 +343,18 @@ if (! function_exists('ui_icon')) {
             'search'    => 'search',
             'plus'      => 'plus',
             'eye'       => 'eye',
+            'eye-off'   => 'eye-off',
             'edit'      => 'pencil',
             'download'  => 'download',
             'trash'     => 'trash-2',
             'x'         => 'x',
             'file'        => 'file',
+            'file-text'   => 'file-text',
+            'file-spreadsheet' => 'file-spreadsheet',
+            'file-archive' => 'file-archive',
+            'file-code'   => 'file-code',
+            'file-image'  => 'file-image',
+            'file-type'   => 'file-type',
             'file-plus'   => 'file-plus',
             'database'    => 'database',
             'hard-drive'  => 'hard-drive',
@@ -322,6 +368,9 @@ if (! function_exists('ui_icon')) {
             'check'         => 'check',
             'folder-open'     => 'folder-open',
             'image'           => 'image',
+            'music-2'         => 'music-2',
+            'film'            => 'film',
+            'presentation'    => 'presentation',
             'layers'          => 'layers',
             'help-circle'     => 'circle-help',
             'info'            => 'info',

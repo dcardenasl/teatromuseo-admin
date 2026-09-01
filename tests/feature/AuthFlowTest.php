@@ -103,7 +103,8 @@ final class AuthFlowTest extends CIUnitTestCase
         ]);
 
         $result->assertRedirect();
-        $result->assertSessionHas('error');
+        $result->assertSessionHas('fieldErrors');
+        $result->assertSessionMissing('error');
         $result->assertSessionMissing('access_token');
     }
 
@@ -226,7 +227,8 @@ final class AuthFlowTest extends CIUnitTestCase
         ]);
 
         $result->assertRedirect();
-        $result->assertSessionHas('error');
+        $result->assertSessionHas('fieldErrors');
+        $result->assertSessionMissing('error');
         $result->assertSessionMissing('access_token');
     }
 }

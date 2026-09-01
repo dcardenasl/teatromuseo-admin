@@ -23,7 +23,7 @@ $colorClass = $typeColors[$type] ?? $typeColors['info'];
             <div class="font-bold mb-0.5"><?= esc($title) ?></div>
         <?php endif; ?>
         <div class="opacity-90">
-            <?= $message !== '' ? $message : 'Mensaje de alerta vacío...' ?>
+            <?= $message !== '' ? $message : esc(lang('BlockPreview.common.empty_content')) ?>
         </div>
     </div>
     <?php if ($dismissible): ?>

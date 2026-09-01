@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Files\Services;
 
 use App\Libraries\ApiClientInterface;
-use App\Libraries\DomainApiClientInterface;
+use App\Libraries\BffApiClientInterface;
 use App\Services\ResourceApiService;
 use RuntimeException;
 
@@ -16,7 +16,7 @@ class FileApiService extends ResourceApiService
 {
     public function __construct(
         ApiClientInterface $apiClient,
-        protected DomainApiClientInterface $domainApiClient,
+        protected BffApiClientInterface $bffApiClient,
     ) {
         parent::__construct($apiClient);
     }
@@ -47,13 +47,10 @@ class FileApiService extends ResourceApiService
         ], $fields);
     }
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return ApiResponse
-     */
-    public function listForPicker(array $filters = []): array
+    /** @return ApiResponse */
+    public function pickerManifest(): array
     {
-        return $this->apiClient->get('/files', $filters);
+        return $this->apiClient->get('/files/picker-manifest');
     }
 
     /** @return ApiResponse */
@@ -86,16 +83,23 @@ class FileApiService extends ResourceApiService
     /** @return ApiResponse */
     public function usages(int|string $id): array
     {
-        $hubResponse    = $this->apiClient->get('/files/' . $id . '/usages');
-        $domainResponse = $this->domainApiClient->get('/cms/files/' . $id . '/usages');
+        $response = $this->bffApiClient->getAdminFileUsages($id);
+        if (($response['ok'] ?? false) !== true) {
+            return $response;
+        }
 
-        $hubItems    = is_array($hubResponse['data'] ?? null) ? (array) $hubResponse['data'] : [];
-        $domainItems = is_array($domainResponse['data'] ?? null) ? (array) $domainResponse['data'] : [];
+        $payload   = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $aggregate = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+        $sections  = is_array($aggregate['sections'] ?? null) ? $aggregate['sections'] : [];
+        $usages    = is_array($sections['usages'] ?? null) ? $sections['usages'] : [];
 
-        /** @var array<string, mixed> $merged */
-        $merged = array_merge($hubItems, $domainItems);
+        $response['data'] = [
+            'data'     => $usages,
+            'complete' => ($aggregate['complete'] ?? false) === true,
+            'source'   => is_array($aggregate['source'] ?? null) ? $aggregate['source'] : [],
+        ];
 
-        return array_merge($hubResponse, ['data' => $merged]);
+        return $response;
     }
 
 

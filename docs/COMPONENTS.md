@@ -205,18 +205,26 @@ The modal partial is included once in `layouts/app.php` via `confirm_modal.php`.
 
 ## Tables (Server-Driven)
 
-Tables use the `tableManager()` Alpine component for sort, pagination, and search.
+Tables use the `remoteTable` Alpine component for sort, pagination, search,
+view mode, and density preferences. Each module must provide a unique `mode`
+so its `sessionStorage` preferences do not collide with another table.
 
 ```php
-<div x-data="tableManager('<?= route_to('users.data') ?>')">
-    <!-- Toolbar (search + actions) -->
-    <?= view('layouts/partials/table_toolbar', ['searchPlaceholder' => lang('Users.search_placeholder')]) ?>
+<section x-data="remoteTable({
+    apiUrl: '<?= route_to('admin.example.data') ?>',
+    pageUrl: '<?= route_to('admin.example') ?>',
+    mode: 'example'
+})">
+    <?= view('layouts/partials/table_toolbar', [
+        'title' => lang('Example.title'),
+        'showDensityToggle' => true,
+    ]) ?>
 
     <!-- Filter panel -->
-    <?= view('layouts/partials/filter_panel', ['filtersView' => 'users/partials/filters']) ?>
+    <?= view('layouts/partials/filter_panel', ['fieldsView' => 'example/partials/filters']) ?>
 
     <!-- Table -->
-    <table class="min-w-full divide-y divide-gray-200">
+    <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
         <thead>
             <tr>
                 <th>
@@ -233,16 +241,22 @@ Tables use the `tableManager()` Alpine component for sort, pagination, and searc
 
     <!-- Pagination -->
     <?= view('layouts/partials/remote_pagination') ?>
-</div>
+</section>
 ```
 
-See `app/Views/users/index.php` for a complete real-world example.
+`table_toolbar.php` renders view and density controls only when the matching
+flags are true; both flags default to false. `density` accepts `sm`, `md`, or
+`lg`, while `viewMode` accepts `table` or `grid`. Both are persisted per tab
+and per module by `remoteTable`, using `admin_table_*_{mode}` session keys.
+Use explicit field mappings for grid cards. See `app/Views/users/index.php`
+for the complete card example and `app/Views/files/partials/list_section.php`
+for the intentional thumbnail-gallery exception.
 
 ---
 
 ## Pagination
 
-**Client-side (remote)** — used with `tableManager()`:
+**Client-side (remote)** — used with `remoteTable`:
 ```php
 <?= view('layouts/partials/remote_pagination') ?>
 ```

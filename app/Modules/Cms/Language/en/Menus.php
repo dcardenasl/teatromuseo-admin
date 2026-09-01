@@ -52,6 +52,7 @@ return [
     'items_link_type_page'        => 'Page',
     'items_link_type_entry'       => 'Entry',
     'items_link_type_collection_listing' => 'Collection Listing',
+    'items_link_type_event_listing' => 'Event Listing',
     'items_link_type_custom_url'  => 'Custom URL',
     'items_link_type_no_link'     => 'No Link (Placeholder)',
     'items_target_page_label'     => 'Target Page',

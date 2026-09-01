@@ -78,7 +78,7 @@ final class RedirectFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['cms.redirects.write', 'cms.redirects.read']],
+            'user'         => ['permissions' => ['cms.redirects.admin', 'cms.redirects.read']],
             'permissions_refreshed_at' => time(),
         ])->post('/admin/cms/redirects/test-uuid/delete', [
             csrf_token() => csrf_hash(),

@@ -12,7 +12,7 @@
         <label class="<?= esc(filter_label_class()) ?>"><?= lang('Settings.field_setting_group') ?></label>
         <select name="setting_group" class="<?= esc(filter_input_class()) ?>">
             <option value=""><?= lang('BlockTypes.filter_all_groups') ?></option>
-            <?php foreach (['identity', 'contact', 'integration', 'analytics', 'social'] as $group): ?>
+            <?php foreach (['identity', 'integration', 'analytics', 'social'] as $group): ?>
                 <option value="<?= esc($group) ?>" <?= request()->getGet('setting_group') === $group ? 'selected' : '' ?>><?= esc(lang('Settings.group_' . $group)) ?></option>
             <?php endforeach ?>
         </select>

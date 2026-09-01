@@ -52,9 +52,16 @@ class Autoload extends AutoloadConfig
         'App\Modules\Language'  => APPPATH . 'Modules/Language',
         'App\Modules\Iam'       => APPPATH . 'Modules/Iam',
         'App\Modules\System'    => APPPATH . 'Modules/System',
-        'App\Modules\Catalog'   => APPPATH . 'Modules/Catalog',
         'App\Modules\Cms'       => APPPATH . 'Modules/Cms',
         'App\Modules\Analytics' => APPPATH . 'Modules/Analytics',
+        'App\Modules\Events'  => APPPATH . 'Modules/Events',
+        'App\Modules\TicketTypes'  => APPPATH . 'Modules/TicketTypes',
+        'App\Modules\Bookings'  => APPPATH . 'Modules/Bookings',
+        'App\Modules\Tickets'  => APPPATH . 'Modules/Tickets',
+        'App\Modules\Venues'  => APPPATH . 'Modules/Venues',
+        'App\Modules\Occurrences'  => APPPATH . 'Modules/Occurrences',
+        'App\Modules\EventReferences'  => APPPATH . 'Modules/EventReferences',
+        'App\Modules\Museum'  => APPPATH . 'Modules/Museum',
     ];
 
     /**

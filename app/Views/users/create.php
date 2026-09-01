@@ -16,13 +16,13 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700" for="first_name"><?= lang('Users.first_name') ?></label>
                 <input id="first_name" name="first_name" type="text" value="<?= esc(old('first_name', '')) ?>" required
-                    class="<?= input_class('first_name') ?>" <?= field_aria_attrs('first_name', required: true) ?>>
+                    maxlength="100" class="<?= input_class('first_name') ?>" <?= field_aria_attrs('first_name', required: true) ?>>
                 <?= render_field_error('first_name') ?>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700" for="last_name"><?= lang('Users.last_name') ?></label>
                 <input id="last_name" name="last_name" type="text" value="<?= esc(old('last_name', '')) ?>" required
-                    class="<?= input_class('last_name') ?>" <?= field_aria_attrs('last_name', required: true) ?>>
+                    maxlength="100" class="<?= input_class('last_name') ?>" <?= field_aria_attrs('last_name', required: true) ?>>
                 <?= render_field_error('last_name') ?>
             </div>
         </div>
@@ -30,7 +30,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700" for="email"><?= lang('Users.email') ?></label>
             <input id="email" name="email" type="email" value="<?= esc(old('email', '')) ?>" required
-                class="<?= input_class('email') ?>" <?= field_aria_attrs('email', required: true) ?>>
+                maxlength="255" class="<?= input_class('email') ?>" <?= field_aria_attrs('email', required: true) ?>>
             <?= render_field_error('email') ?>
         </div>
 
@@ -44,7 +44,8 @@
                         <label class="inline-flex items-start gap-2 text-sm rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
                             <input type="checkbox" name="role_ids[]" value="<?= (int) $role['id'] ?>"
                                 <?= in_array((string) $role['id'], array_map('strval', $oldRoleIds), true) ? 'checked' : '' ?>
-                                class="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                                class="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500 <?= esc(field_error_class('role_ids', 'ring-2 ring-red-500'), 'attr') ?>"
+                                <?= field_aria_attrs('role_ids') ?>>
                             <span>
                                 <span class="font-medium text-gray-900"><?= esc($role['name']) ?></span>
                                 <span class="block text-xs text-gray-500"><?= esc($role['code']) ?></span>

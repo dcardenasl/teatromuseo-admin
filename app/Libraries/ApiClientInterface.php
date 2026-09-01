@@ -70,4 +70,11 @@ interface ApiClientInterface
     public function request(string $method, string $path, array $options = [], bool $authenticated = true): array;
 
     public function clearSessionAuth(): void;
+
+    /**
+     * Refreshes the access token using the session's refresh token.
+     * Implementations that do not own JWT issuance (domain apps, the BFF)
+     * must delegate to the Hub client instead of calling their own host.
+     */
+    public function attemptTokenRefresh(): bool;
 }

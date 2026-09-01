@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\LanguageApiService;
 use App\Modules\Cms\Services\PageApiService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -22,6 +23,43 @@ final class PageFlowTest extends CIUnitTestCase
     {
         Services::reset();
         parent::tearDown();
+    }
+
+    /** @param array<string, mixed> $sections */
+    private function injectPageFormOptions(array $sections): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsPageFormOptions')
+            ->with(null)
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => ['status' => 'success', 'sections' => $sections],
+                'raw' => '',
+                'headers' => [],
+                'messages' => [],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $bff);
+    }
+
+    private function injectUnavailablePageWorkspace(int $pageId = 1): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsPageWorkspace')
+            ->with($pageId, null)
+            ->willReturn([
+                'ok' => false,
+                'status' => 503,
+                'data' => [],
+                'raw' => '',
+                'headers' => [],
+                'messages' => ['BFF workspace unavailable'],
+                'fieldErrors' => [],
+            ]);
+        Services::injectMock('bffApiClient', $bff);
     }
 
     public function testAdminRoutesRequireAuth(): void
@@ -49,6 +87,7 @@ final class PageFlowTest extends CIUnitTestCase
                 'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
             ]);
         Services::injectMock('pageApiService', $mock);
+        $this->injectPageFormOptions(['pages' => [], 'languages' => [], 'collections' => []]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -56,6 +95,19 @@ final class PageFlowTest extends CIUnitTestCase
         ])->get('/admin/cms/pages');
 
         $result->assertStatus(200);
+    }
+
+    public function testShowDoesNotFanOutWhenBffWorkspaceIsUnavailable(): void
+    {
+        $this->injectUnavailablePageWorkspace();
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => ['cms.pages.read']],
+        ])->get('/admin/cms/pages/1');
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString('Error de conexi&oacute;n con el servidor.', (string) $result->getBody());
     }
 
     public function testStoreValidationFailureRedirectsBack(): void
@@ -88,6 +140,11 @@ final class PageFlowTest extends CIUnitTestCase
         $languageMock->method('list')
             ->willReturn($fixtures->response([$language]));
         Services::injectMock('languageApiService', $languageMock);
+        $this->injectPageFormOptions([
+            'pages' => [],
+            'languages' => [$language],
+            'collections' => [],
+        ]);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -95,14 +152,15 @@ final class PageFlowTest extends CIUnitTestCase
         ])->get('/admin/cms/pages/create');
 
         $body = (string) $result->getBody();
+        $bodyText = html_entity_decode($body, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $result->assertStatus(200);
         $this->assertStringContainsString('name="page_type"', $body);
-        // Editorial classifications (about/history/events) were deliberately
-        // normalized to generic pages by the domain migration. The admin must
-        // expose only the page types that the current Domain contract accepts.
         $this->assertStringContainsString('Inicio', $body);
         $this->assertStringContainsString('Gen&eacute;rica', $body);
+        $this->assertStringContainsString('Colecci&oacute;n del museo', $body);
         $this->assertStringContainsString('&Iacute;ndice de Colecci&oacute;n', $body);
+        $this->assertStringContainsString('Plantilla de ficha de catálogo', $bodyText);
+        $this->assertStringContainsString('Plantilla de ficha de evento', $bodyText);
     }
 
     public function testDeleteSuccessRedirectsToList(): void

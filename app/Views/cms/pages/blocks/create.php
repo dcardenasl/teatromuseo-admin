@@ -67,6 +67,11 @@ $languagesJs   = json_encode(array_values($languages), JSON_UNESCAPED_UNICODE | 
 $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 $previewUrl    = route_to('admin.cms.blocks.preview');
 $parentIdJs    = json_encode($parentInstanceId);
+$oldBlockId = old('block_id', '');
+$oldBlockId = is_scalar($oldBlockId) ? (int) $oldBlockId : 0;
+$serverFieldErrors = session('fieldErrors');
+$serverFieldErrors = is_array($serverFieldErrors) ? $serverFieldErrors : [];
+$serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 $isImageAccept = static function (string $accept): bool {
     $normalized = strtolower(trim($accept));
 
@@ -80,16 +85,16 @@ $isImageAccept = static function (string $accept): bool {
 <div class="mb-4">
     <?php if ($parentInstanceId !== null): ?>
         <a href="javascript:history.back()" class="text-sm text-brand-600 hover:text-brand-700">
-            &larr; <?= esc(lang('Pages.block_back_to_blocks')) ?> — <?= esc($ownerChildLabel) ?>
+            &larr; <?= esc(lang('Blocks.block_back_to_blocks')) ?> — <?= esc($ownerChildLabel) ?>
         </a>
     <?php else: ?>
         <a href="<?= route_to($ownerBlocksRoute, (string)$page['id']) ?>" class="text-sm text-brand-600 hover:text-brand-700">
-            &larr; <?= esc(lang('Pages.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
+            &larr; <?= esc(lang('Blocks.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
         </a>
     <?php endif; ?>
 </div>
 
-<div x-data="blockInstanceBuilder(<?= esc($blockTypesJs, 'attr') ?>, <?= esc($languagesJs, 'attr') ?>, <?= esc($entryOptionsUrlJs, 'attr') ?>, '<?= esc($translateUrl, 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>')" class="space-y-6">
+<div x-data="blockInstanceBuilder(<?= esc($blockTypesJs, 'attr') ?>, <?= esc($languagesJs, 'attr') ?>, <?= esc($entryOptionsUrlJs, 'attr') ?>, '<?= esc($translateUrl, 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>', <?= esc(json_encode($oldBlockId), 'attr') ?>)" class="space-y-6">
     <?php ob_start(); ?>
     <div class="relative mb-4">
         <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -97,11 +102,11 @@ $isImageAccept = static function (string $accept): bool {
         </svg>
         <input type="text"
                x-model="blockTypeSearch"
-               placeholder="<?= esc(lang('Pages.block_type_search_placeholder')) ?>"
+               placeholder="<?= esc(lang('Blocks.block_type_search_placeholder')) ?>"
                class="block w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
     </div>
     <p x-show="blockTypeSearch.trim() !== '' && filteredBlockTypes().length === 0" x-cloak class="text-sm text-gray-400 py-6 text-center">
-        <?= esc(lang('Pages.block_type_search_empty')) ?>
+        <?= esc(lang('Blocks.block_type_search_empty')) ?>
     </p>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <template x-for="bt in filteredBlockTypes()" :key="bt.id">
@@ -137,8 +142,8 @@ $isImageAccept = static function (string $accept): bool {
     </div>
     <?php $step1Content = ob_get_clean(); ?>
     <?= view('components/display/form_section', [
-        'title' => 'Pages.block_step1_title',
-        'description' => 'Pages.block_step1_desc',
+        'title' => 'Blocks.block_step1_title',
+        'description' => 'Blocks.block_step1_desc',
         'content' => $step1Content,
         'bodyClass' => 'space-y-4',
     ]) ?>
@@ -153,11 +158,12 @@ $isImageAccept = static function (string $accept): bool {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.963-7.178Z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
                 </svg>
-                <?= esc(lang('Pages.block_preview_button')) ?>
+                <?= esc(lang('Blocks.block_preview_button')) ?>
             </button>
         </div>
 
-        <form method="post" action="<?= route_to($ownerStoreRoute, (string)$page['id']) ?>" class="space-y-6">
+        <form method="post" action="<?= route_to($ownerStoreRoute, (string)$page['id']) ?>" class="space-y-6"
+              data-server-field-errors="<?= esc((string) $serverFieldErrorsJs, 'attr') ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="block_id" :value="selectedBlockType?.id">
             <?php if ($parentInstanceId !== null): ?>
@@ -167,14 +173,18 @@ $isImageAccept = static function (string $accept): bool {
             <div class="flex items-center pb-4 border-b border-gray-100">
                 <input type="checkbox" name="is_active" id="is_active" value="1" checked
                        class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700"><?= esc(lang('Pages.block_active_label')) ?></label>
+                <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700"><?= esc(lang('Blocks.block_active_label')) ?></label>
             </div>
 
             <div x-show="configFields && Object.keys(configFields).length > 0" x-cloak>
                 <h4 class="text-sm font-semibold text-gray-800 mb-3">Configuración del Diseño</h4>
+                <div x-show="selectedBlockType?.block_key === 'collection_grid' || selectedBlockType?.block_key === 'collection_listing'"
+                     class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                    <?= esc(lang('Blocks.block_navigation_auto_help')) ?>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <template x-for="(field, key) in configFields" :key="key">
-                        <div>
+                        <div x-show="(!['collection_grid', 'collection_listing'].includes(selectedBlockType?.block_key) || !['date_field', 'order_by', 'order_direction'].includes(key)) && (key !== 'navigation_target_type' && key !== 'page_id' && key !== 'collection_id' && key !== 'external_target' || (navigationMode === 'internal' && (key === 'navigation_target_type' || key === 'page_id' || key === 'collection_id')) || (navigationMode === 'external' && key === 'external_target'))" x-cloak>
                             <template x-if="field.type !== 'media_reference'">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">
                                     <span x-text="field.label || key"></span>
@@ -190,7 +200,7 @@ $isImageAccept = static function (string $accept): bool {
                                                 class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                             <option value="">— Seleccionar —</option>
                                             <template x-for="opt in (field.options || [])" :key="typeof opt === 'object' ? opt.value : opt">
-                                                <option :value="typeof opt === 'object' ? opt.value : opt" x-text="typeof opt === 'object' ? opt.label : opt"></option>
+                                                <option :value="typeof opt === 'object' ? opt.value : opt" x-text="typeof opt === 'object' ? opt.label : (key === 'date_field' ? dateFieldLabel(opt) : opt)"></option>
                                             </template>
                                         </select>
                                     </template>
@@ -209,15 +219,31 @@ $isImageAccept = static function (string $accept): bool {
                                             <p x-show="entryOptionsError" class="text-[11px] text-red-500" x-text="entryOptionsError"></p>
                                         </div>
                                     </template>
-                                    <template x-if="key !== 'collection_id' && key !== 'entry_id'">
+                                    <template x-if="key === 'collection_key'">
                                         <select :name="`block_config[${key}]`"
+                                                x-model="collectionKey"
+                                                @change="onCollectionKeyChange($event.target.value)"
+                                                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                            <option value="">— Seleccionar colección —</option>
+                                            <template x-for="opt in (field.options || [])" :key="typeof opt === 'object' ? opt.value : opt">
+                                                <option :value="typeof opt === 'object' ? opt.value : opt" x-text="typeof opt === 'object' ? opt.label : opt"></option>
+                                            </template>
+                                        </select>
+                                    </template>
+                                    <template x-if="key !== 'collection_id' && key !== 'entry_id' && key !== 'collection_key'">
+                                        <select :name="`block_config[${key}]`"
+                                                x-model="key === 'navigation_mode' ? navigationMode : (key === 'navigation_target_type' ? navigationTargetType : (key === 'source_type' ? sourceType : (field.default || '')))"
+                                                @change="key === 'source_type' ? (onSourceTypeChange($event.target.value), $dispatch('listing-source-changed', {source: $event.target.value})) : null"
                                                 class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                             <template x-for="opt in (field.options || [])" :key="typeof opt === 'object' ? opt.value : opt">
-                                                <option :value="typeof opt === 'object' ? opt.value : opt" :selected="(typeof opt === 'object' ? opt.value : opt) == (field.default || '')" x-text="typeof opt === 'object' ? opt.label : opt"></option>
+                                                <option :value="typeof opt === 'object' ? opt.value : opt" :selected="(typeof opt === 'object' ? opt.value : opt) == (field.default || '')" x-text="typeof opt === 'object' ? opt.label : (key === 'date_field' ? dateFieldLabel(opt) : opt)"></option>
                                             </template>
                                         </select>
                                     </template>
                                 </div>
+                            </template>
+                            <template x-if="field.description">
+                                <p class="mt-1 text-[11px] leading-relaxed text-gray-500" x-text="field.description"></p>
                             </template>
                             <template x-if="field.type === 'color'">
                                 <div x-data="{ 
@@ -416,6 +442,13 @@ $isImageAccept = static function (string $accept): bool {
                         </div>
                     </template>
                 </div>
+                <div x-show="selectedBlockType?.block_key === 'collection_grid' || selectedBlockType?.block_key === 'collection_listing'" x-cloak>
+                    <?= view('cms/pages/blocks/_listing_projection', [
+                        'listingFieldCatalog' => $listingFieldCatalog ?? [],
+                        'submittedBlockConfig' => [],
+                        'blockConfig' => [],
+                    ]) ?>
+                </div>
             </div>
 
             <div x-show="contentFields && Object.keys(contentFields).length > 0" x-cloak>
@@ -461,7 +494,7 @@ $isImageAccept = static function (string $accept): bool {
                         <input type="hidden" :name="`translations[${langIndex}][is_published]`" value="1">
 
                         <template x-for="(field, fieldKey) in contentFields" :key="fieldKey">
-                            <div class="space-y-1">
+                            <div class="space-y-1" x-show="fieldKey !== 'external_url' || navigationMode === 'external'" x-cloak>
                                 <label class="block text-xs font-semibold text-gray-700">
                                     <span x-text="field.label || fieldKey"></span>
                                     <span x-show="field.required && lang.is_default == 1" class="text-red-500 ml-0.5">*</span>
@@ -469,7 +502,6 @@ $isImageAccept = static function (string $accept): bool {
 
                                 <template x-if="field.type === 'richtext'">
                                     <div x-data="richTextEditor('', `translations[${langIndex}][block_data][${fieldKey}]`)"
-                                         x-init="init()"
                                          class="border border-gray-300 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 transition-shadow">
                                         <?= view('partials/richtext_toolbar') ?>
                                         <!-- Editor area -->
@@ -506,6 +538,38 @@ $isImageAccept = static function (string $accept): bool {
                                             <option :value="typeof opt === 'object' ? opt.value : opt" :selected="(typeof opt === 'object' ? opt.value : opt) == (field.default || '')" x-text="typeof opt === 'object' ? opt.label : opt"></option>
                                         </template>
                                     </select>
+                                </template>
+                                <template x-if="field.type === 'entry_reference'">
+                                    <select :name="`translations[${langIndex}][block_data][${fieldKey}]`"
+                                            :required="field.required && lang.is_default == 1"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                        <option value="">— Seleccionar entrada —</option>
+                                        <template x-for="opt in (field.options || [])" :key="opt.value">
+                                            <option :value="opt.value" x-text="opt.label"></option>
+                                        </template>
+                                    </select>
+                                </template>
+                                <template x-if="field.type === 'entry_reference_list'">
+                                    <select :name="`translations[${langIndex}][block_data][${fieldKey}][]`"
+                                            multiple
+                                            :required="field.required && lang.is_default == 1"
+                                            size="6"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                        <template x-for="opt in (field.options || [])" :key="opt.value">
+                                            <option :value="opt.value" x-text="opt.label"></option>
+                                        </template>
+                                    </select>
+                                </template>
+                                <template x-if="field.type === 'number'">
+                                    <input type="number" :name="`translations[${langIndex}][block_data][${fieldKey}]`"
+                                           :required="field.required && lang.is_default == 1"
+                                           class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                </template>
+                                <template x-if="field.type === 'date' || field.type === 'datetime'">
+                                    <input :type="field.type === 'datetime' ? 'datetime-local' : 'date'"
+                                           :name="`translations[${langIndex}][block_data][${fieldKey}]`"
+                                           :required="field.required && lang.is_default == 1"
+                                           class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                 </template>
                                 <template x-if="field.type === 'media_reference'">
                                     <div x-data="mediaReferenceField(field.default || {}, field.accept || 'image', fieldKey)" class="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -887,7 +951,7 @@ $isImageAccept = static function (string $accept): bool {
                                     </div>
                                 </template>
 
-                                <template x-if="!['richtext','text','textarea','url','integer','int','select','file','repeater','color'].includes(field.type)">
+                                <template x-if="!['richtext','text','textarea','url','integer','int','number','date','datetime','select','entry_reference','entry_reference_list','file','repeater','color'].includes(field.type)">
                                     <input type="text" :name="`translations[${langIndex}][block_data][${fieldKey}]`"
                                            :required="field.required && lang.is_default == 1"
                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
@@ -902,18 +966,18 @@ $isImageAccept = static function (string $accept): bool {
 
             <div x-show="selectedBlockType && Object.keys(contentFields).length === 0" x-cloak
                  class="p-4 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 text-center">
-                <?= esc(lang('Pages.block_structural_note')) ?>
+                <?= esc(lang('Blocks.block_structural_note')) ?>
             </div>
 
             <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Pages.block_add_button')) ?></button>
+                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Blocks.block_add_button')) ?></button>
                 <a href="<?= route_to($ownerBlocksRoute, (string)$page['id']) ?>" class="<?= esc(action_button_class()) ?>"><?= esc(lang('App.cancel')) ?></a>
             </div>
         </form>
         <?php $step2Content = ob_get_clean(); ?>
         <?= view('components/display/form_section', [
-            'title' => 'Pages.block_step2_title',
-            'description' => 'Pages.block_step2_desc',
+            'title' => 'Blocks.block_step2_title',
+            'description' => 'Blocks.block_step2_desc',
             'content' => $step2Content,
             'bodyClass' => 'space-y-6',
         ]) ?>
@@ -922,315 +986,4 @@ $isImageAccept = static function (string $accept): bool {
 
 </div>
 
-<script>
-const findRichTextEditorComponent = (input) => {
-    const container = input instanceof HTMLElement ? input.closest('[x-data*="richTextEditor"]') : null;
-    const component = container?._x_dataStack?.[0];
-    return component && typeof component.applyContent === 'function' ? component : null;
-};
-
-const applyTranslatedText = (targetInput, translatedValue) => {
-    if (!(targetInput instanceof HTMLInputElement || targetInput instanceof HTMLTextAreaElement)) {
-        return;
-    }
-
-    targetInput.value = translatedValue;
-    targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-    const richTextComponent = findRichTextEditorComponent(targetInput);
-    if (richTextComponent) {
-        richTextComponent.applyContent(translatedValue);
-    }
-};
-
-function blockInstanceBuilder(blockTypes, languages, entryOptionsUrl = '', translateUrl = '', defaultLangCode = 'ES') {
-    const configFactory = typeof window.blockInstanceConfigFactory === 'function'
-        ? window.blockInstanceConfigFactory(entryOptionsUrl, {})
-        : {};
-
-    return {
-        ...configFactory,
-        blockTypes,
-        languages,
-        entryOptionsUrl,
-        translateUrl,
-        defaultLangCode,
-        selectedBlockType: null,
-        activeLangId: null,
-        contentFields: {},
-        configFields: {},
-        blockTypeSearch: '',
-
-        // Filters the Paso 1 catalog by name/block_key/category — 30+ ungrouped
-        // cards was hard to scan for a specific block type.
-        filteredBlockTypes() {
-            const q = this.blockTypeSearch.trim().toLowerCase();
-            if (q === '') return this.blockTypes;
-            return this.blockTypes.filter(bt => {
-                const haystack = [bt.name, bt.block_key, bt.category, bt.description]
-                    .filter(Boolean)
-                    .join(' ')
-                    .toLowerCase();
-                return haystack.includes(q);
-            });
-        },
-
-        translating: false,
-        translatingAll: false,
-        translateError: '',
-        translateAllProgress: '',
-
-        // Repeater state: keyed by `${langId}_${fieldKey}`
-        repeaterItems: {},
-
-        // Picked file metadata keyed by `${langId}_${fieldKey}` (top-level file fields)
-        pickedFilesMap: {},
-
-        init() {
-            const def = this.languages.find(l => l.is_default == 1);
-            this.activeLangId = def ? def.id : (this.languages[0]?.id || null);
-            if (typeof configFactory.init === 'function') {
-                configFactory.init.call(this);
-            }
-        },
-
-        selectBlockType(bt) {
-            this.selectedBlockType = bt;
-            const schema = bt.schema_definition || {};
-            this.contentFields = schema.fields       || {};
-            this.configFields  = schema.config_fields || {};
-            this.repeaterItems = {};
-            this.pickedFilesMap = {};
-            if (typeof this.setDefaultsFromFields === 'function') {
-                this.setDefaultsFromFields(this.configFields || {});
-            }
-            if (typeof lucide !== 'undefined') { setTimeout(() => lucide.createIcons(), 50); }
-        },
-
-        // ── Repeater helpers ─────────────────────────────────────────────────
-        repeaterList(langId, fieldKey) {
-            const k = `${langId}_${fieldKey}`;
-            if (!this.repeaterItems[k]) this.repeaterItems[k] = [];
-            return this.repeaterItems[k];
-        },
-
-        isImageAccept(accept) {
-            const normalized = String(accept || '').trim().toLowerCase();
-            return normalized === 'image'
-                || normalized === 'image/*'
-                || normalized.startsWith('image/');
-        },
-
-        normalizeMediaReferenceValue(value = {}) {
-            const raw = (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
-            const fileId = String(raw.file_id ?? raw.fileId ?? '');
-            const url = String(raw.url ?? raw.external_url ?? '');
-            let sourceKind = String(raw.source_kind ?? raw.sourceKind ?? '');
-
-            if (!sourceKind) {
-                sourceKind = fileId !== '' || /\/files\/\d+\/(?:view|download)(?:\?.*)?$/i.test(url)
-                    ? 'hub_file'
-                    : (url !== '' ? 'external_url' : 'hub_file');
-            }
-
-            return {
-                source_kind: sourceKind,
-                file_id: sourceKind === 'external_url' ? '' : fileId,
-                url,
-            };
-        },
-
-        normalizeRepeaterItem(itemFields, item = {}) {
-            const normalized = {};
-            Object.keys(itemFields || {}).forEach(subKey => {
-                const subField = itemFields[subKey] || {};
-                if (subField.type === 'media_reference' || (subField.type === 'file' && this.isImageAccept(subField.accept))) {
-                    normalized[subKey] = this.normalizeMediaReferenceValue(
-                        item[subKey] || {
-                            source_kind: item[subKey + '_source_kind'] || '',
-                            file_id: item[subKey + '_file_id'] || '',
-                            url: item[subKey + '_url'] || '',
-                        }
-                    );
-                } else if (subField.type === 'file') {
-                    normalized[subKey + '_file_id'] = String(item[subKey + '_file_id'] || '');
-                    normalized[subKey + '_preview_url'] = '';
-                    normalized[subKey + '_url'] = String(item[subKey + '_url'] || '');
-                } else {
-                    normalized[subKey] = item[subKey] ?? '';
-                }
-            });
-
-            return normalized;
-        },
-
-        addItem(langId, fieldKey, itemFields) {
-            const k = `${langId}_${fieldKey}`;
-            if (!this.repeaterItems[k]) this.repeaterItems[k] = [];
-            const item = this.normalizeRepeaterItem(itemFields, {});
-            this.repeaterItems[k].push(item);
-        },
-
-        removeItem(langId, fieldKey, idx) {
-            const k = `${langId}_${fieldKey}`;
-            if (this.repeaterItems[k]) this.repeaterItems[k].splice(idx, 1);
-        },
-
-        // ── File picker helpers ───────────────────────────────────────────────
-        getPickedFileId(langId, fieldKey) {
-            return (this.pickedFilesMap[`${langId}_${fieldKey}`] || {}).id || '';
-        },
-
-        getPickedFileUrl(langId, fieldKey) {
-            return (this.pickedFilesMap[`${langId}_${fieldKey}`] || {}).url || '';
-        },
-
-        openFilePicker(callback, accept) {
-            const filterTypeMap = { video: 'video', document: 'document', audio: 'audio' };
-            const filterType = filterTypeMap[accept] ?? 'image';
-            const mimeAccept = (!accept || accept === 'any') ? ''
-                : accept.includes('/') ? accept
-                : accept + '/*';
-            Alpine.store('filePicker').show({
-                filterType,
-                accept: mimeAccept,
-                multi: false,
-                onSelect: (file) => callback(file),
-            });
-        },
-
-        // pickFile is called by the openFilePicker callback.
-        // For top-level file fields: langId, fieldKey, itemIdx=null, subKey=null
-        // For repeater sub-fields: all four are set
-        pickFile(langId, fieldKey, itemIdx, subKey, file) {
-            if (itemIdx === null) {
-                this.pickedFilesMap[`${langId}_${fieldKey}`] = { id: file.id, url: file.url, preview_url: window.bestFilePreviewUrl ? window.bestFilePreviewUrl(file) : file.url };
-            } else {
-                const k = `${langId}_${fieldKey}`;
-                if (this.repeaterItems[k] && this.repeaterItems[k][itemIdx]) {
-                    this.repeaterItems[k][itemIdx][subKey + '_file_id']     = file.id;
-                    this.repeaterItems[k][itemIdx][subKey + '_url']         = file.url;
-                    this.repeaterItems[k][itemIdx][subKey + '_preview_url'] = window.bestFilePreviewUrl ? window.bestFilePreviewUrl(file) : file.url;
-                }
-            }
-        },
-
-        clearPickedFile(langId, fieldKey) {
-            this.pickedFilesMap[`${langId}_${fieldKey}`] = { id: '', url: '', preview_url: '' };
-        },
-
-        copyFileToAllLanguages(sourceLangId, fieldKey) {
-            const sourceFile = this.pickedFilesMap[`${sourceLangId}_${fieldKey}`];
-            if (!sourceFile || !sourceFile.id) return;
-
-            const updatedMap = { ...this.pickedFilesMap };
-            this.languages.forEach(lang => {
-                if (Number(lang.id) !== Number(sourceLangId)) {
-                    updatedMap[`${lang.id}_${fieldKey}`] = {
-                        id: sourceFile.id,
-                        url: sourceFile.url,
-                        preview_url: sourceFile.preview_url
-                    };
-                }
-            });
-            this.pickedFilesMap = updatedMap;
-        },
-
-        getTranslateTargets() {
-            if (!this.selectedBlockType) return [];
-
-            const defLang = this.languages.find(l => l.is_default == 1);
-            if (!defLang) return [];
-
-            const defLangIndex = this.languages.findIndex(l => l.is_default == 1);
-
-            const translatableFieldKeys = [];
-            Object.entries(this.contentFields).forEach(([fieldKey, field]) => {
-                const fieldType = field.type || 'string';
-                if (!['file', 'media_reference', 'repeater', 'boolean', 'integer', 'select'].includes(fieldType)) {
-                    translatableFieldKeys.push(fieldKey);
-                }
-            });
-
-            if (translatableFieldKeys.length === 0) return [];
-
-            const targets = [];
-            this.languages.forEach((lang, idx) => {
-                if (idx === defLangIndex) return;
-
-                const fieldPairs = [];
-                translatableFieldKeys.forEach(fieldKey => {
-                    fieldPairs.push({
-                        from: `[name="translations[${defLangIndex}][block_data][${fieldKey}]"]`,
-                        to: `[name="translations[${idx}][block_data][${fieldKey}]"]`
-                    });
-                });
-
-                targets.push({
-                    langCode: lang.code.toUpperCase(),
-                    fieldPairs: fieldPairs
-                });
-            });
-
-            return targets;
-        },
-
-        async _translatePairs(targetLangCode, fieldPairs) {
-            for (const pair of fieldPairs) {
-                const sourceEl = document.querySelector(pair.from);
-                const targetEl = document.querySelector(pair.to);
-                if (!(sourceEl instanceof HTMLInputElement || sourceEl instanceof HTMLTextAreaElement)) continue;
-                if (!(targetEl instanceof HTMLInputElement || targetEl instanceof HTMLTextAreaElement)) continue;
-                const sourceText = sourceEl.value.trim();
-                if (sourceText === '') continue;
-
-                const url = new URL(this.translateUrl, window.location.origin);
-                url.searchParams.set('text', sourceText);
-                url.searchParams.set('source_lang', this.defaultLangCode.toUpperCase());
-                url.searchParams.set('target_lang', targetLangCode.toUpperCase());
-
-                const res = await fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
-                const json = await res.json();
-                if (json && typeof json.translated === 'string') {
-                    applyTranslatedText(targetEl, json.translated);
-                } else if (json && json.error) {
-                    throw new Error(json.error);
-                }
-            }
-        },
-
-        async autoTranslateAll() {
-            const targets = this.getTranslateTargets();
-            if (this.translateUrl === '' || this.translating || this.translatingAll || targets.length === 0) return;
-
-            this.translatingAll = true;
-            this.translateError = '';
-            try {
-                for (let i = 0; i < targets.length; i++) {
-                    const { langCode, fieldPairs } = targets[i];
-                    this.translateAllProgress = langCode + ' (' + (i + 1) + '/' + targets.length + ')';
-                    await this._translatePairs(langCode, fieldPairs);
-                }
-                this.translateAllProgress = '';
-            } catch (e) {
-                this.translateError = e instanceof Error ? e.message : String(e);
-                this.translateAllProgress = '';
-            } finally {
-                this.translatingAll = false;
-            }
-        },
-
-        openPreview() {
-            if (!this.selectedBlockType) return;
-            const form = this.$root instanceof HTMLElement ? this.$root.querySelector('form') : null;
-            const payload = typeof window.formValuesToObject === 'function'
-                ? window.formValuesToObject(form)
-                : {};
-            const config = payload.block_config || {};
-            window.dispatchEvent(new CustomEvent('block-preview-open', {
-                detail: { blockKey: this.selectedBlockType.block_key, blockConfig: config, blockData: {}, previewMode: 'live' },
-            }));
-        },
-    };
-}
-</script>
+<?= view('components/form/server_field_errors') ?>

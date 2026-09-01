@@ -17,11 +17,38 @@ namespace App\Modules\Cms\Services;
  */
 final class BlockTypeOptionsResolver
 {
+    private const RESOLVED_CACHE_KEY = 'cms_block_types_resolved_catalog';
+
+    // Keep this aligned with BlockCatalogService's short TTL. The resolved
+    // catalog is only used by the block create/edit screens, and the admin has
+    // a manual refresh path for block-type schema edits.
+    private const CACHE_TTL = 120;
+
     /** @var array<int, array{value: string, label: string}>|null */
     private ?array $pagesForIdsCache = null;
 
     /** @var array<int, array{value: string, label: string}>|null */
     private ?array $entriesForIdsCache = null;
+
+    /** @var array<string, array{value: string, label: string}> */
+    private array $entryReferenceOptionsCache = [];
+
+    /**
+     * Raw active-collections payload, fetched at most once per resolve()
+     * call regardless of how many block types reference it (collection_key,
+     * collection_id, entry_reference fields all share this).
+     *
+     * @var list<array<string, mixed>>|null
+     */
+    private ?array $activeCollectionsCache = null;
+
+    /**
+     * Active form keys, fetched at most once per resolve() call regardless
+     * of how many form_embed block types are in the catalog.
+     *
+     * @var list<string>|null
+     */
+    private ?array $activeFormKeysCache = null;
 
     public function __construct(
         private readonly BlockCatalogServiceInterface $blockCatalogService,
@@ -29,6 +56,7 @@ final class BlockTypeOptionsResolver
         private readonly CollectionApiService $collectionApiService,
         private readonly PageApiService $pageApiService,
         private readonly EntryApiService $entryApiService,
+        private readonly ?CategoryApiService $categoryApiService = null,
     ) {
     }
 
@@ -41,6 +69,11 @@ final class BlockTypeOptionsResolver
      */
     public function resolve(): array
     {
+        $cachedItems = cache()->get(self::RESOLVED_CACHE_KEY);
+        if (is_array($cachedItems)) {
+            return $cachedItems;
+        }
+
         $indexed = [];
         foreach ($this->blockCatalogService->indexed() as $id => $blockType) {
             if (! is_array($blockType)) {
@@ -51,7 +84,26 @@ final class BlockTypeOptionsResolver
             $indexed[(int) $id] = $blockType;
         }
 
+        cache()->save(self::RESOLVED_CACHE_KEY, $indexed, self::CACHE_TTL);
+
         return $indexed;
+    }
+
+    /**
+     * The raw active block-type catalog with no dynamic option hydration —
+     * for list/read-only views (block index, children list) that only
+     * render static metadata (name, icon, block_key, category, description,
+     * is_container) and never touch config_fields/schema_definition options.
+     * Skips every forms/collections/pages/entries lookup that resolve()
+     * performs, since none of that is rendered there. Callers that need
+     * populated select options (create/edit forms) must use resolve() or
+     * augment() instead.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function rawIndexed(): array
+    {
+        return $this->blockCatalogService->indexed();
     }
 
     /**
@@ -72,20 +124,176 @@ final class BlockTypeOptionsResolver
     public function collectionsMap(): array
     {
         $collectionsMap = [];
-        try {
-            $response = $this->safeApiCall(fn () => $this->collectionApiService->list(['limit' => 100, 'is_active' => true]));
-            if ($response['ok']) {
-                foreach ($this->extractItems($response) as $c) {
-                    if (is_array($c) && ! empty($c['collection_key']) && isset($c['id'])) {
-                        $collectionsMap[(string) $c['collection_key']] = (int) $c['id'];
-                    }
-                }
+        foreach ($this->activeCollections() as $c) {
+            if (! empty($c['collection_key']) && isset($c['id'])) {
+                $collectionsMap[(string) $c['collection_key']] = (int) $c['id'];
             }
-        } catch (\Throwable $e) {
-            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch collections for map: ' . $e->getMessage());
         }
 
         return $collectionsMap;
+    }
+
+    /**
+     * Return the fields that a collection listing may safely project.
+     *
+     * The catalog is derived from the collection block template and the
+     * canonical block schemas. It deliberately returns field references
+     * instead of hardcoded listing options so new collections and block fields
+     * become available to editors without another admin change.
+     *
+     * @return array<int|string, list<array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool}>>
+     */
+    public function listingFieldCatalog(): array
+    {
+        $catalog = [];
+        $blockTypes = $this->blockCatalogService->indexed();
+
+        // External sources do not have a CMS collection/template from which
+        // to discover fields. They expose the same projection contract.
+        $catalog['event_items'] = $this->eventListingFields();
+        $catalog['catalog_items'] = $this->catalogListingFields();
+
+        foreach ($this->activeCollections() as $collection) {
+            $collectionId = (int) ($collection['id'] ?? 0);
+            if ($collectionId <= 0) {
+                continue;
+            }
+
+            $fields = [
+                $this->listingField('entry.title', 'Título', 'Datos de la entrada', 'text', true, true),
+                $this->listingField('entry.excerpt', 'Resumen', 'Datos de la entrada', 'text', false, true),
+                $this->listingField('entry.slug', 'Slug', 'Datos de la entrada', 'text', true, true),
+                $this->listingField('entry.featured_image', 'Imagen destacada', 'Datos de la entrada', 'media_reference', false, false),
+                $this->listingField('entry.published_at', 'Fecha de publicación', 'Datos de la entrada', 'date', true, true),
+                $this->listingField('entry.created_at', 'Fecha de creación', 'Datos de la entrada', 'date', true, true),
+                $this->listingField('entry.sort_order', 'Orden editorial', 'Datos de la entrada', 'number', true, false),
+                $this->listingField('taxonomy.categories', 'Categorías', 'Taxonomía', 'taxonomy', false, true),
+                $this->listingField('taxonomy.tags', 'Etiquetas', 'Taxonomía', 'taxonomy', false, true),
+            ];
+
+            $template = $collection['block_template'] ?? [];
+            if (is_string($template)) {
+                $template = json_decode($template, true);
+            }
+            $templateBlocks = is_array($template) && is_array($template['blocks'] ?? null)
+                ? $template['blocks']
+                : [];
+
+            foreach ($templateBlocks as $templateBlock) {
+                if (! is_array($templateBlock)) {
+                    continue;
+                }
+                $blockKey = trim((string) ($templateBlock['block_key'] ?? ''));
+                $blockType = $this->findBlockType($blockTypes, $blockKey);
+                if ($blockKey === '' || $blockType === null) {
+                    continue;
+                }
+                $schema = $blockType['schema_definition'] ?? [];
+                if (is_string($schema)) {
+                    $schema = json_decode($schema, true);
+                }
+                $schemaFields = is_array($schema) && is_array($schema['fields'] ?? null)
+                    ? $schema['fields']
+                    : [];
+                $blockLabel = (string) ($templateBlock['label'] ?? $blockType['name'] ?? $blockKey);
+
+                foreach ($schemaFields as $fieldKey => $definition) {
+                    if (! is_array($definition) || ! $this->isListingFieldType((string) ($definition['type'] ?? ''))) {
+                        continue;
+                    }
+                    $fieldKey = trim((string) $fieldKey);
+                    if ($fieldKey === '') {
+                        continue;
+                    }
+                    $fieldType = (string) ($definition['type'] ?? 'string');
+                    $fields[] = $this->listingField(
+                        'block.' . $blockKey . '.' . $fieldKey,
+                        $blockLabel . ' · ' . (string) ($definition['label'] ?? $fieldKey),
+                        'Campos de bloques',
+                        $fieldType,
+                        in_array($fieldType, ['date', 'datetime', 'number', 'integer', 'string', 'text'], true),
+                        in_array($fieldType, ['date', 'datetime', 'number', 'integer', 'string', 'text', 'select'], true),
+                    );
+                }
+            }
+
+            $catalog[$collectionId] = $fields;
+            $collectionKey = trim((string) ($collection['collection_key'] ?? ''));
+            if ($collectionKey !== '') {
+                $catalog[$collectionKey] = $fields;
+            }
+        }
+
+        return $catalog;
+    }
+
+    /**
+     * Canonical projection fields exposed by the programming/event source.
+     * The public source adapter translates these `entry.*` references to its
+     * API query fields, keeping collection_list and collection_grid uniform.
+     *
+     * @return list<array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool}>
+     */
+    private function eventListingFields(): array
+    {
+        return [
+            $this->listingField('entry.title', 'Título', 'Datos del evento', 'text', true, true),
+            $this->listingField('entry.excerpt', 'Descripción', 'Datos del evento', 'text', false, true),
+            $this->listingField('entry.slug', 'Slug', 'Datos del evento', 'text', true, true),
+            $this->listingField('entry.event_type', 'Tipo de actividad', 'Datos del evento', 'select', true, true),
+            $this->listingField('entry.start_time', 'Fecha y hora de inicio', 'Datos del evento', 'datetime', true, true),
+            $this->listingField('entry.end_time', 'Fecha y hora de término', 'Datos del evento', 'datetime', true, true),
+            $this->listingField('entry.venue', 'Lugar', 'Datos del evento', 'text', true, true),
+            $this->listingField('entry.featured_image', 'Imagen de portada', 'Datos del evento', 'media_reference', false, false),
+        ];
+    }
+
+    /** @return list<array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool}> */
+    private function catalogListingFields(): array
+    {
+        return [
+            $this->listingField('entry.title', 'Nombre', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.excerpt', 'Resumen', 'Datos de la pieza', 'text', false, true),
+            $this->listingField('entry.slug', 'Slug', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.inventory_code', 'Código de inventario', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.origin', 'Origen', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.period', 'Período', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.creator', 'Autoría / creador', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.ubicacion', 'Ubicación', 'Datos de la pieza', 'text', true, true),
+            $this->listingField('entry.materials', 'Materiales', 'Datos de la pieza', 'text', false, true),
+            $this->listingField('entry.collection_number', 'Número de colección', 'Clasificación', 'text', true, true),
+            $this->listingField('entry.collection_group', 'Grupo de colección', 'Clasificación', 'text', true, true),
+            $this->listingField('taxonomy.categories', 'Categoría', 'Clasificación', 'taxonomy', false, true),
+            $this->listingField('entry.created_at', 'Fecha de registro', 'Metadatos', 'date', true, true),
+            $this->listingField('entry.updated_at', 'Última actualización', 'Metadatos', 'date', true, true),
+            $this->listingField('entry.featured_image', 'Imagen de portada', 'Visual', 'media_reference', false, false),
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $blockTypes
+     * @return array<string, mixed>|null
+     */
+    private function findBlockType(array $blockTypes, string $blockKey): ?array
+    {
+        foreach ($blockTypes as $blockType) {
+            if (is_array($blockType) && (string) ($blockType['block_key'] ?? '') === $blockKey) {
+                return $blockType;
+            }
+        }
+
+        return null;
+    }
+
+    private function isListingFieldType(string $type): bool
+    {
+        return in_array($type, ['string', 'text', 'textarea', 'richtext', 'date', 'datetime', 'number', 'integer', 'select', 'boolean', 'media_reference'], true);
+    }
+
+    /** @return array{value: string, label: string, group: string, type: string, sortable: bool, filterable: bool} */
+    private function listingField(string $value, string $label, string $group, string $type, bool $sortable, bool $filterable): array
+    {
+        return compact('value', 'label', 'group', 'type', 'sortable', 'filterable');
     }
 
     /**
@@ -147,29 +355,29 @@ final class BlockTypeOptionsResolver
         $hasFormEmbed     = ($blockType['block_key'] ?? '') === 'form_embed';
         $hasCollectionKey = isset($schema['config_fields']['collection_key']) || isset($blockType['config_fields']['collection_key']);
         $hasCollectionId  = isset($schema['config_fields']['collection_id'])  || isset($blockType['config_fields']['collection_id']);
+        $hasCategoryId    = isset($schema['config_fields']['category_id']) || isset($blockType['config_fields']['category_id']);
         $hasPageId        = isset($schema['config_fields']['page_id']) || isset($blockType['config_fields']['page_id']);
         $hasEntryId       = isset($schema['config_fields']['entry_id']) || isset($blockType['config_fields']['entry_id']);
+        $hasEntryReferences = false;
 
-        if (! $hasFormEmbed && ! $hasCollectionKey && ! $hasCollectionId && ! $hasPageId && ! $hasEntryId) {
+        $schemaFields = is_array($schema['fields'] ?? null) ? $schema['fields'] : [];
+        foreach ($schemaFields as $fieldKey => $fieldDefinition) {
+            if (! is_array($fieldDefinition)) {
+                continue;
+            }
+            if (in_array((string) ($fieldDefinition['type'] ?? ''), ['entry_reference', 'entry_reference_list'], true)) {
+                $hasEntryReferences = true;
+                $schema['fields'][$fieldKey]['options'] = $this->entryReferenceOptions($fieldDefinition);
+            }
+        }
+        $blockType['fields'] = $schemaFields;
+
+        if (! $hasFormEmbed && ! $hasCollectionKey && ! $hasCollectionId && ! $hasCategoryId && ! $hasPageId && ! $hasEntryId && ! $hasEntryReferences) {
             return;
         }
 
         if ($hasFormEmbed) {
-            $forms = [];
-            try {
-                $formsResponse = $this->safeApiCall(
-                    fn () => $this->formApiService->list(['limit' => 100, 'is_active' => true])
-                );
-                if ($formsResponse['ok']) {
-                    foreach ($this->extractItems($formsResponse) as $f) {
-                        if (is_array($f) && ! empty($f['form_key'])) {
-                            $forms[] = (string) $f['form_key'];
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                log_message('error', '[BlockTypeOptionsResolver] Failed to fetch forms for options: ' . $e->getMessage());
-            }
+            $forms = $this->activeFormKeys();
 
             if ($forms === []) {
                 $forms = ['contact'];
@@ -189,29 +397,17 @@ final class BlockTypeOptionsResolver
         if ($hasCollectionKey || $hasCollectionId) {
             $collectionsForKeys = [];
             $collectionsForIds  = [];
-            try {
-                $collectionsResponse = $this->safeApiCall(
-                    fn () => $this->collectionApiService->list(['limit' => 100, 'is_active' => true])
-                );
-                if ($collectionsResponse['ok']) {
-                    foreach ($this->extractItems($collectionsResponse) as $c) {
-                        if (! is_array($c)) {
-                            continue;
-                        }
-                        if (! empty($c['collection_key'])) {
-                            $collectionsForKeys[] = (string) $c['collection_key'];
-                        }
-                        if (isset($c['id'])) {
-                            $label = $c['name'] ?? $c['collection_key'] ?? $c['title'] ?? $c['label'] ?? $c['id'];
-                            $collectionsForIds[] = [
-                                'value' => (int) $c['id'],
-                                'label' => (string) $label,
-                            ];
-                        }
-                    }
+            foreach ($this->activeCollections() as $c) {
+                if (! empty($c['collection_key'])) {
+                    $collectionsForKeys[] = (string) $c['collection_key'];
                 }
-            } catch (\Throwable $e) {
-                log_message('error', '[BlockTypeOptionsResolver] Failed to fetch collections for options: ' . $e->getMessage());
+                if (isset($c['id'])) {
+                    $label = $c['name'] ?? $c['collection_key'] ?? $c['title'] ?? $c['label'] ?? $c['id'];
+                    $collectionsForIds[] = [
+                        'value' => (int) $c['id'],
+                        'label' => (string) $label,
+                    ];
+                }
             }
 
             if ($hasCollectionKey) {
@@ -234,6 +430,18 @@ final class BlockTypeOptionsResolver
                     $blockType['config_fields']['collection_id']['type']    = 'select';
                     $blockType['config_fields']['collection_id']['options'] = $collectionsForIds;
                 }
+            }
+        }
+
+        if ($hasCategoryId) {
+            $categoryOptions = $this->categoriesForIds();
+            if (isset($schema['config_fields']['category_id'])) {
+                $schema['config_fields']['category_id']['type'] = 'select';
+                $schema['config_fields']['category_id']['options'] = $categoryOptions;
+            }
+            if (isset($blockType['config_fields']['category_id'])) {
+                $blockType['config_fields']['category_id']['type'] = 'select';
+                $blockType['config_fields']['category_id']['options'] = $categoryOptions;
             }
         }
 
@@ -262,6 +470,49 @@ final class BlockTypeOptionsResolver
         }
 
         $blockType['schema_definition'] = $schema;
+    }
+
+    /**
+     * @param array<string, mixed> $fieldDefinition
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function entryReferenceOptions(array $fieldDefinition): array
+    {
+        $allowed = $fieldDefinition['collection_keys'] ?? $fieldDefinition['allowed_collections'] ?? [];
+        if (isset($fieldDefinition['collection_key']) && is_string($fieldDefinition['collection_key'])) {
+            $allowed = [$fieldDefinition['collection_key']];
+        }
+        if (! is_array($allowed)) {
+            return [];
+        }
+
+        $collectionMap = $this->collectionsMap();
+        $options = [];
+        foreach ($allowed as $collectionKey) {
+            $collectionKey = trim((string) $collectionKey);
+            $collectionId = $collectionMap[$collectionKey] ?? null;
+            if ($collectionKey === '' || $collectionId === null) {
+                continue;
+            }
+
+            $cacheKey = $collectionKey . ':' . $collectionId;
+            if (! isset($this->entryReferenceOptionsCache[$cacheKey])) {
+                foreach ($this->entriesForCollection((int) $collectionId) as $option) {
+                    $this->entryReferenceOptionsCache[$cacheKey . ':' . $option['value']] = [
+                        'value' => $collectionKey . ':' . $option['value'],
+                        'label' => $option['label'] . ' · ' . $collectionKey,
+                    ];
+                }
+            }
+
+            foreach ($this->entryReferenceOptionsCache as $optionKey => $option) {
+                if (str_starts_with($optionKey, $cacheKey . ':')) {
+                    $options[] = $option;
+                }
+            }
+        }
+
+        return $options;
     }
 
     /**
@@ -316,6 +567,96 @@ final class BlockTypeOptionsResolver
         }
 
         return $this->entriesForIdsCache = $entries;
+    }
+
+    /**
+     * Category IDs are stable across locales, unlike translated category slugs.
+     * Labels include the owning collection so an editor cannot accidentally
+     * configure a category from a different collection without noticing it.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function categoriesForIds(): array
+    {
+        $categories = [];
+        try {
+            if ($this->categoryApiService === null) {
+                return [];
+            }
+            $response = $this->safeApiCall(fn () => $this->categoryApiService->categories(['limit' => 500]));
+            if ($response['ok']) {
+                $collectionNames = [];
+                foreach ($this->activeCollections() as $collection) {
+                    $id = (int) ($collection['id'] ?? 0);
+                    if ($id > 0) {
+                        $collectionNames[$id] = (string) ($collection['name'] ?? $collection['collection_key'] ?? $id);
+                    }
+                }
+
+                foreach ($this->extractItems($response) as $item) {
+                    $id = (int) ($item['id'] ?? 0);
+                    if ($id <= 0) {
+                        continue;
+                    }
+                    $name = (string) ($item['name'] ?? $item['title'] ?? $item['slug'] ?? $id);
+                    $collectionId = (int) ($item['collection_id'] ?? 0);
+                    $collectionLabel = $collectionNames[$collectionId] ?? (string) ($item['collection_key'] ?? 'Colección');
+                    $categories[] = ['value' => (string) $id, 'label' => $collectionLabel . ' · ' . $name];
+                }
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch category options: ' . $e->getMessage());
+        }
+
+        return $categories;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function activeCollections(): array
+    {
+        if ($this->activeCollectionsCache !== null) {
+            return $this->activeCollectionsCache;
+        }
+
+        $collections = [];
+        try {
+            $response = $this->safeApiCall(fn () => $this->collectionApiService->list(['limit' => 100, 'is_active' => true]));
+            if ($response['ok']) {
+                $collections = array_values(array_filter($this->extractItems($response), 'is_array'));
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch active collections: ' . $e->getMessage());
+        }
+
+        return $this->activeCollectionsCache = $collections;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function activeFormKeys(): array
+    {
+        if ($this->activeFormKeysCache !== null) {
+            return $this->activeFormKeysCache;
+        }
+
+        $forms = [];
+        try {
+            $response = $this->safeApiCall(fn () => $this->formApiService->list(['limit' => 100, 'is_active' => true]));
+            if ($response['ok']) {
+                foreach ($this->extractItems($response) as $f) {
+                    if (is_array($f) && ! empty($f['form_key'])) {
+                        $forms[] = (string) $f['form_key'];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[BlockTypeOptionsResolver] Failed to fetch forms for options: ' . $e->getMessage());
+        }
+
+        return $this->activeFormKeysCache = $forms;
     }
 
     /**

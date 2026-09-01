@@ -4,9 +4,9 @@
 
 $document = is_array($config['document'] ?? null) ? $config['document'] : (is_array($data['document'] ?? null) ? $data['document'] : []);
 $documentUrl = $document['url'] ?? ($data['document_url'] ?? '');
-$title = $data['title'] ?? 'Documento de ejemplo';
-$description = $data['description'] ?? 'Previsualización del bloque de descarga.';
-$buttonLabel = $data['button_label'] ?? 'Descargar';
+$title = $data['title'] ?? lang('BlockPreview.document.download_title');
+$description = $data['description'] ?? lang('BlockPreview.document.download_description');
+$buttonLabel = $data['button_label'] ?? lang('BlockPreview.document.download_button');
 $ext = strtoupper((string) pathinfo(parse_url((string) $documentUrl, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
 $ext = $ext !== '' ? $ext : 'DOC';
 ?>
@@ -25,7 +25,7 @@ $ext = $ext !== '' ? $ext : 'DOC';
     </div>
 
     <div class="mt-4 flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
-        <span class="text-xs font-medium text-slate-500"><?= $documentUrl !== '' ? esc($documentUrl) : 'Sin archivo configurado' ?></span>
+        <span class="text-xs font-medium text-slate-500"><?= $documentUrl !== '' ? esc($documentUrl) : esc(lang('BlockPreview.common.empty_file')) ?></span>
         <span class="inline-flex items-center rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white"><?= esc($buttonLabel) ?></span>
     </div>
 </div>

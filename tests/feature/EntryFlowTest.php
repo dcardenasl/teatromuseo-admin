@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\EntryApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -41,12 +42,37 @@ final class EntryFlowTest extends CIUnitTestCase
 
     public function testIndexRendersForAdmin(): void
     {
-        $mock = $this->createMock(EntryApiService::class);
-        $mock->method('collections')->willReturn([
-            'ok' => true, 'status' => 200, 'data' => ['items' => []],
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsEntryFormOptions')
+            ->with(null)
+            ->willReturn([
+            'ok' => true, 'status' => 200, 'data' => ['sections' => [
+                'collections' => [],
+                'languages' => [],
+            ]],
             'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => []
         ]);
-        Services::injectMock('entryApiService', $mock);
+        Services::injectMock('bffApiClient', $bff);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'user'         => ['permissions' => [
+                'cms.entries.read',
+                'cms.languages.read',
+                'cms.collections.read',
+            ]],
+            'permissions_refreshed_at' => time(),
+        ])->get('/admin/cms/entries');
+
+        $result->assertStatus(200);
+    }
+
+    public function testIndexDoesNotRequestOptionalBootstrapWithoutMetadataPermissions(): void
+    {
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->never())->method('getAdminCmsEntryFormOptions');
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession([
             'access_token' => 'token',
@@ -85,7 +111,7 @@ final class EntryFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['cms.entries.write', 'cms.entries.read']],
+            'user'         => ['permissions' => ['cms.entries.admin', 'cms.entries.read']],
             'permissions_refreshed_at' => time(),
         ])->post('/admin/cms/entries/test-uuid/delete', [
             csrf_token() => csrf_hash(),

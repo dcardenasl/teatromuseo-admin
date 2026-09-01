@@ -36,7 +36,7 @@
     "require-dev": {
         "codeigniter/coding-standard": "^1.7",
         "fakerphp/faker": "^1.24",
-        "friendsofphp/php-cs-fixer": "^3.47.1",
+        "friendsofphp/php-cs-fixer": "^3.95",
         "kint-php/kint": "^6.1",
         "mikey179/vfsstream": "^1.6.12",
         "nexusphp/cs-config": "^3.6",
@@ -68,7 +68,6 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "App\\Libraries\\Cms\\": "../ci4-website-builder-domain/app/Libraries/Cms/",
             "Config\\": "app/Config/"
         },
         "exclude-from-classmap": [
@@ -113,18 +112,14 @@
         "format:check": "vendor/bin/php-cs-fixer fix --dry-run --diff",
         "format": "vendor/bin/php-cs-fixer fix",
         "i18n-check": "php scripts/i18n-check.php",
-        "coverage:check": "php scripts/check-coverage.php 54.20 tests/coverage.xml",
+        "coverage:check": "php scripts/check-coverage.php 60 tests/coverage/clover.xml",
         "quality": [
             "@analyse",
             "@format:check",
             "@i18n-check",
-            "@test:fixture-policy"
+            "@test:fixture-policy",
+            "@test"
         ],
-        "ci": [
-            "@test",
-            "@quality"
-        ],
-        "sync-swagger": "cp ../ci4-website-builder-api/public/swagger.json swagger_contract.json",
         "cs-fix": "@format",
         "cs-check": "@format:check",
         "phpstan": "@analyse"

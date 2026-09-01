@@ -67,6 +67,7 @@
             ...remoteTable({
                 apiUrl: '<?= route_to('admin.cms.translations.audit.data') ?>',
                 pageUrl: '<?= route_to('admin.cms.translations.audit') ?>',
+                mode: 'cms_translations',
                 limitOptions: ['10', '25', '50', '100']
             }),
             dict: <?= esc(json_encode([
@@ -87,12 +88,15 @@
                     'missing' => lang('Translations.status_missing'),
                     'incomplete' => lang('Translations.status_incomplete'),
                     'mismatch' => lang('Translations.status_mismatch'),
+                    'untranslated' => lang('Translations.status_untranslated'),
                     'outdated' => lang('Translations.status_outdated'),
                 ],
                 'details' => [
                     'missing_all' => lang('Translations.detail_missing_all'),
                     'missing_required_fields' => lang('Translations.detail_missing_required_fields'),
                     'inconsistent_fields' => lang('Translations.detail_inconsistent_fields'),
+                    'same_as_source_fields' => lang('Translations.detail_same_as_source_fields'),
+                    'outdated' => lang('Translations.detail_outdated'),
                 ],
                 'fields' => [
                     'title' => lang('Translations.field_title'),
@@ -134,7 +138,13 @@
                     if (row.status === 'mismatch') {
                         return this.dict.details.inconsistent_fields.replace('{fields}', fields);
                     }
+                    if (row.status === 'untranslated') {
+                        return this.dict.details.same_as_source_fields.replace('{fields}', fields);
+                    }
                     return this.dict.details.missing_required_fields.replace('{fields}', fields);
+                }
+                if (row.status === 'outdated') {
+                    return this.dict.details.outdated;
                 }
                 return row.detail;
             },
@@ -150,14 +160,16 @@
                 const row = this.rows.find((candidate) => ['missing', 'incomplete', 'mismatch'].includes(candidate.status));
                 return row ? this.editUrl(row) : '#';
             }
-        }" x-init="init()">
+        }">
+
+        <?= view('layouts/partials/table_toolbar', [
+            'title' => lang('Translations.missing_incomplete'),
+            'subtitle' => lang('Translations.missing_incomplete_desc'),
+            'showDensityToggle' => true,
+        ]) ?>
         
         <div class="pb-5 border-b border-gray-200 space-y-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900"><?= esc(lang('Translations.missing_incomplete')) ?></h2>
-                    <p class="text-xs text-gray-500 mt-0.5"><?= esc(lang('Translations.missing_incomplete_desc')) ?></p>
-                </div>
                 <a :href="nextPendingUrl()" :aria-disabled="rows.length === 0" :class="rows.length === 0 ? 'pointer-events-none opacity-50' : ''" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700">
                     <?= ui_icon('arrow-right', 'h-3.5 w-3.5') ?>
                     <?= esc(lang('Translations.action_next_pending')) ?>
@@ -166,6 +178,7 @@
 
             <!-- Filters -->
             <form data-table-filter-form="1" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+                <input type="hidden" name="scope" value="actionable">
                 <input type="search" name="search" placeholder="<?= esc(lang('Translations.search_issues')) ?>" class="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 lg:col-span-4" data-table-debounce="300">
                 <select name="language_id" class="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 lg:col-span-2">
                     <option value=""><?= esc(lang('Translations.all_active_languages')) ?></option>
@@ -181,7 +194,7 @@
                 </select>
                 <select name="status" class="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 lg:col-span-2">
                     <option value=""><?= esc(lang('Translations.all_statuses')) ?></option>
-                    <?php foreach (['missing', 'incomplete', 'mismatch'] as $status): ?>
+                    <?php foreach (['missing', 'incomplete', 'mismatch', 'untranslated', 'outdated'] as $status): ?>
                         <option value="<?= esc($status) ?>"><?= esc(lang('Translations.status_' . $status)) ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -210,7 +223,7 @@
         <template x-if="!loading && !error && rows.length > 0">
             <div class="<?= esc(table_wrapper_class()) ?>">
                 <div class="<?= esc(table_scroll_class()) ?>">
-                    <table class="<?= esc(table_class()) ?>">
+                    <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                         <thead class="<?= esc(table_head_class()) ?>">
                             <tr>
                                 <th class="<?= esc(table_th_class()) ?>"><?= esc(lang('Translations.field_type')) ?></th>
@@ -232,7 +245,7 @@
                                         <span class="font-bold text-xs uppercase bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200" x-text="row.language_code"></span>
                                     </td>
                                     <td class="<?= esc(table_td_class()) ?>">
-                                        <span :class="row.status === 'missing' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800' : row.status === 'mismatch' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : row.status === 'outdated' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800'" x-text="translateStatus(row.status)"></span>
+                                        <span :class="row.status === 'missing' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800' : row.status === 'mismatch' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : row.status === 'outdated' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800' : row.status === 'untranslated' ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800' : 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800'" x-text="translateStatus(row.status)"></span>
                                     </td>
                                     <td class="<?= esc(table_td_class('muted')) ?>" x-text="translateDetail(row)"></td>
                                     <td class="<?= esc(table_td_class()) ?>">
@@ -247,5 +260,9 @@
                 </div>
             </div>
         </template>
+
+        <div x-show="!loading && !error && rows.length > 0" class="mt-5">
+            <?= view('layouts/partials/remote_pagination') ?>
+        </div>
     </section>
 </div>

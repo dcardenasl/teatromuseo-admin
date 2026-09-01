@@ -1,12 +1,18 @@
 <?php
 /** @var array<string, mixed> $file */
 /** @var list<array{resource:string, resource_id:int, role:string, label:string}> $usages */
+/** @var bool $usagesComplete */
 $file     = $file ?? [];
 $usages   = $usages ?? [];
+$usagesComplete = $usagesComplete ?? false;
 $id       = (string) ($file['id'] ?? '');
 $variants = is_array($file['variants'] ?? null) ? $file['variants'] : [];
 $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url'] ?? '') : '';
+$originalUrl = (string) ($file['url'] ?? '');
 ?>
+<div data-file-usages
+     data-usages-url="<?= esc(route_to('files.usages', $id), 'attr') ?>"
+     data-in-use-message="<?= esc(lang('Files.in_use_warning_body'), 'attr') ?>">
 <div class="mb-4 flex items-center justify-between">
     <a href="<?= route_to('files') ?>" class="text-sm text-brand-600 hover:text-brand-700">
         &larr; <?= esc(lang('App.back')) ?>
@@ -15,43 +21,44 @@ $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url']
         <a href="<?= route_to('files') ?>/<?= esc($id) ?>/download" class="<?= esc(action_button_class()) ?>">
             <?= ui_icon('download', 'h-3.5 w-3.5') ?> <?= esc(lang('App.download')) ?>
         </a>
-        <?php if (has_permission('cms.pages.write')): ?>
+        <?php if (has_permission('cms.file-translations.write')): ?>
             <a href="<?= route_to('admin.cms.file_translations.edit', $id) ?>" class="<?= esc(action_button_class('neutral')) ?>">
                 <?= ui_icon('languages', 'h-3.5 w-3.5') ?> <?= esc(lang('FileTranslations.sidebar_label')) ?>
             </a>
         <?php endif; ?>
-        <?php if ($usages === []): ?>
-            <form method="post" action="<?= route_to('files') ?>/<?= esc($id) ?>/delete"
-                  x-data @submit.prevent="$store.confirm.show(window.confirmDeleteMessage('<?= esc($file['original_name'] ?? $file['name'] ?? $id, 'js') ?>'), () => $el.submit())">
-                <?= csrf_field() ?>
-                <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
-                    <?= ui_icon('trash', 'h-3.5 w-3.5') ?> <?= esc(lang('App.delete')) ?>
-                </button>
-            </form>
-        <?php else: ?>
-            <button type="button" class="<?= esc(action_button_class('danger')) ?> opacity-50 cursor-not-allowed" disabled title="<?= esc(lang('Files.cannot_delete_in_use')) ?>">
+        <form method="post" data-file-delete-form
+              data-delete-url="<?= esc(route_to('files.delete', $id), 'attr') ?>"
+              x-data @submit.prevent="$store.confirm.show(window.confirmDeleteMessage('<?= esc($file['original_name'] ?? $file['name'] ?? $id, 'js') ?>'), () => $el.submit())">
+            <?= csrf_field() ?>
+            <button type="submit" data-file-delete-button class="<?= esc(action_button_class('danger')) ?> opacity-50 cursor-not-allowed" disabled title="<?= esc(lang('Files.usages_unavailable_body')) ?>">
                 <?= ui_icon('trash', 'h-3.5 w-3.5') ?> <?= esc(lang('App.delete')) ?>
             </button>
-        <?php endif; ?>
+        </form>
     </div>
 </div>
 
-<?php if ($usages !== []): ?>
-<div class="mb-4 flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800" role="alert">
+<div data-file-in-use-warning hidden class="mb-4 flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800" role="alert">
     <?= ui_icon('triangle-alert', 'mt-0.5 h-4 w-4 shrink-0 text-red-600') ?>
     <div>
         <strong><?= esc(lang('Files.in_use_warning_title')) ?></strong>
-        <?= esc(lang('Files.in_use_warning_body', [count($usages)])) ?>
+        <span data-file-usage-message></span>
     </div>
 </div>
-<?php endif; ?>
+
+<div data-file-usages-unavailable hidden class="mb-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+    <?= ui_icon('triangle-alert', 'mt-0.5 h-4 w-4 shrink-0 text-amber-600') ?>
+    <div>
+        <strong><?= esc(lang('Files.usages_unavailable_title')) ?></strong>
+        <?= esc(lang('Files.usages_unavailable_body')) ?>
+    </div>
+</div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Preview + technical info -->
     <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5 lg:col-span-1">
         <div class="aspect-square w-full overflow-hidden rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
             <?php if (! empty($file['is_image'])): ?>
-                <img src="<?= esc($smUrl !== '' ? $smUrl : (route_to('files') . '/' . $id . '/view')) ?>"
+                <img src="<?= esc($smUrl !== '' ? $smUrl : ($originalUrl !== '' ? $originalUrl : route_to('files') . '/' . $id . '/view')) ?>"
                      alt="<?= esc((string) ($file['alt_text'] ?? $file['original_name'] ?? '')) ?>"
                      class="w-full h-full object-contain">
             <?php else: ?>
@@ -181,26 +188,11 @@ $smUrl    = is_array($variants['sm'] ?? null) ? (string) ($variants['sm']['url']
 
         <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
             <h3 class="text-lg font-semibold text-gray-900"><?= esc(lang('Files.where_used')) ?></h3>
-            <?php if ($usages === []): ?>
-                <p class="mt-3 text-sm text-gray-500"><?= esc(lang('Files.where_used_empty')) ?></p>
-            <?php else: ?>
-                <ul class="mt-3 divide-y divide-gray-100">
-                    <?php foreach ($usages as $usage): ?>
-                        <?php $editUrl = (string) ($usage['edit_url'] ?? ''); ?>
-                        <li class="py-2 flex items-center justify-between gap-3 text-sm">
-                            <div class="min-w-0">
-                                <?php if ($editUrl !== ''): ?>
-                                    <a href="<?= esc($editUrl) ?>" class="font-medium text-brand-600 hover:underline truncate block"><?= esc((string) ($usage['label'] ?? '')) ?></a>
-                                <?php else: ?>
-                                    <p class="font-medium text-gray-900 truncate"><?= esc((string) ($usage['label'] ?? '')) ?></p>
-                                <?php endif; ?>
-                                <p class="text-xs text-gray-500"><?= esc((string) ($usage['resource'] ?? '')) ?> #<?= esc((string) ($usage['resource_id'] ?? '')) ?></p>
-                            </div>
-                            <span class="text-xs text-gray-400 uppercase shrink-0"><?= esc((string) ($usage['role'] ?? '')) ?></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
+            <p data-file-usages-loading class="mt-3 text-sm text-gray-500"><?= esc(lang('App.loading')) ?></p>
+            <p data-file-usages-error hidden class="mt-3 text-sm text-amber-800"><?= esc(lang('Files.usages_unavailable_body')) ?></p>
+            <p data-file-usages-empty hidden class="mt-3 text-sm text-gray-500"><?= esc(lang('Files.where_used_empty')) ?></p>
+            <ul data-file-usages-list hidden class="mt-3 divide-y divide-gray-100"></ul>
         </section>
     </div>
+</div>
 </div>

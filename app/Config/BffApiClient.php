@@ -6,11 +6,8 @@ namespace Config;
 
 /**
  * Configuration for the HTTP client that talks to a ci4-bff-starter gateway
- * (port 8088 by default). Mirrors {@see DomainApiClient} but reads a distinct
- * set of environment variables so a single admin instance can monitor hub,
- * domain, and BFF health independently.
- *
- * Leave $baseUrl empty (the default) to disable BFF health monitoring.
+ * (port 8188 by default). Mirrors {@see DomainApiClient} but reads a distinct
+ * set of environment variables for the authenticated composite Admin reads.
  */
 class BffApiClient extends ApiClient
 {
@@ -20,8 +17,12 @@ class BffApiClient extends ApiClient
     {
         \CodeIgniter\Config\BaseConfig::__construct();
 
-        $baseUrl = env('bffApiClient.baseUrl') ?: env('BFF_API_BASE_URL');
-        if (is_string($baseUrl) && trim($baseUrl) !== '') {
+        // Some shared hosts inject a short process value such as `api` under
+        // the uppercase key and then refuse to let .env override it. Prefer
+        // the dotted application setting when it is a valid URL and only use
+        // the uppercase key as a compatibility fallback.
+        $baseUrl = $this->resolveBaseUrl();
+        if ($baseUrl !== null) {
             $this->baseUrl = $baseUrl;
         }
 
@@ -51,17 +52,29 @@ class BffApiClient extends ApiClient
             $this->appKey = $appKey;
         }
 
-        $val = env('bffApiClient.healthPaths') ?: env('BFF_API_HEALTH_PATHS');
-        if ($val) {
-            $paths = array_values(array_filter(array_map('trim', explode(',', (string) $val))));
-            if ($paths !== []) {
-                $this->healthPaths = $paths;
-            }
-        }
-
-        $logRequests = env('bffApiClient.logRequests') ?: env('BFF_API_LOG_REQUESTS');
+        $logRequests = env('BFF_API_LOG_REQUESTS') ?: env('bffApiClient.logRequests');
         if ($logRequests !== null && $logRequests !== '') {
             $this->logRequests = filter_var($logRequests, FILTER_VALIDATE_BOOLEAN);
         }
+    }
+
+    private function resolveBaseUrl(): ?string
+    {
+        foreach ([env('bffApiClient.baseUrl'), env('BFF_API_BASE_URL')] as $candidate) {
+            if (! is_string($candidate)) {
+                continue;
+            }
+
+            $candidate = rtrim(trim($candidate), '/');
+            $parts = parse_url($candidate);
+
+            if (in_array($parts['scheme'] ?? null, ['http', 'https'], true)
+                && is_string($parts['host'] ?? null)
+                && $parts['host'] !== '') {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 }

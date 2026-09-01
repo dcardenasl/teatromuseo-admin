@@ -124,6 +124,7 @@
                             'sourceId' => sprintf('[name="translations[%d][name]"]', $index),
                             'checkUrl' => route_to('admin.cms.categories.check_slug') . '?language_id=' . (int)$lang['id'],
                             'value' => old("translations.{$index}.slug", ''),
+                            'maxlength' => 150,
                             'help' => 'Categories.translation_slug_help',
                             'errors' => $errors ?? []
                         ]) ?>

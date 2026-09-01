@@ -14,6 +14,11 @@ final class LanguageFlowTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
 
+    public function testAdminSupportsOnlyItsUiLocales(): void
+    {
+        $this->assertSame(['es', 'en'], config('App')->supportedLocales);
+    }
+
     public function testSetLocalePersistsSupportedLocaleInSession(): void
     {
         $supported = config('App')->supportedLocales;

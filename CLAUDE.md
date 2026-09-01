@@ -16,11 +16,11 @@ For cross-repo context (current milestone, blocked tasks), read `../TASKS.md`.
 
 ## Project Overview
 
-**CI4 Admin Starter** is a CodeIgniter 4 web application (server-rendered frontend) designed to consume the external API from [`ci4-website-builder-api`](https://github.com/yourusername/ci4-website-builder-api). It provides an administrative panel interface for authentication, user management, file management, audit logs, and metrics.
+**Teatro Museo Admin** is a CodeIgniter 4 web application (server-rendered frontend) designed to consume the external API from the Central Hub. It provides an administrative panel interface for authentication, user management, file management, audit logs, and metrics.
 
 **Architecture flow:**
 ```
-Browser → CI4 Admin Starter (port 8182) → ci4-website-builder-api API (port 8080)
+Browser → Teatro Museo Admin (port 8182) → Central Hub API (port 8180)
 ```
 
 **Current state:** Fully implemented. All modules are active: authentication, dashboard, profile, file management, and admin panel (users, audit logs, API keys, metrics). See `docs/INDEX.md` for detailed architectural documentation.
@@ -175,6 +175,35 @@ Reference implementations for this contract:
 - `App\Modules\Cms\Requests\MenuItemStoreRequest`
 - `App\Controllers\BaseWebController`
 
+### Dashboard aggregation via the BFF
+
+The administrative dashboard's cross-domain data is consumed through the
+authenticated BFF endpoint `GET /api/v1/me/admin-dashboard`. Configure
+`BFF_API_BASE_URL` (local default: `http://localhost:8188`) in the Admin
+environment before expecting fresh dashboard data.
+
+- `BffApiClient` makes the single authenticated request. The BFF keeps the Hub
+  summary behind its authenticated client and serves CMS, Catalog, and Event
+  through its permission-aware, SELECT-only `AdminRead` seam; it returns
+  `sections` plus per-source `source` states without exposing domain HTTP
+  fan-out to the Admin.
+- `DashboardDataService` owns only the Admin-side permission-aware cache,
+  lock, stale snapshot, and failure cooldown. It preserves unavailable sources
+  as unavailable instead of converting them to zero values.
+- The dashboard must not call the domain clients directly and must not reuse
+  `/api/v1/me/dashboard`; that endpoint remains the canonical fail-fast
+  aggregate example for other BFF consumers.
+- A BFF outage can make the aggregate stale or unavailable while the page
+  remains renderable. Restore/check the BFF and its upstreams before changing
+  dashboard code. Domain CRUD modules continue using their own domain clients;
+  this boundary applies only to the dashboard aggregate.
+- The dashboard's analytics and translation widgets also read the
+  `analytics`/`translations` sections from this same cached snapshot. They
+  must not instantiate `AnalyticsApiService` or
+  `TranslationAuditApiService` for an additional upstream request; those
+  services remain available to their standalone CMS screens until their own
+  migration is complete.
+
 ### ApiClient: Central HTTP Communication Layer
 
 The `app/Libraries/ApiClient.php` class is the heart of all API communication. It handles:
@@ -223,7 +252,7 @@ if (has_permission('iam.admin-access')) { /* show admin nav */ }
 
 **Filters:**
 - `AuthFilter` (`app/Filters/AuthFilter.php`): Verifies presence of `access_token` in session, redirects to `/login` if missing
-- `AdminFilter` (`app/Filters/AdminFilter.php`): Checks `has_permission('iam.admin-access')`, redirects to `/dashboard` with error flash otherwise (returns JSON 403 for AJAX)
+- `AdminFilter` (`app/Filters/AdminFilter.php`): Broad section gate backed by `Config\AdminAccess::$permissions`; redirects to `/dashboard` with error flash otherwise (returns JSON 403 for AJAX). Resource modules must use explicit `permission:<code>` filters per endpoint.
 - `LocaleFilter` (`app/Filters/LocaleFilter.php`): Reads `session('locale')`, validates against supported locales, sets the language for the current request
 
 All filters are registered in `app/Config/Filters.php`. `csrf` and `locale` run globally on every request; `auth` and `admin` are applied per route group.
@@ -251,7 +280,6 @@ API communication is abstracted into service classes in `app/Services/`. All ser
 - `AuditApiService.php` — Audit log endpoints (list, get, byEntity)
 - `ApiKeyApiService.php` — Admin API key management (list, get, create, update, delete)
 - `MetricsApiService.php` — Metrics (summary, timeseries with `/metrics/timeseries` → `/metrics` fallback)
-- `HealthApiService.php` — API health check across configured paths; returns `up` / `degraded` / `down` state with latency
 
 Services are registered in `app/Config/Services.php` as shared singletons. Access via `service('authApiService')`, `service('apiClient')`, etc.
 
@@ -333,8 +361,8 @@ app/Views/
 - `app/Config/Routes.php` — All web routes (public, authenticated, admin)
 - `app/Config/Filters.php` — Filter registration and aliases (`auth`, `admin`, `locale`)
 - `app/Config/Autoload.php` — Helper auto-loading (`ui`, `form` loaded globally)
-- `app/Config/ApiClient.php` — API base URL, timeouts, API prefix, app name, `appKey` (reads `API_APP_KEY` env var)
-- `app/Config/Services.php` — Shared service factory for `apiClient`, `authApiService`, `fileApiService`, `userApiService`, `auditApiService`, `apiKeyApiService`, `metricsApiService`, `healthApiService`
+- `app/Config/ApiClient.php` — API base URL, timeouts, retry budget, API prefix, app name, `appKey` (reads `API_APP_KEY` env var)
+- `app/Config/Services.php` — Shared service factory for `apiClient`, `authApiService`, `fileApiService`, `userApiService`, `auditApiService`, `apiKeyApiService` and `metricsApiService`
 
 ## API App Key (`X-App-Key`)
 
@@ -392,7 +420,7 @@ All modules are fully implemented:
 | Auth | `AuthController` | `GET/POST /login`, `/register`, `/forgot-password`, `/reset-password`, `GET /verify-email`, `/logout` |
 | Dashboard | `DashboardController` | `GET /dashboard` |
 | Profile | `ProfileController` | `GET/POST /profile`, `POST /profile/change-password`, `POST /profile/resend-verification`. Open to any authenticated user (no `users.write` gate). `update()` calls the API's `PATCH /auth/me`. Email is shown read-only — there is no editable email input here. |
-| Files | `FileController` | Listing: `GET /files`, `/files/data`. Trash: `GET /files/trash`, `/files/trash/data`. Upload: `POST /files/upload`. Per-file: `GET /files/{id}/{download,view,show,usages}`, `POST /files/{id}/{delete,restore,force,replace,regenerate,metadata}`. Bulk: `POST /files/bulk` with `action=delete\|restore\|force` and `ids[]`. Picker: `GET /files/picker-data`, `/files/{id}/picker-info`. The `restore`, `force`, `bulk-restore`, `bulk-force` flows require the API trash endpoints (added in API v2.1, 2026-05-17). `replace` (`POST /files/{id}/replace`) and `metadata` (`PATCH /files/{id}`) were added to the hub in May 2026 (audit AUDIT-2026-05-20 finding M5). `usages` and `regenerate-variants` were already available. |
+| Files | `FileController` | Listing: `GET /files`, `/files/data`. Trash: `GET /files/trash`, `/files/trash/data`. Upload: `POST /files/upload`. Per-file: `GET /files/{id}/{download,view,show,usages}`, `POST /files/{id}/{delete,restore,force,replace,regenerate,metadata}`. Bulk: `POST /files/bulk` with `action=delete\|restore\|force` and `ids[]`. Picker: `GET /files/picker-manifest`, `/files/{id}/picker-info`; the manifest is loaded once and paginated locally. The `restore`, `force`, `bulk-restore`, `bulk-force` flows require the API trash endpoints (added in API v2.1, 2026-05-17). `replace` (`POST /files/{id}/replace`) and `metadata` (`PATCH /files/{id}`) were added to the hub in May 2026 (audit AUDIT-2026-05-20 finding M5). `usages` and `regenerate-variants` were already available. |
 | Users (admin) | `UserController` | Full CRUD + approve under `/admin/users`. The edit form's email input is read-only unless the actor is `is_superadmin()`; `UserUpdateRequest::payload()` strips `email` from the payload for non-superadmins as defense in depth (the API also rejects with 403 `Iam.cannotModifyEmail`). |
 | Audit (admin) | `AuditController` | `GET /admin/audit`, `/admin/audit/{id}`, `/admin/audit/entity/{type}/{id}` |
 | API Keys (admin) | `ApiKeyController` | Full CRUD under `/admin/api-keys` |
@@ -445,13 +473,14 @@ The project uses a **modular architecture** where each feature is self-contained
 - Language: `app/Language/{en,es}/` (global strings, app-wide messages)
 - Config: `app/Config/` (`Routes.php`, `Filters.php`, `Autoload.php`, `ApiClient.php`, `Services.php`)
 - Tests: `tests/unit/` (libraries, filters, helpers, services, views) and `tests/feature/` (controller flows)
+- Remote tables: new `remoteTable` views must declare a unique `mode`, bind the table with `:class="'density-' + density`, and use `table_toolbar.php` flags explicitly. `showViewToggle` and `showDensityToggle` default to false; enable view cards only when the resource has an explicit field mapping. Keep UI preferences in per-tab `sessionStorage` through `remoteTable` (`table`/`grid`, `sm`/`md`/`lg`), never `localStorage`.
 
 ## Security Considerations
 
 - JWT tokens MUST ONLY be stored in PHP sessions, never in cookies/localStorage accessible by JavaScript. UI-only preferences (e.g. table-vs-grid view) may use `sessionStorage` (per-tab, ephemeral), but never `localStorage` — the audit caught one such regression in 2026-05.
 - CSRF protection enabled by default in CodeIgniter 4. `Config\Security::$regenerate = false` is **intentional** to keep multi-tab forms valid; see the long comment on that property for the trade-off.
 - Input validation required on all form submissions. File uploads cross-check `getMimeType()` (real, via fileinfo) against the per-extension whitelist in `FileUploadRequest::ALLOWED_EXTENSION_MIMES`, not just the client-reported `Content-Type`.
-- Admin routes MUST use both `auth` and `admin` filters. The list of permission codes that grant admin entry lives in `Config\AdminAccess::$permissions` (env-overridable via `ADMIN_PERMISSIONS`); `AdminFilter` reads it dynamically — do NOT hardcode the list back into the filter.
+- Admin resource routes MUST use `auth` plus an explicit `permission:<code>` filter on every endpoint. Use `admin` only for a section-level gate where the whole module intentionally shares that boundary; never rely on it for CRUD authorization. The list of broad-gate permission codes lives in `Config\AdminAccess::$permissions` (env-overridable via `ADMIN_PERMISSIONS`); `AdminFilter` reads it dynamically — do NOT hardcode the list back into the filter.
 - `<meta name="session-expires-at">` is emitted by `BaseWebController` so the JS in `bootSessionExpiryWatcher()` can warn the user 60s before the access token expires (event: `session:expiring-soon`). Avoids the "surprise 401 mid-action" UX.
 - File uploads validated by size (max 10 MB) before being passed to API.
 - API app key stored only in `.env`; never exposed to client-side code.
@@ -471,7 +500,7 @@ This app consumes **ci4-website-builder-api** (https://github.com/yourusername/c
   - `Libraries/ApiClientTest.php` — interface contract and config defaults
   - `Filters/AuthFilterTest.php` — redirect when no token / allow when token present
   - `Helpers/UiHelperTest.php` — `has_active_filters()` logic
-  - `Services/AuthApiServiceTest.php`, `ApiKeyApiServiceTest.php`, `HealthApiServiceTest.php`, `MetricsApiServiceTest.php`
+  - `Services/AuthApiServiceTest.php`, `ApiKeyApiServiceTest.php`, `MetricsApiServiceTest.php`
   - `Views/ErrorViewsSmokeTest.php` — 404/500 error page rendering
 - **Feature tests** in `tests/feature/`:
   - `FileUploadFlowTest.php` — upload, download, delete, auth protection, data endpoint

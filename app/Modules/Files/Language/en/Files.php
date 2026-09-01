@@ -65,6 +65,8 @@ return [
     'metadata_update_failed'   => 'Could not update metadata.',
     'where_used'               => 'Used in',
     'where_used_empty'         => 'This file is not referenced anywhere.',
+    'usages_unavailable_title' => 'Usage check incomplete.',
+    'usages_unavailable_body'  => 'Some usage sources could not be checked. This file cannot be treated as safe to delete until the check completes.',
 
     'trash_title'              => 'Trash',
     'trash_empty'              => 'No files in the trash.',

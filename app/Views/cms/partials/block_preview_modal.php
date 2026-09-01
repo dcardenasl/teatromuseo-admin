@@ -1,4 +1,4 @@
-<div x-data="blockPreview()"
+<div x-data="Object.assign(blockPreview(), { isCompact: true })"
      x-show="isOpen"
      x-cloak
      class="fixed inset-0 z-[60] flex items-center justify-center p-4"
@@ -9,25 +9,35 @@
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="close()"></div>
 
     <!-- Modal -->
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-[96vw] h-[92vh] flex flex-col overflow-hidden">
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[78vh] max-h-[760px] flex flex-col overflow-hidden">
 
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <div class="flex items-center justify-between gap-4 px-5 py-3.5 border-b border-gray-200 shrink-0">
             <div>
                 <h3 class="text-base font-semibold text-gray-900">Vista Previa del Bloque</h3>
                 <p x-show="blockKey" class="text-xs text-gray-500 mt-0.5">
                     Diseño: <code x-text="blockKey" class="font-mono bg-gray-100 px-1 rounded"></code>
                 </p>
             </div>
-            <button @click="close()" class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <div class="flex items-center gap-2">
+                <button type="button"
+                        @click="isCompact = !isCompact"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                        :aria-label="isCompact ? 'Expandir vista previa' : 'Reducir vista previa'">
+                    <svg x-show="isCompact" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 3 6 6-6 6"/><path d="M21 9H3"/><path d="m9 21-6-6 6-6"/><path d="M3 15h18"/></svg>
+                    <svg x-show="!isCompact" x-cloak xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 14 6 6 6-6"/><path d="M10 20V4"/><path d="m20 10-6-6-6 6"/><path d="M14 4v16"/></svg>
+                    <span x-text="isCompact ? 'Expandir' : 'Reducir'"></span>
+                </button>
+                <button type="button" @click="close()" aria-label="Cerrar vista previa" class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
-            </button>
+                </button>
+            </div>
         </div>
 
         <!-- Body -->
-        <div class="flex-1 p-6 bg-slate-50/50 flex flex-col min-h-0 overflow-hidden">
+        <div class="flex-1 p-4 bg-slate-50/50 flex flex-col min-h-0 overflow-hidden">
 
             <!-- Loading -->
             <div x-show="loading" class="flex items-center justify-center py-16 shrink-0">
@@ -41,7 +51,7 @@
             </div>
 
             <!-- Device Selector -->
-            <div x-show="!loading && !error && html" class="flex items-center justify-center gap-2 mb-4 p-2 bg-gray-50 border border-gray-200 rounded-xl shrink-0">
+            <div x-show="!loading && !error && html" class="flex items-center justify-center gap-2 mb-3 p-1.5 bg-gray-50 border border-gray-200 rounded-xl shrink-0">
                 <button @click="deviceMode = 'desktop'" :class="deviceMode === 'desktop' ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-monitor"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
                     Escritorio
@@ -58,13 +68,15 @@
 
             <!-- Preview HTML Container -->
             <meta name="public-site-url" content="<?= esc(rtrim((string) env('PUBLIC_SITE_URL'), '/')) ?>">
-            <div x-show="!loading && !error && html" class="flex-1 flex justify-center bg-gray-100 p-4 border border-gray-200 rounded-xl min-h-0 overflow-hidden">
+            <div x-show="!loading && !error && html" class="flex-1 flex justify-center bg-gray-100 p-3 border border-gray-200 rounded-xl min-h-0 overflow-hidden">
                 <div :class="{
                         'w-full': deviceMode === 'desktop',
                         'w-[768px]': deviceMode === 'tablet',
-                        'w-[375px]': deviceMode === 'mobile'
+                        'w-[375px]': deviceMode === 'mobile',
+                        'h-[380px]': isCompact,
+                        'h-full': !isCompact
                      }"
-                     class="transition-all duration-300 ease-in-out border border-gray-200 bg-white shadow-md rounded-lg flex flex-col min-h-0 overflow-hidden">
+                     class="max-h-full transition-all duration-300 ease-in-out border border-gray-200 bg-white shadow-md rounded-lg flex flex-col min-h-0 overflow-hidden">
                     <iframe x-ref="previewIframe" class="w-full h-full border-0 bg-transparent flex-1"></iframe>
                 </div>
             </div>

@@ -47,8 +47,9 @@ final class ApiClientTest extends CIUnitTestCase
         $this->assertSame('http://localhost:8180', $config->baseUrl);
         $this->assertSame(15, $config->timeout);
         $this->assertSame(5, $config->connectTimeout);
+        $this->assertSame(0, $config->maxRetries);
         $this->assertSame('/api/v1', $config->apiPrefix);
-        $this->assertSame('CI4 Website Builder Admin', $config->appName);
+        $this->assertSame('Teatromuseo Admin', $config->appName);
     }
 
     public function testConfigReadsEnvVariables(): void
@@ -74,7 +75,7 @@ final class ApiClientTest extends CIUnitTestCase
 
     public function testBaseHeadersFallbackToSessionLocaleWhenCurrentLocaleUnsupported(): void
     {
-        Services::language()->setLocale('fr');
+        Services::language()->setLocale('de');
         session()->set('locale', 'es');
 
         $client = new ApiClient(new ApiClientConfig());
@@ -85,8 +86,8 @@ final class ApiClientTest extends CIUnitTestCase
 
     public function testBaseHeadersFallbackToDefaultLocaleWhenNoSupportedLocaleFound(): void
     {
-        Services::language()->setLocale('fr');
-        session()->set('locale', 'pt');
+        Services::language()->setLocale('de');
+        session()->set('locale', 'it');
 
         $client = new ApiClient(new ApiClientConfig());
         $headers = $this->invokeMethod($client, 'baseHeaders');
@@ -183,6 +184,53 @@ final class ApiClientTest extends CIUnitTestCase
         $this->assertTrue($result['ok']);
         $this->assertSame(200, $result['status']);
         $this->assertSame(['data' => ['items' => []]], $result['data']);
+    }
+
+    public function testRequestHonorsExplicitRetryBudget(): void
+    {
+        session()->set(SessionKeys::ACCESS_TOKEN->value, 'test-token');
+        $client   = new ApiClient(new ApiClientConfig());
+        $response  = $this->createResponseMock(503, ['detail' => 'unavailable']);
+        $http      = $this->createMock(\CodeIgniter\HTTP\CURLRequest::class);
+
+        $http->expects($this->once())
+            ->method('request')
+            ->with(
+                'GET',
+                '/api/v1/test',
+                $this->callback(function (array $options): bool {
+                    $this->assertArrayNotHasKey('max_retries', $options);
+
+                    return true;
+                })
+            )
+            ->willReturn($response);
+
+        $this->setProtectedProperty($client, 'http', $http);
+
+        $result = $client->request('GET', '/test', ['max_retries' => 0], true);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(503, $result['status']);
+    }
+
+    public function testDefaultReadDoesNotRetryOnServerFailure(): void
+    {
+        session()->set(SessionKeys::ACCESS_TOKEN->value, 'test-token');
+        $client  = new ApiClient(new ApiClientConfig());
+        $response = $this->createResponseMock(503, ['detail' => 'unavailable']);
+        $http = $this->createMock(\CodeIgniter\HTTP\CURLRequest::class);
+
+        $http->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
+
+        $this->setProtectedProperty($client, 'http', $http);
+
+        $result = $client->request('GET', '/test', [], true);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(503, $result['status']);
     }
 
     public function testPostForwardsToRequestAsPostMethod(): void

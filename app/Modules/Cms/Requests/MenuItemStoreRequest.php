@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Cms\Requests;
 
 use App\Modules\Cms\Support\TranslationRowNormalizer;
+use App\Support\CmsFieldEnums;
 use App\Support\Requests\BaseFormRequest;
 
 class MenuItemStoreRequest extends BaseFormRequest
@@ -32,7 +33,7 @@ class MenuItemStoreRequest extends BaseFormRequest
         return [
             'menu_id'     => 'required|integer',
             'parent_id'   => 'permit_empty|integer',
-            'link_type'   => 'required|in_list[page,entry,collection_listing,custom_url,no_link]',
+            'link_type'   => 'required|' . CmsFieldEnums::inListRule(CmsFieldEnums::MENU_LINK_TYPES),
             'page_id'     => 'permit_empty|integer',
             'entry_id'    => 'permit_empty|integer',
             'collection_id' => 'permit_empty|integer',
@@ -41,6 +42,9 @@ class MenuItemStoreRequest extends BaseFormRequest
             'css_class'   => 'permit_empty|string|max_length[100]',
             'sort_order'  => 'required|integer',
             'is_active'   => 'permit_empty|in_list[0,1]',
+            'translations' => 'permit_empty',
+            'translations.*.label' => 'permit_empty|string|max_length[150]',
+            'translations.*.custom_url' => 'permit_empty|string|max_length[500]',
         ];
     }
 
@@ -84,7 +88,7 @@ class MenuItemStoreRequest extends BaseFormRequest
                 $customUrl = isset($row['custom_url']) ? trim((string) $row['custom_url']) : '';
 
                 return [
-                    'language_id' => (int) $languageId,
+                    'language_id' => (int) ($row['language_id'] ?? $languageId),
                     'label'       => $label,
                     'custom_url'  => $payload['link_type'] === 'custom_url' ? ($customUrl !== '' ? $customUrl : null) : null,
                 ];

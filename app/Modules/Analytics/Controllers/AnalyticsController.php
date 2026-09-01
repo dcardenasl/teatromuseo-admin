@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Analytics\Controllers;
 
 use App\Controllers\BaseWebController;
-use App\Modules\Analytics\Services\AnalyticsApiService;
+use App\Libraries\BffApiClientInterface;
 use App\Support\CatalogOptions;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -13,12 +13,12 @@ use Psr\Log\LoggerInterface;
 
 class AnalyticsController extends BaseWebController
 {
-    protected AnalyticsApiService $analyticsService;
+    protected BffApiClientInterface $bffApiClient;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
-        $this->analyticsService = service('analyticsApiService');
+        $this->bffApiClient = service('bffApiClient');
     }
 
     public function index(): string
@@ -39,41 +39,65 @@ class AnalyticsController extends BaseWebController
             $period = '7d';
         }
 
-        $params = ['period' => $period];
+        $response = $this->safeApiCall(fn () => $this->bffApiClient->getAdminAnalytics($period));
+        $this->maybeFlashDevError($response);
 
-        $overviewResponse  = $this->safeApiCall(fn () => $this->analyticsService->overview($params));
-        $pagesResponse     = $this->safeApiCall(fn () => $this->analyticsService->pages(array_merge($params, ['limit' => 10])));
-        $referrersResponse = $this->safeApiCall(fn () => $this->analyticsService->referrers(array_merge($params, ['limit' => 10])));
-        $devicesResponse   = $this->safeApiCall(fn () => $this->analyticsService->devices($params));
-        $timeseriesResponse = $this->safeApiCall(fn () => $this->analyticsService->timeseries($params));
-
-        $this->maybeFlashDevError($overviewResponse);
-        $this->maybeFlashDevError($pagesResponse);
-        $this->maybeFlashDevError($referrersResponse);
-        $this->maybeFlashDevError($devicesResponse);
-        $this->maybeFlashDevError($timeseriesResponse);
-
-        $overview  = $this->extractData($overviewResponse);
-        $pages     = $this->extractData($pagesResponse);
-        $referrers = $this->extractData($referrersResponse);
-        $devices   = $this->extractData($devicesResponse);
-        $timeseries = $this->extractData($timeseriesResponse);
-
-        $pagesData      = isset($pages['data']) && is_array($pages['data']) ? $pages['data'] : [];
-        $referrersData  = isset($referrers['data']) && is_array($referrers['data']) ? $referrers['data'] : [];
-        $timeseriesData = isset($timeseries['data']) && is_array($timeseries['data']) ? $timeseries['data'] : [];
+        $analytics = $this->extractAnalyticsProjection($response);
 
         return $this->render('analytics/index', [
             'title'          => lang('Analytics.title'),
-            'overview'       => $overview,
-            'pages'          => $pagesData,
-            'referrers'      => $referrersData,
-            'devices'        => $devices,
-            'timeseries'     => $timeseriesData,
+            'overview'       => $analytics['overview'],
+            'pages'          => $analytics['pages'],
+            'referrers'      => $analytics['referrers'],
+            'devices'        => $analytics['devices'],
+            'timeseries'     => $analytics['timeseries'],
             'filters'        => ['period' => $period],
             'defaultFilters' => $defaultFilters,
             'hasFilters'     => $period !== $defaultFilters['period'],
             'periodOptions'  => $periodOptions,
         ]);
+    }
+
+    /**
+     * Translate the versioned BFF aggregate into the flat shape the existing
+     * Analytics view consumes. A failed aggregate becomes empty sections,
+     * never fabricated zero values.
+     *
+     * @param array<string, mixed> $response
+     * @return array{overview: array<string, mixed>, pages: list<array<string, mixed>>, referrers: list<array<string, mixed>>, devices: array<string, mixed>, timeseries: list<array<string, mixed>>}
+     */
+    private function extractAnalyticsProjection(array $response): array
+    {
+        $aggregate = $this->extractData($response);
+        $sections  = is_array($aggregate['sections'] ?? null) ? $aggregate['sections'] : [];
+
+        $pages = $this->sectionRows($sections['pages']['data'] ?? null);
+        $referrers = $this->sectionRows($sections['referrers']['data'] ?? null);
+        $timeseries = $this->sectionRows($sections['timeseries']['data'] ?? null);
+
+        return [
+            'overview'  => is_array($sections['overview'] ?? null) ? $sections['overview'] : [],
+            'pages'     => $pages,
+            'referrers' => $referrers,
+            'devices'   => is_array($sections['devices'] ?? null) ? $sections['devices'] : [],
+            'timeseries' => $timeseries,
+        ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function sectionRows(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($value as $row) {
+            if (is_array($row)) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
     }
 }

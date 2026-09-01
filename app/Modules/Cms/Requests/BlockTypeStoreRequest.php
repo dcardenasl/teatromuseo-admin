@@ -28,11 +28,11 @@ class BlockTypeStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'block_key'         => 'required|min_length[2]|max_length[255]',
-            'name'              => 'required|min_length[2]|max_length[255]',
+            'block_key'         => 'required|min_length[2]|max_length[50]',
+            'name'              => 'required|min_length[2]|max_length[100]',
             'description'       => 'permit_empty|string',
-            'category'          => 'required|min_length[2]|max_length[255]',
-            'icon'              => 'permit_empty|string|max_length[255]',
+            'category'          => 'required|min_length[2]|max_length[50]',
+            'icon'              => 'permit_empty|string|max_length[50]',
             'schema_definition' => 'required|string',
             'supports_pages'    => 'permit_empty|in_list[0,1]',
             'supports_entries'  => 'permit_empty|in_list[0,1]',

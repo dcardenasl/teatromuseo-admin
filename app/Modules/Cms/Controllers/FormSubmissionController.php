@@ -34,7 +34,7 @@ class FormSubmissionController extends BaseWebController
         $counts = $this->extractData($countsResponse) ?: ['new' => 0, 'read' => 0, 'replied' => 0, 'spam' => 0, 'archived' => 0];
 
         return $this->render('cms/form_submissions/index', [
-            'title'        => lang('FormSubmissions.title'),
+            'title'        => lang('FormSubmissions.submissions_title'),
             'limitOptions' => [10, 25, 50],
             'activeStatus' => $status,
             'counts'       => $counts,
@@ -58,7 +58,7 @@ class FormSubmissionController extends BaseWebController
             $this->maybeFlashDevError($response);
 
             return $this->withError(
-                lang('FormSubmissions.not_found'),
+                lang('FormSubmissions.submissions_not_found'),
                 route_to('admin.cms.form_submissions')
             );
         }
@@ -75,7 +75,7 @@ class FormSubmissionController extends BaseWebController
         }
 
         return $this->render('cms/form_submissions/show', [
-            'title'      => lang('FormSubmissions.detail_title'),
+            'title'      => lang('FormSubmissions.submissions_details'),
             'submission' => $submission,
         ]);
     }
@@ -87,17 +87,17 @@ class FormSubmissionController extends BaseWebController
 
         $allowed = ['new', 'read', 'replied', 'spam', 'archived'];
         if (! in_array($status, $allowed, true)) {
-            return $this->withError(lang('FormSubmissions.invalid_status'), route_to('admin.cms.form_submissions'));
+            return $this->withError(lang('FormSubmissions.submissions_invalid_status'), route_to('admin.cms.form_submissions'));
         }
 
         $response = $this->safeApiCall(fn () => $this->submissionService->updateStatus($id, $status));
 
         if (! $response['ok']) {
-            return $this->failApi($response, lang('FormSubmissions.update_failed'), route_to('admin.cms.form_submissions.show', $id));
+            return $this->failApi($response, lang('FormSubmissions.submissions_update_failed'), route_to('admin.cms.form_submissions.show', $id));
         }
 
         return redirect()
             ->to(route_to('admin.cms.form_submissions.show', $id))
-            ->with('success', lang('FormSubmissions.update_success'));
+            ->with('success', lang('FormSubmissions.submissions_update_success'));
     }
 }

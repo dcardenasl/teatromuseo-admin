@@ -14,6 +14,7 @@ export const schemaEditor = (initialSchema = {}, initialIsContainer = false, sou
     schemaFields: [],
     configFields: [],
     schemaJson: '{}',
+    navigationDefinition: null,
     isContainer: initialIsContainer,
     allowedChildren: [],
 
@@ -23,6 +24,7 @@ export const schemaEditor = (initialSchema = {}, initialIsContainer = false, sou
         this.schemaFields = this._schemaToRows(initialSchema.fields || {});
         this.configFields = this._schemaToRows(initialSchema.config_fields || {});
         this.allowedChildren = initialSchema.allowed_children || [];
+        this.navigationDefinition = initialSchema.navigation || null;
         this.rebuildJson();
     },
 
@@ -84,6 +86,9 @@ export const schemaEditor = (initialSchema = {}, initialIsContainer = false, sou
                 description: this.selectedSource?.description || '',
             },
         };
+        if (this.navigationDefinition && typeof this.navigationDefinition === 'object') {
+            schema.navigation = this.navigationDefinition;
+        }
         if (this.isContainer) schema.allowed_children = this.allowedChildren || [];
         this.schemaJson = JSON.stringify(schema, null, 2);
     },

@@ -63,13 +63,16 @@ $blockKey    = $blockType['block_key'] ?? '';
 $previewUrl  = route_to('admin.cms.blocks.preview');
 $configJs    = json_encode($blockConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$serverFieldErrors = session('fieldErrors');
+$serverFieldErrors = is_array($serverFieldErrors) ? $serverFieldErrors : [];
+$serverFieldErrorsJs = json_encode($serverFieldErrors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 ?>
 <meta name="block-preview-url" content="<?= esc($previewUrl) ?>">
 
 <div class="mb-4">
     <a href="<?= route_to($ownerBlocksRoute, (string) $page['id']) ?>"
        class="text-sm text-brand-600 hover:text-brand-700">
-        &larr; <?= esc(lang('Pages.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
+        &larr; <?= esc(lang('Blocks.block_back_to_blocks')) ?> — <?= esc($ownerLabel) ?>
     </a>
 </div>
 
@@ -89,13 +92,13 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
             <?php endif; ?>
         </div>
         <button type="button"
-                onclick="window.openBlockEditPreview && window.openBlockEditPreview(<?= esc(json_encode($blockKey), 'attr') ?>)"
+                data-block-preview-key="<?= esc($blockKey, 'attr') ?>"
                 class="shrink-0 flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-400 bg-white hover:bg-brand-50 px-3 py-1.5 rounded-lg transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.573-3.007-9.963-7.178Z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
             </svg>
-            <?= esc(lang('Pages.block_preview_button')) ?>
+            <?= esc(lang('Blocks.block_preview_button')) ?>
         </button>
     </div>
 
@@ -103,10 +106,12 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
         <form method="post"
               id="block-edit-form"
               action="<?= route_to($ownerUpdateRoute, (string) $page['id'], (string) $block['id']) ?>"
-              class="space-y-6">
+              class="space-y-6"
+              data-server-field-errors="<?= esc((string) $serverFieldErrorsJs, 'attr') ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="return_to" value="<?= esc($returnTo ?? '', 'attr') ?>">
             <input type="hidden" name="block_id" value="<?= esc((string) $blockIdValue) ?>">
+            <input type="hidden" name="parent_instance_id" value="<?= esc((string) ($block['parent_instance_id'] ?? '')) ?>">
 
             <!-- Hidden sort order and active checkbox -->
             <input type="hidden" name="sort_order" value="<?= esc((string) $sortOrderValue) ?>">
@@ -115,7 +120,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                     <input type="checkbox" name="is_active" value="1"
                            <?= $isActiveValue ? 'checked' : '' ?>
                            class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                    <span class="text-sm font-medium text-gray-700"><?= esc(lang('Pages.block_active_label')) ?></span>
+                    <span class="text-sm font-medium text-gray-700"><?= esc(lang('Blocks.block_active_label')) ?></span>
                 </label>
             </div>
 
@@ -123,10 +128,19 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
             <?php if (! empty($configFields)): ?>
             <div class="border-t border-gray-100 pt-5"
                  x-data="blockInstanceConfig(<?= esc($entryOptionsUrlJs, 'attr') ?>, <?= esc($configJs, 'attr') ?>)">
-                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Pages.block_config_section')) ?></h4>
-                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Pages.block_config_desc')) ?></p>
+                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Blocks.block_config_section')) ?></h4>
+                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Blocks.block_config_desc')) ?></p>
+                <?php if (in_array($blockKey, ['collection_grid', 'collection_listing', 'collection_timeline'], true)): ?>
+                    <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                        <?= esc(lang('Blocks.block_navigation_auto_help')) ?>
+                    </div>
+                <?php endif; ?>
                 <div class="space-y-4">
                     <?php foreach ($configFields as $cfKey => $cf):
+                        if (in_array($blockKey, ['collection_grid', 'collection_listing'], true)
+                            && in_array($cfKey, ['date_field', 'order_by', 'order_direction'], true)) {
+                            continue;
+                        }
                         $cfType    = $cf['type']     ?? 'string';
                         $cfLabel   = $cf['label']    ?? $cfKey;
                         $cfDefault = $cf['default']  ?? '';
@@ -135,7 +149,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                         $cfReq     = ! empty($cf['required']);
                         $cfFieldName = "block_config[{$cfKey}]";
                         ?>
-                    <div class="space-y-1">
+                    <div class="space-y-1" <?php if ($cfKey === 'navigation_target_type' || $cfKey === 'page_id' || $cfKey === 'collection_id'): ?>x-show="navigationMode === 'internal'"<?php elseif ($cfKey === 'external_target'): ?>x-show="navigationMode === 'external'"<?php endif; ?>>
                         <?php if ($cfType !== 'media_reference'): ?>
                             <label class="block text-xs font-semibold text-gray-700">
                                 <?= esc($cfLabel) ?>
@@ -158,9 +172,15 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                 <option value="">— Seleccionar —</option>
                                 <?php foreach ($cfOptions as $opt):
                                     $val = is_array($opt) ? $opt['value'] : $opt;
-                                    $lbl = is_array($opt) ? $opt['label'] : $opt;
+                                    $dateLabels = [
+                                        'auto' => 'Automática', 'published_at' => 'Fecha de publicación', 'created_at' => 'Fecha de creación',
+                                        'listing.publication_date' => 'Fecha editorial', 'listing.start_date' => 'Fecha de inicio', 'listing.end_date' => 'Fecha de término',
+                                        'listing.opening_date' => 'Fecha de inauguración', 'listing.closing_date' => 'Fecha de cierre', 'listing.premiere_date' => 'Fecha de estreno',
+                                        'listing.performance_date' => 'Fecha de función', 'listing.recorded_at' => 'Fecha de registro',
+                                    ];
+                                    $lbl = is_array($opt) ? $opt['label'] : (($cfKey === 'date_field' && isset($dateLabels[(string) $opt]) ? $dateLabels[(string) $opt] : $opt));
                                     ?>
-                                    <option value="<?= esc((string) $val) ?>">
+                                    <option value="<?= esc((string) $val) ?>" <?= (string) $cfVal === (string) $val ? 'selected' : '' ?>>
                                         <?= esc((string) $lbl) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -180,6 +200,20 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                 <p x-show="!collectionId" class="text-[11px] text-gray-400">Selecciona primero una colección.</p>
                                 <p x-show="entryOptionsError" class="text-[11px] text-red-500" x-text="entryOptionsError"></p>
                             </div>
+                        <?php elseif ($cfType === 'select' && $cfKey === 'collection_key'): ?>
+                            <select name="<?= esc($cfFieldName, 'attr') ?>"
+                                    x-model="collectionKey"
+                                    @change="onCollectionKeyChange($event.target.value)"
+                                    class="<?= esc(input_class($cfFieldName)) ?>"
+                                    <?= $cfReq ? 'required' : '' ?>>
+                                <option value="">— Seleccionar colección —</option>
+                                <?php foreach ($cfOptions as $opt):
+                                    $val = is_array($opt) ? $opt['value'] : $opt;
+                                    $lbl = is_array($opt) ? $opt['label'] : $opt;
+                                    ?>
+                                    <option value="<?= esc((string) $val) ?>" <?= (string) $cfVal === (string) $val ? 'selected' : '' ?>><?= esc((string) $lbl) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         <?php elseif ($cfType === 'select' && ! empty($cfOptions)): ?>
                             <?php
                             $flatOptionValues = array_map(function ($opt) {
@@ -193,6 +227,8 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                             }
                             ?>
                             <select name="<?= esc($cfFieldName, 'attr') ?>"
+                                    <?php if ($cfKey === 'navigation_mode'): ?>x-model="navigationMode"<?php elseif ($cfKey === 'navigation_target_type'): ?>x-model="navigationTargetType"<?php endif; ?>
+                                    <?php if ($cfKey === 'source_type'): ?>x-model="sourceType" @change="onSourceTypeChange($event.target.value); $dispatch('listing-source-changed', {source: $event.target.value})"<?php endif; ?>
                                     class="<?= esc(input_class($cfFieldName)) ?>"
                                     <?= $cfReq ? 'required' : '' ?>>
                                 <option value="">— Seleccionar —</option>
@@ -221,7 +257,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                 'required'   => $cfReq,
                                 'accept'     => (string) ($cf['accept'] ?? 'image'),
                                 'help'       => (string) ($cf['help'] ?? ''),
-                                'previewClass' => 'h-36 w-full rounded-xl border border-gray-200 object-cover',
+                                'previewClass' => 'h-32 w-full rounded-xl border border-gray-200 object-contain bg-slate-50',
                             ]) ?>
                         <?php else: ?>
                             <input type="<?= $cfType === 'url' ? 'url' : ($cfType === 'integer' ? 'number' : 'text') ?>"
@@ -230,10 +266,20 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                                    <?= $cfReq ? 'required' : '' ?>>
                         <?php endif; ?>
+                        <?php if (! empty($cf['description'])): ?>
+                            <p class="text-[11px] leading-relaxed text-gray-500"><?= esc((string) $cf['description']) ?></p>
+                        <?php endif; ?>
                         <?= render_field_error($cfFieldName) ?>
                     </div>
                     <?php endforeach; ?>
                 </div>
+                <?php if (in_array($blockKey, ['collection_grid', 'collection_listing'], true)): ?>
+                    <?= view('cms/pages/blocks/_listing_projection', [
+                        'listingFieldCatalog' => $listingFieldCatalog ?? [],
+                        'submittedBlockConfig' => $submittedBlockConfig,
+                        'blockConfig' => $blockConfig,
+                    ]) ?>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
 
@@ -243,8 +289,8 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
             <div class="border-t border-gray-100 pt-5"
                  x-ref="langTabs"
                  x-data="langTabs(<?= $initialTabId ?>, '<?= esc(route_to('admin.cms.translate'), 'attr') ?>', '<?= esc($defaultLangCode, 'attr') ?>')">
-                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Pages.block_content_section')) ?></h4>
-                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Pages.block_content_desc')) ?></p>
+                <h4 class="text-sm font-semibold text-gray-800 mb-1"><?= esc(lang('Blocks.block_content_section')) ?></h4>
+                <p class="text-xs text-gray-500 mb-4"><?= esc(lang('Blocks.block_content_desc')) ?></p>
 
                 <!-- Tab bar -->
                 <div class="flex items-center justify-between border-b border-gray-200 mb-4">
@@ -315,12 +361,17 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                     <?php foreach ($fields as $fieldKey => $field):
                         $ft       = $field['type']  ?? 'string';
                         $flabel   = $field['label']  ?? $fieldKey;
+                        if ($blockKey === 'team_member' && $fieldKey === 'position') {
+                            $flabel = 'Cargo principal';
+                        } elseif ($blockKey === 'team_member' && $fieldKey === 'roles') {
+                            $flabel = 'Roles adicionales';
+                        }
                         $freq     = ! empty($field['required']) && $isDefault;
                         $fval     = $transRow['block_data'][$fieldKey] ?? '';
                         $foptions = isset($field['options']) ? (array) $field['options'] : [];
                         $fieldName = "translations[{$idx}][block_data][{$fieldKey}]";
                         ?>
-                    <div class="space-y-1">
+                    <div class="space-y-1" <?php if ($fieldKey === 'external_url'): ?>x-show="navigationMode === 'external'" x-cloak<?php endif; ?>>
                         <?php if ($ft !== 'file' && $ft !== 'repeater' && $ft !== 'media_reference'): ?>
                         <label class="block text-xs font-semibold text-gray-700">
                             <?= esc($flabel) ?>
@@ -361,8 +412,15 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                        <?= $freq ? 'required' : '' ?>>
                             </div>
                             <?= render_field_error($fieldName) ?>
-                        <?php elseif ($ft === 'integer'): ?>
+                        <?php elseif (in_array($ft, ['integer', 'int', 'number'], true)): ?>
                             <input type="number"
+                                   name="<?= esc($fieldName, 'attr') ?>"
+                                   value="<?= esc((string) old($fieldName, $fval)) ?>"
+                                   class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                   <?= $freq ? 'required' : '' ?>>
+                            <?= render_field_error($fieldName) ?>
+                        <?php elseif (in_array($ft, ['date', 'datetime'], true)): ?>
+                            <input type="<?= $ft === 'datetime' ? 'datetime-local' : 'date' ?>"
                                    name="<?= esc($fieldName, 'attr') ?>"
                                    value="<?= esc((string) old($fieldName, $fval)) ?>"
                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -377,6 +435,55 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                        class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
                                 <span class="text-sm text-gray-600"><?= esc($flabel) ?></span>
                             </label>
+                            <?= render_field_error($fieldName) ?>
+                        <?php elseif ($ft === 'entry_reference'): ?>
+                            <?php
+                            $referenceValue = old($fieldName, $fval);
+                            if (is_array($referenceValue)) {
+                                $referenceValue = (string) ($referenceValue['collection_key'] ?? '') . ':' . (string) ($referenceValue['entry_id'] ?? '');
+                            }
+                            ?>
+                            <select name="<?= esc($fieldName, 'attr') ?>"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                    <?= $freq ? 'required' : '' ?>>
+                                <option value="">— Seleccionar entrada —</option>
+                                <?php foreach ($foptions as $opt):
+                                    $val = is_array($opt) ? $opt['value'] : $opt;
+                                    $lbl = is_array($opt) ? $opt['label'] : $opt;
+                                    ?>
+                                    <option value="<?= esc((string) $val) ?>" <?= (string) $referenceValue === (string) $val ? 'selected' : '' ?>><?= esc((string) $lbl) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?= render_field_error($fieldName) ?>
+                        <?php elseif ($ft === 'entry_reference_list'): ?>
+                            <?php
+                            $referenceValues = is_array($fval) ? $fval : [];
+                            if (isset($referenceValues['entry_id'])) {
+                                $referenceValues = [$referenceValues];
+                            }
+                            $referenceValues = array_map(static function (mixed $reference): string {
+                                if (is_array($reference)) {
+                                    return (string) ($reference['collection_key'] ?? '') . ':' . (string) ($reference['entry_id'] ?? '');
+                                }
+                                return (string) $reference;
+                            }, $referenceValues);
+                            $oldReferenceValues = old($fieldName, null);
+                            if (is_array($oldReferenceValues)) {
+                                $referenceValues = array_map('strval', $oldReferenceValues);
+                            }
+                            ?>
+                            <select name="<?= esc($fieldName, 'attr') ?>[]"
+                                    multiple
+                                    size="6"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                    <?= $freq ? 'required' : '' ?>>
+                                <?php foreach ($foptions as $opt):
+                                    $val = is_array($opt) ? $opt['value'] : $opt;
+                                    $lbl = is_array($opt) ? $opt['label'] : $opt;
+                                    ?>
+                                    <option value="<?= esc((string) $val) ?>" <?= in_array((string) $val, $referenceValues, true) ? 'selected' : '' ?>><?= esc((string) $lbl) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                             <?= render_field_error($fieldName) ?>
                         <?php elseif ($ft === 'select' && ! empty($foptions)): ?>
                             <select name="<?= esc($fieldName, 'attr') ?>"
@@ -418,7 +525,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                 'help'        => (string) ($field['help'] ?? ''),
                                 'fieldKey'    => $fieldKey,
                                 'copyEnabled' => count($languages) > 1,
-                                'previewClass' => 'h-36 w-full rounded-xl border border-gray-200 object-cover',
+                                'previewClass' => 'h-32 w-full rounded-xl border border-gray-200 object-contain bg-slate-50',
                             ]) ?>
                             <?= render_field_error($fieldName) ?>
                         <?php elseif ($ft === 'file' && $isImageAccept((string) ($field['accept'] ?? 'image'))): ?>
@@ -469,7 +576,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                         <video :src="previewUrl" class="h-24 w-auto rounded border border-gray-200" controls muted></video>
                                     </template>
                                     <template x-if="accept !== 'video'">
-                                        <img :src="previewUrl" class="h-24 w-auto rounded border border-gray-200 object-cover">
+                                        <img :src="previewUrl" class="max-h-48 max-w-full rounded border border-gray-200 object-contain bg-slate-50">
                                     </template>
                                 </div>
                                 <div class="flex gap-2">
@@ -517,6 +624,9 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                             <label class="block text-xs font-semibold text-gray-700 mb-2">
                                 <?= esc($flabel) ?>
                             </label>
+                            <?php if ($blockKey === 'team_member' && $fieldKey === 'roles'): ?>
+                                <p class="mb-2 text-xs text-gray-500">Agrega otros roles o responsabilidades. El cargo principal y la profesión se completan en sus campos separados.</p>
+                            <?php endif; ?>
                             <div x-data="blockRepeaterField(<?= $existingItemsJs ?>, <?= $itemFieldsJs ?>, <?= $fieldKeyJs ?>, <?= $langIdxJs ?>)"
                                  class="space-y-3">
                                 <template x-for="(item, itemIdx) in items" :key="itemIdx">
@@ -554,7 +664,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                                                 <video :src="previewUrl" class="h-20 w-auto rounded border border-gray-200 object-cover" controls muted></video>
                                                             </template>
                                                             <template x-if="accept === 'image' || accept === 'any'">
-                                                                <img :src="previewUrl" class="h-20 w-auto rounded border border-gray-200 object-cover">
+                                                                <img :src="previewUrl" class="max-h-40 max-w-full rounded border border-gray-200 object-contain bg-slate-50">
                                                             </template>
                                                             <template x-if="accept === 'document' || accept === 'audio'">
                                                                 <a :href="previewUrl" target="_blank" rel="noopener" class="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600 hover:bg-gray-100">
@@ -658,7 +768,7 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
                                                                     </template>
                                                                     <template x-if="(subField.accept || 'image') !== 'video'">
                                                                         <img :src="item[subKey + '_preview_url'] || item[subKey + '_url']"
-                                                                             class="h-20 w-auto rounded border border-gray-200 object-cover">
+                                                                             class="max-h-40 max-w-full rounded border border-gray-200 object-contain bg-slate-50">
                                                                     </template>
                                                                 </div>
                                                                 <button type="button"
@@ -723,47 +833,18 @@ $entryOptionsUrlJs = json_encode((string) ($entryOptionsUrl ?? ''), JSON_UNESCAP
             <?php endif; ?>
 
             <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Pages.block_update_button')) ?></button>
+                <button type="submit" class="<?= esc(action_button_class('primary')) ?>"><?= esc(lang('Blocks.block_update_button')) ?></button>
                 <a href="<?= route_to($ownerBlocksRoute, (string) $page['id']) ?>" class="<?= esc(action_button_class()) ?>"><?= esc(lang('App.cancel')) ?></a>
             </div>
         </form>
     </section>
 </div>
-<script>
-window.openBlockEditPreview = window.openBlockEditPreview || function openBlockEditPreview(blockKey) {
-    const form = document.getElementById('block-edit-form');
-    if (!(form instanceof HTMLFormElement)) {
-        return;
-    }
-
-    const langTabs = form.querySelector('[x-ref="langTabs"]')?._x_dataStack?.[0] || null;
-    const activeLanguageId = Number(langTabs?.active || 0);
-    const activePanel = activeLanguageId > 0
-        ? form.querySelector(`[data-language-id="${activeLanguageId}"]`)
-        : form.querySelector('[data-language-id]');
-
-    const translatedData = typeof window.formValuesToObject === 'function'
-        ? window.formValuesToObject(form)
-        : {};
-    const blockConfig = translatedData.block_config || {};
-    const translationIndex = Number(activePanel?.dataset?.translationIndex || 0);
-    const blockData = translatedData.translations?.[String(translationIndex)]?.block_data || {};
-
-    window.dispatchEvent(new CustomEvent('block-preview-open', {
-        detail: {
-            blockKey,
-            blockConfig,
-            blockData,
-            previewMode: 'live',
-        },
-    }));
-};
-</script>
+<?= view('components/form/server_field_errors') ?>
 <?php $blockEditContent = ob_get_clean(); ?>
 
 <?= view('components/display/form_section', [
-    'title' => 'Pages.block_editor_title',
-    'description' => 'Pages.block_editor_desc',
+    'title' => 'Blocks.block_editor_title',
+    'description' => 'Blocks.block_editor_desc',
     'content' => $blockEditContent,
     'bodyClass' => 'space-y-5',
 ]) ?>

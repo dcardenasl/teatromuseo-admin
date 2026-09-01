@@ -48,7 +48,7 @@ class SettingStoreRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'setting_key'          => 'required|min_length[2]|max_length[255]',
+            'setting_key'          => 'required|min_length[2]|max_length[100]',
             'setting_value'        => 'permit_empty|string',
             'setting_value_string' => 'permit_empty|string',
             'setting_value_int'    => 'permit_empty|integer',
@@ -57,12 +57,12 @@ class SettingStoreRequest extends BaseFormRequest
             'setting_type'         => 'permit_empty|in_list[string,int,bool,json,file_id]',
             'input_type'           => 'permit_empty|in_list[text,textarea,richtext,url,email,phone,color,number,boolean,image,file,select,code,slug]',
             'options_json'         => 'permit_empty|string',
-            'setting_group'        => 'permit_empty|string|max_length[255]',
+            'setting_group'        => 'permit_empty|string|max_length[50]',
             'is_translatable'      => 'permit_empty|in_list[0,1]',
             'is_required'          => 'permit_empty|in_list[0,1]',
             'is_readonly'          => 'permit_empty|in_list[0,1]',
             'sort_order'           => 'permit_empty|integer',
-            'description'          => 'permit_empty|string',
+            'description'          => 'permit_empty|string|max_length[255]',
         ];
     }
 

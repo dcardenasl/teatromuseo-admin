@@ -4,15 +4,44 @@ import { statusBadgeClass, auditActionBadgeClass, auditResultBadgeClass, auditSe
 import { statusLabel, auditActionLabel, auditResultLabel, auditSeverityLabel } from '../utils/labels.js';
 import { formatDate } from '../utils/date.js';
 import { bootLucideIcons } from '../utils/lucide.js';
+import { fileTypePresentation } from '../utils/fileType.js';
 import { devError } from '../utils/dev.js';
+import { extractListItems, extractListSummary, extractListPagination } from '../utils/listResponse.js';
+
+const VIEW_MODES = new Set(['table', 'grid']);
+const DENSITIES = new Set(['sm', 'md', 'lg']);
+
+const readSessionPreference = (key, allowedValues, fallback) => {
+    try {
+        const storage = typeof window !== 'undefined' ? window.sessionStorage : null;
+        const value = storage?.getItem(key);
+        return allowedValues.has(value) ? value : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
+const writeSessionPreference = (key, value) => {
+    try {
+        const storage = typeof window !== 'undefined' ? window.sessionStorage : null;
+        storage?.setItem(key, value);
+    } catch {
+        // sessionStorage can be unavailable in privacy-restricted contexts.
+    }
+};
 
 export const remoteTableFactory = (config = {}) => {
     const text = uiLabels[localePrefix()] || uiLabels.es;
+    const mode = String(config.mode || 'generic');
+    const viewStorageKey = `admin_table_view_${mode}`;
+    const densityStorageKey = `admin_table_density_${mode}`;
 
     return {
         apiUrl: config.apiUrl || window.location.pathname,
         pageUrl: config.pageUrl || window.location.pathname,
-        mode: config.mode || 'generic',
+        mode,
+        viewMode: readSessionPreference(viewStorageKey, VIEW_MODES, 'table'),
+        density: readSessionPreference(densityStorageKey, DENSITIES, 'md'),
         routes: config.routes || {},
         csrf: config.csrf || { name: '', hash: '' },
         defaultSort: typeof config.defaultSort === 'string' ? config.defaultSort : '',
@@ -32,6 +61,21 @@ export const remoteTableFactory = (config = {}) => {
         requestId: 0,
         debounceTimers: new WeakMap(),
         form: null,
+
+        setViewMode(viewMode) {
+            if (!VIEW_MODES.has(viewMode)) return;
+            this.viewMode = viewMode;
+            writeSessionPreference(viewStorageKey, viewMode);
+            if (typeof this.$nextTick === 'function') this.$nextTick(() => bootLucideIcons());
+        },
+
+        setDensity(density) {
+            if (!DENSITIES.has(density)) return;
+            this.density = density;
+            writeSessionPreference(densityStorageKey, density);
+        },
+
+        filePresentation: fileTypePresentation,
 
         init() {
             this.form = this.$el.querySelector('form[data-table-filter-form="1"]');
@@ -218,9 +262,9 @@ export const remoteTableFactory = (config = {}) => {
         },
 
         extractRows(root) {
-            if (Array.isArray(root.data)) return root.data;
-            if (isObject(root.data) && Array.isArray(root.data.data)) return root.data.data;
-            if (Array.isArray(root.items)) return root.items;
+            const items = extractListItems(root);
+            if (items.length > 0) return items;
+
             const commonKeys = ['users', 'files', 'audit', 'api_keys', 'keys', 'logs', 'entries'];
             for (const key of commonKeys) {
                 if (Array.isArray(root[key])) return root[key];
@@ -230,41 +274,16 @@ export const remoteTableFactory = (config = {}) => {
         },
 
         extractSummary(root) {
-            if (isObject(root.summary)) return root.summary;
-            if (isObject(root.data) && isObject(root.data.summary)) return root.data.summary;
-            return {};
+            return extractListSummary(root);
         },
 
         extractPagination(root, visibleCount) {
-            const meta = isObject(root.meta) ? root.meta : {};
-            const next_cursor = String(meta.next_cursor ?? root.next_cursor ?? '');
-            const prev_cursor = String(meta.prev_cursor ?? root.prev_cursor ?? '');
-            const hasCursor = next_cursor !== '' || prev_cursor !== '' || String(this.query.cursor || '') !== '';
-            const limit = Number(meta.per_page ?? meta.limit ?? root.per_page ?? root.limit ?? this.query.limit ?? this.query.per_page ?? 25) || 25;
-            const safeLimit = Math.max(1, limit);
-            const total = Number(meta.total_items ?? meta.total ?? root.total_items ?? root.total ?? visibleCount) || visibleCount;
-            const current_page = Number(meta.current_page ?? meta.page ?? root.current_page ?? root.page ?? this.query.page ?? 1) || 1;
-            const derivedLastPage = Math.max(1, Math.ceil(Math.max(0, total) / safeLimit));
-            const last_page = Number(meta.last_page ?? root.last_page ?? derivedLastPage) || derivedLastPage;
-            const normalizedCurrentPage = Math.max(1, Math.min(current_page, Math.max(1, last_page)));
-            const from = total <= 0 ? 0 : ((normalizedCurrentPage - 1) * safeLimit) + 1;
-            let to = 0;
-            if (total > 0) {
-                to = visibleCount > 0
-                    ? Math.min(total, from + visibleCount - 1)
-                    : Math.min(total, normalizedCurrentPage * safeLimit);
-            }
-            return {
-                mode: hasCursor ? 'cursor' : 'page',
-                current_page: normalizedCurrentPage,
-                last_page: Math.max(1, last_page),
-                total_items: Math.max(0, total),
-                limit: safeLimit,
-                from: Math.max(0, from),
-                to: Math.max(0, to),
-                next_cursor,
-                prev_cursor
-            };
+            return extractListPagination(root, {
+                currentPage: Number(this.query.page || 1) || 1,
+                perPage: Number(this.query.limit ?? this.query.per_page ?? 25) || 25,
+                visibleCount,
+                cursor: this.query.cursor || '',
+            });
         },
 
         resolveErrorMessage(payload, status) {

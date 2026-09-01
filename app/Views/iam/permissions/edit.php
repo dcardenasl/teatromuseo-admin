@@ -30,7 +30,7 @@ $selectedApp  = (int) old('application_id', (int) ($item['application_id'] ?? 0)
                     <p class="mt-2 text-sm text-amber-700"><?= esc(lang('Iam.no_applications')) ?></p>
                     <input type="hidden" name="application_id" value="<?= esc((string) $selectedApp) ?>">
                 <?php else: ?>
-                    <select id="application_id" name="application_id" required class="<?= esc(input_class('application_id')) ?>">
+                    <select id="application_id" name="application_id" required class="<?= esc(input_class('application_id')) ?>" <?= field_aria_attrs('application_id', required: true) ?>>
                         <?php foreach ($applications as $app): ?>
                             <option value="<?= esc((string) $app['id']) ?>" <?= $selectedApp === (int) $app['id'] ? 'selected' : '' ?>>
                                 <?= esc($app['name']) ?> (#<?= (int) $app['id'] ?>)
@@ -44,21 +44,21 @@ $selectedApp  = (int) old('application_id', (int) ($item['application_id'] ?? 0)
                 <label class="block text-sm font-medium text-gray-700" for="code"><?= esc(lang('Iam.field_code')) ?> <span class="text-red-500">*</span></label>
                 <input id="code" name="code" type="text" required maxlength="100"
                     value="<?= esc(old('code', (string) ($item['code'] ?? ''))) ?>"
-                    class="<?= esc(input_class('code')) ?>">
+                    class="<?= esc(input_class('code')) ?>" <?= field_aria_attrs('code', required: true) ?>>
                 <?= render_field_error('code') ?>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700" for="resource"><?= esc(lang('Iam.field_resource')) ?> <span class="text-red-500">*</span></label>
                 <input id="resource" name="resource" type="text" required maxlength="50"
                     value="<?= esc(old('resource', (string) ($item['resource'] ?? ''))) ?>"
-                    class="<?= esc(input_class('resource')) ?>">
+                    class="<?= esc(input_class('resource')) ?>" <?= field_aria_attrs('resource', required: true) ?>>
                 <?= render_field_error('resource') ?>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700" for="action"><?= esc(lang('Iam.field_action')) ?> <span class="text-red-500">*</span></label>
                 <input id="action" name="action" type="text" required maxlength="50"
                     value="<?= esc(old('action', (string) ($item['action'] ?? ''))) ?>"
-                    class="<?= esc(input_class('action')) ?>">
+                    class="<?= esc(input_class('action')) ?>" <?= field_aria_attrs('action', required: true) ?>>
                 <?= render_field_error('action') ?>
             </div>
         </div>
@@ -66,7 +66,7 @@ $selectedApp  = (int) old('application_id', (int) ($item['application_id'] ?? 0)
         <div>
             <label class="block text-sm font-medium text-gray-700" for="description"><?= esc(lang('Iam.field_description')) ?></label>
             <textarea id="description" name="description" rows="3" maxlength="500"
-                class="<?= esc(input_class('description')) ?>"><?= esc(old('description', (string) ($item['description'] ?? ''))) ?></textarea>
+                class="<?= esc(input_class('description')) ?>" <?= field_aria_attrs('description') ?>><?= esc(old('description', (string) ($item['description'] ?? ''))) ?></textarea>
             <?= render_field_error('description') ?>
         </div>
 

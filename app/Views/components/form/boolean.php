@@ -56,7 +56,7 @@ $offLabelText = (string) lang($off_label);
             <?= render_extra_attrs($attributes) ?>
         >
         <span
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-gray-200 transition-colors duration-200 ease-in-out peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-gray-200 transition-colors duration-200 ease-in-out peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2 <?= esc(field_error_class($name, 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>"
             :style="checked ? 'width: 2.75rem; height: 1.5rem; background-color: var(--color-brand-600)' : 'width: 2.75rem; height: 1.5rem'"
             aria-hidden="true"
         >

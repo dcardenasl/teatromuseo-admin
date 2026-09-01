@@ -52,6 +52,7 @@ return [
     'items_link_type_page'        => 'Página',
     'items_link_type_entry'       => 'Entrada',
     'items_link_type_collection_listing' => 'Listado de colección',
+    'items_link_type_event_listing' => 'Listado de eventos',
     'items_link_type_custom_url'  => 'URL personalizada',
     'items_link_type_no_link'     => 'Sin enlace (Marcador)',
     'items_target_page_label'     => 'Página destino',

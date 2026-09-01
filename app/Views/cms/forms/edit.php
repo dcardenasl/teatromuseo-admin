@@ -50,17 +50,19 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
                 <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_key_readonly') ?></p>
             </div>
             <div class="flex items-end gap-6">
-                <label class="flex items-center gap-2 text-sm">
+                <label class="flex items-center gap-2 text-sm <?= esc(field_error_class('is_active', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                     <input type="hidden" name="is_active" value="0">
-                    <input type="checkbox" name="is_active" value="1" <?= $form['is_active'] ? 'checked' : '' ?> class="rounded border-gray-300">
+                    <input type="checkbox" name="is_active" value="1" <?= $form['is_active'] ? 'checked' : '' ?> class="rounded border-gray-300" <?= field_aria_attrs('is_active') ?> >
                     <?= lang('Forms.field_active') ?>
                 </label>
+                <?= render_field_error('is_active') ?>
                 <div>
-                    <label class="flex items-center gap-2 text-sm">
+                    <label class="flex items-center gap-2 text-sm <?= esc(field_error_class('has_captcha', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                         <input type="hidden" name="has_captcha" value="0">
-                        <input type="checkbox" name="has_captcha" value="1" <?= $form['has_captcha'] ? 'checked' : '' ?> class="rounded border-gray-300">
+                        <input type="checkbox" name="has_captcha" value="1" <?= $form['has_captcha'] ? 'checked' : '' ?> class="rounded border-gray-300" <?= field_aria_attrs('has_captcha') ?> >
                         <?= lang('Forms.field_captcha') ?>
                     </label>
+                    <?= render_field_error('has_captcha') ?>
                     <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_captcha_hint') ?></p>
                 </div>
             </div>
@@ -69,19 +71,22 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_notify_email') ?></label>
-                <input type="email" name="notify_email" class="<?= input_class('notify_email') ?> w-full" placeholder="admin@example.com" value="<?= esc($form['notify_email'] ?? '') ?>">
+                <input type="email" name="notify_email" maxlength="255" class="<?= input_class('notify_email') ?> w-full" placeholder="admin@example.com" value="<?= esc(old('notify_email', $form['notify_email'] ?? '')) ?>" <?= field_aria_attrs('notify_email') ?>>
+                <?= render_field_error('notify_email') ?>
                 <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_notify_email_hint') ?></p>
             </div>
             <div class="space-y-3">
-                <label class="flex items-center gap-2 text-sm">
+                <label class="flex items-center gap-2 text-sm <?= esc(field_error_class('autoreply_enabled', 'ring-2 ring-red-500 ring-offset-1'), 'attr') ?>">
                     <input type="hidden" name="autoreply_enabled" value="0">
-                    <input type="checkbox" name="autoreply_enabled" value="1" <?= $form['autoreply_enabled'] ? 'checked' : '' ?> class="rounded border-gray-300">
+                    <input type="checkbox" name="autoreply_enabled" value="1" <?= $form['autoreply_enabled'] ? 'checked' : '' ?> class="rounded border-gray-300" <?= field_aria_attrs('autoreply_enabled') ?> >
                     <?= lang('Forms.field_autoreply') ?>
                 </label>
+                <?= render_field_error('autoreply_enabled') ?>
                 <div>
                     <label class="mb-1.5 block text-xs font-medium text-gray-600"><?= lang('Forms.field_autoreply_email_field') ?></label>
-                    <input type="text" name="autoreply_email_field" class="<?= input_class('autoreply_email_field') ?> w-full text-sm"
-                           placeholder="email" value="<?= esc($form['autoreply_email_field'] ?? '') ?>">
+                    <input type="text" name="autoreply_email_field" maxlength="100" class="<?= input_class('autoreply_email_field') ?> w-full text-sm"
+                           placeholder="email" value="<?= esc(old('autoreply_email_field', $form['autoreply_email_field'] ?? '')) ?>" <?= field_aria_attrs('autoreply_email_field') ?>>
+                    <?= render_field_error('autoreply_email_field') ?>
                     <p class="mt-1 text-xs text-gray-400"><?= lang('Forms.field_autoreply_email_field_hint') ?></p>
                 </div>
             </div>
@@ -137,27 +142,32 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_name') ?> <span class="text-red-500">*</span></label>
-                                <input type="text" name="translations[<?= $idx ?>][name]" class="<?= input_class('translations.' . $idx . '.name') ?> w-full"
-                                       value="<?= esc($t['name'] ?? '') ?>" <?= $isDefault ? 'required' : '' ?>>
+                                <input type="text" name="translations[<?= $idx ?>][name]" maxlength="255" class="<?= input_class('translations.' . $idx . '.name') ?> w-full"
+                                       value="<?= esc(old('translations.' . $idx . '.name', $t['name'] ?? '')) ?>" <?= $isDefault ? 'required' : '' ?> <?= field_aria_attrs('translations.' . $idx . '.name', $isDefault) ?>>
+                                <?= render_field_error('translations.' . $idx . '.name') ?>
                             </div>
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_submit_label') ?></label>
-                                <input type="text" name="translations[<?= $idx ?>][submit_label]" class="<?= input_class('translations.' . $idx . '.submit_label') ?> w-full"
-                                       value="<?= esc($t['submit_label'] ?? 'Enviar') ?>">
+                                <input type="text" name="translations[<?= $idx ?>][submit_label]" maxlength="100" class="<?= input_class('translations.' . $idx . '.submit_label') ?> w-full"
+                                       value="<?= esc(old('translations.' . $idx . '.submit_label', $t['submit_label'] ?? 'Enviar')) ?>" <?= field_aria_attrs('translations.' . $idx . '.submit_label') ?>>
+                                <?= render_field_error('translations.' . $idx . '.submit_label') ?>
                             </div>
                         </div>
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_description') ?></label>
-                            <textarea name="translations[<?= $idx ?>][description]" rows="2" class="<?= input_class('translations.' . $idx . '.description') ?> block w-full resize-none"><?= esc($t['description'] ?? '') ?></textarea>
+                            <textarea name="translations[<?= $idx ?>][description]" rows="2" class="<?= input_class('translations.' . $idx . '.description') ?> block w-full resize-none" <?= field_aria_attrs('translations.' . $idx . '.description') ?>><?= esc(old('translations.' . $idx . '.description', $t['description'] ?? '')) ?></textarea>
+                            <?= render_field_error('translations.' . $idx . '.description') ?>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_success_message') ?></label>
-                                <textarea name="translations[<?= $idx ?>][success_message]" rows="2" class="<?= input_class('translations.' . $idx . '.success_message') ?> block w-full resize-none"><?= esc($t['success_message'] ?? '') ?></textarea>
+                                <textarea name="translations[<?= $idx ?>][success_message]" rows="2" class="<?= input_class('translations.' . $idx . '.success_message') ?> block w-full resize-none" <?= field_aria_attrs('translations.' . $idx . '.success_message') ?>><?= esc(old('translations.' . $idx . '.success_message', $t['success_message'] ?? '')) ?></textarea>
+                                <?= render_field_error('translations.' . $idx . '.success_message') ?>
                             </div>
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700"><?= lang('Forms.field_error_message') ?></label>
-                                <textarea name="translations[<?= $idx ?>][error_message]" rows="2" class="<?= input_class('translations.' . $idx . '.error_message') ?> block w-full resize-none"><?= esc($t['error_message'] ?? '') ?></textarea>
+                                <textarea name="translations[<?= $idx ?>][error_message]" rows="2" class="<?= input_class('translations.' . $idx . '.error_message') ?> block w-full resize-none" <?= field_aria_attrs('translations.' . $idx . '.error_message') ?>><?= esc(old('translations.' . $idx . '.error_message', $t['error_message'] ?? '')) ?></textarea>
+                                <?= render_field_error('translations.' . $idx . '.error_message') ?>
                             </div>
                         </div>
                     </div>
@@ -194,8 +204,7 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
 	         optionsRequiredMessage: <?= esc(json_encode(lang('Forms.options_required'), JSON_THROW_ON_ERROR), 'attr') ?>,
 	         confirmDeleteFieldMessage: <?= esc(json_encode(lang('Forms.confirm_delete_field'), JSON_THROW_ON_ERROR), 'attr') ?>,
 	         deleteFailedMessage: <?= esc(json_encode(lang('Forms.delete_failed'), JSON_THROW_ON_ERROR), 'attr') ?>,
-	     })"
-     x-init="init()">
+     })">
 
     <div class="mb-4 flex items-center justify-between">
         <h2 class="text-base font-semibold text-gray-800"><?= lang('Forms.section_fields') ?></h2>
@@ -247,12 +256,19 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
                     <div class="space-y-4">
                         <div>
                             <label class="mb-1.5 block text-xs font-medium text-gray-700"><?= lang('Forms.field_field_key') ?> <span class="text-red-500">*</span></label>
-                            <input type="text" x-model="fieldForm.field_key" :disabled="!!editingField"
+                            <input type="text" name="field_key" x-model="fieldForm.field_key" :disabled="!!editingField"
+                                   maxlength="100"
+                                   :class="fieldHasError('field_key') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''"
+                                   :aria-invalid="fieldHasError('field_key') ? 'true' : null"
                                    class="form-input w-full text-sm" placeholder="email">
+                            <p x-show="fieldErrorFor('field_key')" x-text="fieldErrorFor('field_key')" x-cloak role="alert" class="mt-1 text-xs text-red-600"></p>
                         </div>
                         <div>
                             <label class="mb-1.5 block text-xs font-medium text-gray-700"><?= lang('Forms.field_field_type') ?></label>
-                            <select x-model="fieldForm.field_type" class="form-input w-full text-sm">
+                            <select name="field_type" x-model="fieldForm.field_type"
+                                    :class="fieldHasError('field_type') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''"
+                                    :aria-invalid="fieldHasError('field_type') ? 'true' : null"
+                                    class="form-input w-full text-sm">
                                 <?php foreach ($fieldTypes as $val => $label): ?>
                                     <option value="<?= esc($val) ?>"><?= esc($label) ?></option>
                                 <?php endforeach; ?>
@@ -269,7 +285,9 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
                                         <span class="min-w-0 flex-1 truncate text-sm"
                                               :class="option.labels[<?= $defaultLangIdInt ?>] ? 'text-gray-700' : 'text-amber-600'"
                                               x-text="option.labels[<?= $defaultLangIdInt ?>] || '<?= esc(lang('Forms.option_untitled')) ?>'"></span>
-                                        <input type="text" x-model="option.value" @input="onOptionValueInput(option)"
+                                        <input type="text" name="options[]" x-model="option.value" @input="onOptionValueInput(option)"
+                                               :class="fieldHasError('options') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''"
+                                               :aria-invalid="fieldHasError('options') ? 'true' : null"
                                                class="form-input w-28 shrink-0 text-xs font-mono text-gray-500" placeholder="<?= esc(lang('Forms.option_value')) ?>">
                                         <button type="button" @click="regenerateOptionValue(option)" class="shrink-0 text-gray-400 hover:text-brand-600" title="<?= esc(lang('Forms.btn_regenerate_option_value')) ?>" aria-label="<?= esc(lang('Forms.btn_regenerate_option_value')) ?>">
                                             <i data-lucide="refresh-ccw" class="h-3.5 w-3.5"></i>
@@ -284,6 +302,7 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
                                 <i data-lucide="plus" class="h-3.5 w-3.5"></i>
                                 <?= lang('Forms.btn_add_option') ?>
                             </button>
+                            <p x-show="fieldErrorFor('options')" x-text="fieldErrorFor('options')" x-cloak role="alert" class="mt-1 text-xs text-red-600"></p>
                         </div>
 
                         <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -326,16 +345,27 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
                             <div x-show="activeFieldLang === '<?= esc($lang['code']) ?>'" class="space-y-4">
                                 <div>
                                     <label class="mb-1.5 block text-xs font-medium text-gray-700"><?= lang('Forms.field_label') ?></label>
-                                    <input type="text" x-model="fieldForm.translations[<?= (int) $lang['id'] ?>].label" class="form-input w-full text-sm">
+                                    <input type="text" :name="`translations[<?= (int) $lang['id'] ?>][label]`" x-model="fieldForm.translations[<?= (int) $lang['id'] ?>].label"
+                                           maxlength="255"
+                                           :class="fieldHasError(`translations.<?= (int) $lang['id'] ?>.label`) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''"
+                                           :aria-invalid="fieldHasError(`translations.<?= (int) $lang['id'] ?>.label`) ? 'true' : null"
+                                           class="form-input w-full text-sm">
                                 </div>
                                 <div class="grid gap-4 sm:grid-cols-2">
                                     <div>
                                         <label class="mb-1.5 block text-xs font-medium text-gray-700"><?= lang('Forms.field_placeholder') ?></label>
-                                        <input type="text" x-model="fieldForm.translations[<?= (int) $lang['id'] ?>].placeholder" class="form-input w-full text-sm">
+                                        <input type="text" :name="`translations[<?= (int) $lang['id'] ?>][placeholder]`" x-model="fieldForm.translations[<?= (int) $lang['id'] ?>].placeholder"
+                                               maxlength="255"
+                                               :class="fieldHasError(`translations.<?= (int) $lang['id'] ?>.placeholder`) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''"
+                                               :aria-invalid="fieldHasError(`translations.<?= (int) $lang['id'] ?>.placeholder`) ? 'true' : null"
+                                               class="form-input w-full text-sm">
                                     </div>
                                     <div>
                                         <label class="mb-1.5 block text-xs font-medium text-gray-700"><?= lang('Forms.field_help_text') ?></label>
-                                        <input type="text" x-model="fieldForm.translations[<?= (int) $lang['id'] ?>].help_text" class="form-input w-full text-sm">
+                                        <input type="text" :name="`translations[<?= (int) $lang['id'] ?>][help_text]`" x-model="fieldForm.translations[<?= (int) $lang['id'] ?>].help_text"
+                                               :class="fieldHasError(`translations.<?= (int) $lang['id'] ?>.help_text`) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''"
+                                               :aria-invalid="fieldHasError(`translations.<?= (int) $lang['id'] ?>.help_text`) ? 'true' : null"
+                                               class="form-input w-full text-sm">
                                     </div>
                                 </div>
 
@@ -345,8 +375,12 @@ $languageItems  = json_encode(array_values($languages), $jsonFlags);
                                     <div class="space-y-2">
                                         <template x-for="(option, index) in fieldForm.options" :key="index">
                                             <input type="text"
+                                                   name="option_labels[]"
                                                    x-model="option.labels[<?= (int) $lang['id'] ?>]"
                                                    @input="onOptionLabelInput(option, <?= (int) $lang['id'] ?>)"
+                                                   maxlength="255"
+                                                   :class="fieldHasError(`translations.<?= (int) $lang['id'] ?>.option_labels`) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''"
+                                                   :aria-invalid="fieldHasError(`translations.<?= (int) $lang['id'] ?>.option_labels`) ? 'true' : null"
                                                    class="form-input w-full text-sm"
                                                    :placeholder="option.value || '<?= esc(lang('Forms.option_value')) ?>'">
                                         </template>

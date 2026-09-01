@@ -21,13 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout ci4-website-builder-domain (App\Libraries\Cms\ PSR-4 dependency)
-        # actions/checkout's `path` input is confined to $GITHUB_WORKSPACE and
-        # rejects `../` targets, so a real sibling checkout (matching this
-        # repo's composer.json App\Libraries\Cms\ => ../ci4-website-builder-domain/...
-        # PSR-4 mapping) needs a plain git clone instead of the checkout action.
-        run: git clone --branch dev --depth 1 https://github.com/dcardenasl/ci4-website-builder-domain.git ../ci4-website-builder-domain
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -64,28 +57,17 @@ jobs:
       - name: Build CSS
         run: npm run build:css
 
-      - name: Static analysis
-        run: vendor/bin/phpstan analyse --debug
-
-      - name: Code style
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+      - name: Quality gate
+        run: composer quality
 
       - name: Security audit
         run: composer audit --abandoned=ignore
 
-      - name: Lint JS (all files under public/assets/js, audit B8.2)
+      - name: Lint JS (all files under public/assets/js)
         run: npm run lint:all
 
-      - name: Language file parity (EN/ES, audit B8.3)
-        run: composer i18n-check
-
-      - name: Run test suite
-        # GH Actions' `cond && A || B` collapses to B whenever A is falsy —
-        # and '' *is* falsy — so this can't branch to "no extra flag" via an
-        # empty string; use an explicit, non-empty flag for the 8.2/coverage
-        # branch instead.
-        run: vendor/bin/phpunit ${{ matrix.php-version == '8.2' && '--coverage-clover=tests/coverage.xml' || '--no-coverage' }}
-
-      - name: Coverage gate (>= 54.20% line coverage)
+      - name: Coverage gate (>= 60% line coverage)
         if: matrix.php-version == '8.2'
-        run: composer coverage:check
+        run: |
+          composer test:coverage
+          composer coverage:check

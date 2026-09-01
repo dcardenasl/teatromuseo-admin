@@ -22,15 +22,15 @@ class BlockOwnerRouting
     public static function label(string $ownerType): string
     {
         return $ownerType === self::OWNER_ENTRY
-            ? lang('Pages.owner_label_entry')
-            : lang('Pages.owner_label_page');
+            ? lang('Blocks.owner_label_entry')
+            : lang('Blocks.owner_label_page');
     }
 
     public static function childLabel(string $ownerType): string
     {
         return $ownerType === self::OWNER_ENTRY
-            ? lang('Pages.child_label_subblock')
-            : lang('Pages.child_label_slide');
+            ? lang('Blocks.child_label_subblock')
+            : lang('Blocks.child_label_slide');
     }
 
     public static function listRoute(string $ownerType): string
@@ -184,7 +184,7 @@ class BlockOwnerRouting
     public static function notFoundMessage(string $ownerType): string
     {
         return $ownerType === self::OWNER_ENTRY
-            ? lang('Pages.owner_not_found_entry')
-            : lang('Pages.pages_not_found');
+            ? lang('Blocks.owner_not_found_entry')
+            : lang('Blocks.owner_not_found_page');
     }
 }

@@ -114,7 +114,8 @@ final class BlockEditViewTest extends CIUnitTestCase
         $this->assertStringContainsString('data-language-id="1"', $html);
         $this->assertStringContainsString('mediaReferenceField(', $html);
         $this->assertStringContainsString('translations&#x5B;0&#x5D;&#x5B;block_data&#x5D;&#x5B;cover&#x5D;&#x5B;source_kind&#x5D;', $html);
-        $this->assertStringContainsString('window.openBlockEditPreview', $html);
+        $this->assertStringContainsString('data-block-preview-key="hero"', $html);
+        $this->assertStringNotContainsString('onclick="', $html);
     }
 
     public function testEditViewRendersMediaReferenceRepeaters(): void
@@ -343,5 +344,72 @@ final class BlockEditViewTest extends CIUnitTestCase
         $this->assertStringContainsString('x-text="pickerButtonLabel()"', $html);
         $this->assertStringNotContainsString('pickerSelectLabels', $html);
         $this->assertStringNotContainsString('pickerChangeLabels', $html);
+    }
+
+    public function testCollectionProjectionExposesUpcomingOrderingForCmsSources(): void
+    {
+        $html = view('cms/pages/blocks/edit', [
+            'page' => ['id' => 12, 'title' => 'Home'],
+            'block' => [
+                'id' => 3032,
+                'block_id' => 5,
+                'sort_order' => 3,
+                'is_active' => true,
+                'block_config' => [
+                    'source_type' => 'cms_collection',
+                    'collection_key' => 'teatroescuela',
+                    'listing_projection' => [
+                        'version' => 2,
+                        'slots' => ['date' => 'block.teatroescuela_ficha.start_date'],
+                        'order' => [
+                            'field' => 'block.teatroescuela_ficha.start_date',
+                            'direction' => 'upcoming',
+                        ],
+                    ],
+                ],
+                'translations' => [],
+            ],
+            'blockType' => [
+                'block_key' => 'collection_grid',
+                'fields' => [],
+                'config_fields' => [
+                    'collection_key' => [
+                        'type' => 'string',
+                        'label' => 'Colección',
+                    ],
+                ],
+            ],
+            'listingFieldCatalog' => [
+                'teatroescuela' => [[
+                    'value' => 'block.teatroescuela_ficha.start_date',
+                    'label' => 'Curso · Inicio',
+                    'group' => 'TeatroEscuela',
+                    'type' => 'date',
+                    'sortable' => true,
+                    'filterable' => true,
+                ]],
+            ],
+            'languages' => [['id' => 1, 'is_default' => true, 'code' => 'es']],
+            'ownerBlocksRoute' => 'admin.cms.pages.blocks',
+            'ownerUpdateRoute' => 'admin.cms.pages.blocks.update',
+        ]);
+
+        $this->assertStringContainsString('value="upcoming"', $html);
+        $this->assertStringContainsString('canUseUpcoming()', $html);
+        $this->assertStringContainsString('&quot;direction&quot;&#x3A;&quot;upcoming', $html);
+        $this->assertStringContainsString('x-data="listingProjectionEditor(', $html);
+        $this->assertStringNotContainsString('<script', $html);
+    }
+
+    public function testListingProjectionUsesTheBundledComponentWithoutInlineScript(): void
+    {
+        $html = view('cms/pages/blocks/_listing_projection', [
+            'listingFieldCatalog' => ['teatroescuela' => []],
+            'blockConfig' => [],
+            'submittedBlockConfig' => [],
+        ]);
+
+        $this->assertStringContainsString('x-data="listingProjectionEditor(', $html);
+        $this->assertStringNotContainsString('<script', $html);
     }
 }

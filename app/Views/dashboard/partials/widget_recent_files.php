@@ -1,4 +1,8 @@
-<?php if (empty($recentFiles)): ?>
+<?php if (($sourceState ?? 'unavailable') === 'unavailable'): ?>
+    <div class="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-800">
+        <?= esc(lang('Dashboard.source_unavailable')) ?>
+    </div>
+<?php elseif (empty($recentFiles)): ?>
     <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
         <div class="mx-auto h-12 w-12 text-gray-400">
             <?= ui_icon('file-plus', 'h-12 w-12') ?>
@@ -28,6 +32,9 @@
                         $fileId   = $file['id'] ?? '';
                         $isImage  = (bool) ($file['is_image'] ?? false);
                         $thumbUrl = $file['variants']['sm']['url'] ?? ($isImage ? route_to('files.view', $fileId) : null);
+                        if (is_string($thumbUrl) && str_starts_with($thumbUrl, '/uploads/')) {
+                            $thumbUrl = rtrim((string) config('ApiClient')->baseUrl, '/') . $thumbUrl;
+                        }
                         ?>
                         <tr class="<?= esc(table_row_class()) ?>">
                             <td class="<?= esc(table_td_class()) ?>">

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\ApiClientInterface;
+use App\Support\FieldErrorNormalizer;
 use App\Support\Requests\FormRequestInterface;
 use App\Support\SessionKeys;
 use App\Traits\TableResponseTrait;
@@ -183,7 +184,11 @@ abstract class BaseWebController extends BaseController
     private function normalizeDevErr(array $response): array
     {
         $messages = is_array($response['messages'] ?? null) ? $response['messages'] : [];
-        $errors   = is_array($response['fieldErrors'] ?? null) ? $response['fieldErrors'] : [];
+        $errors   = FieldErrorNormalizer::normalize($response['fieldErrors'] ?? []);
+
+        foreach (FieldErrorNormalizer::normalize($response['errors'] ?? []) as $key => $message) {
+            $errors[$key] ??= $message;
+        }
 
         return [
             'status'   => (int) ($response['status'] ?? 0),
@@ -286,26 +291,12 @@ abstract class BaseWebController extends BaseController
      */
     protected function getFieldErrors(array $response): array
     {
-        if (! isset($response['fieldErrors'])) {
-            return [];
-        }
-
-        $fieldErrors = $response['fieldErrors'];
-
-        if (! is_array($fieldErrors)) {
-            log_message('warning', '[BaseWebController] Unexpected fieldErrors type: ' . gettype($fieldErrors));
-
-            return [];
-        }
-
         $normalized = [];
 
-        foreach ($fieldErrors as $key => $value) {
-            if (! is_string($key) || ! is_scalar($value)) {
-                continue;
+        foreach (['fieldErrors', 'errors'] as $source) {
+            foreach (FieldErrorNormalizer::normalize($response[$source] ?? []) as $key => $message) {
+                $normalized[$key] ??= $this->localizeApiMessage($message);
             }
-
-            $normalized[$key] = $this->localizeApiMessage((string) $value);
         }
 
         return $normalized;
@@ -353,9 +344,32 @@ abstract class BaseWebController extends BaseController
         $localized  = lang('ApiErrors.' . $normalized);
 
         // lang() returns the key string (e.g. "ApiErrors.some_code") when not found.
-        // Fall back to the original message to avoid showing raw key strings.
         if (is_string($localized) && ! str_starts_with($localized, 'ApiErrors.')) {
             return $localized;
+        }
+
+        if (str_contains($normalized, 'must contain a unique value')) {
+            $fallback = lang('ApiErrors.validation_unique');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
+        }
+
+        if (str_contains($normalized, 'field is required')) {
+            $fallback = lang('ApiErrors.validation_required');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
+        }
+
+        if (str_contains($normalized, 'must be at least')) {
+            $fallback = lang('ApiErrors.validation_min_length');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
+        }
+
+        if (str_contains($normalized, 'may not exceed')) {
+            $fallback = lang('ApiErrors.validation_max_length');
+
+            return is_string($fallback) && ! str_starts_with($fallback, 'ApiErrors.') ? $fallback : $message;
         }
 
         return $message;
@@ -433,7 +447,112 @@ abstract class BaseWebController extends BaseController
             ? ($this->request->getJSON(true) ?? [])
             : [];
 
-        return is_array($raw) ? $raw : [];
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $payload = [];
+        foreach ($raw as $key => $value) {
+            if (is_string($key)) {
+                $payload[$key] = $value;
+            }
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Execute one bounded reorder request against its owning domain.
+     *
+     * @param list<array{id: int|string, sort_order: int}> $items
+     * @param array<string, int|string|null> $scope
+     * @return array<string, mixed>
+     */
+    protected function sortOrderApiCall(string $domain, string $resource, array $items, array $scope = []): array
+    {
+        /** @var \App\Services\SortOrderApiServiceInterface $service */
+        $service = service('sortOrderApiService');
+
+        return match ($domain) {
+            'cms' => $service->cms($resource, $items, $scope),
+            'catalog' => $service->catalog($resource, $items),
+            'events' => $service->events($resource, $items),
+            default => [
+                'ok' => false,
+                'status' => 400,
+                'data' => [],
+                'raw' => '',
+                'headers' => [],
+                'messages' => ['Invalid reorder domain.'],
+                'fieldErrors' => [],
+            ],
+        };
+    }
+
+    /**
+     * Read the shared JSON reorder payload and forward it in one request.
+     *
+     * @param array<string, int|string|null> $scope
+     */
+    protected function saveSortOrderFromJson(
+        string $domain,
+        string $resource,
+        array $scope = [],
+        string $successMessage = 'Order saved.',
+    ): ResponseInterface {
+        $payload = $this->jsonRequestPayload();
+        $items = $payload['items'] ?? null;
+        if (! is_array($items)) {
+            return $this->response->setJSON([
+                'ok' => false,
+                'message' => 'Invalid payload structure',
+            ])->setStatusCode(400);
+        }
+
+        $normalizedItems = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! is_numeric($item['id'] ?? null) || ! is_numeric($item['sort_order'] ?? null)) {
+                return $this->response->setJSON([
+                    'ok' => false,
+                    'message' => 'Invalid payload structure',
+                ])->setStatusCode(400);
+            }
+            $normalizedItems[] = [
+                'id' => (int) $item['id'],
+                'sort_order' => (int) $item['sort_order'],
+            ];
+        }
+
+        return $this->persistSortOrder($domain, $resource, $normalizedItems, $scope, $successMessage);
+    }
+
+    /**
+     * Send a normalized reorder payload and preserve the upstream status.
+     *
+     * @param list<array{id: int|string, sort_order: int}> $items
+     * @param array<string, int|string|null> $scope
+     */
+    protected function persistSortOrder(
+        string $domain,
+        string $resource,
+        array $items,
+        array $scope = [],
+        string $successMessage = 'Order saved.',
+    ): ResponseInterface {
+        $response = $this->safeApiCall(fn () => $this->sortOrderApiCall($domain, $resource, $items, $scope));
+        if (! ($response['ok'] ?? false)) {
+            $this->maybeFlashDevError($response);
+
+            return $this->response->setJSON([
+                'ok' => false,
+                'message' => $this->firstMessage($response, lang('App.connection_error')),
+            ])->setStatusCode($this->normalizeUpstreamStatus($response));
+        }
+
+        return $this->response->setJSON([
+            'ok' => true,
+            'message' => $successMessage,
+        ]);
     }
 
     /**
@@ -458,6 +577,23 @@ abstract class BaseWebController extends BaseController
                 'messages'    => [lang('App.connection_error')],
                 'fieldErrors' => [],
             ];
+        }
+    }
+
+    /**
+     * Best-effort invalidation for public website cache entries touched by the
+     * current admin write action.
+     *
+     * @param string|list<string> $scopes
+     */
+    protected function invalidatePublicSiteCache(string|array $scopes): void
+    {
+        $scopeList = is_array($scopes) ? $scopes : [$scopes];
+
+        try {
+            service('publicSiteCacheInvalidator')->invalidate($scopeList);
+        } catch (\Throwable $e) {
+            log_message('warning', '[BaseWebController] Public cache invalidation failed: ' . $e->getMessage());
         }
     }
 

@@ -86,6 +86,7 @@ $itemId = (string) ($item['id'] ?? '');
                                 'placeholder' => 'Tags.translation_name_placeholder',
                                 'help' => 'Tags.translation_name_help',
                                 'value' => old("translations.{$index}.name", $transValue['name'] ?? ''),
+                                'maxlength' => 100,
                                 'errors' => $errors ?? []
                             ]) ?>
 
@@ -96,6 +97,7 @@ $itemId = (string) ($item['id'] ?? '');
                                 'placeholder' => 'Tags.translation_slug_placeholder',
                                 'help' => 'Tags.translation_slug_help',
                                 'value' => old("translations.{$index}.slug", $transValue['slug'] ?? ''),
+                                'maxlength' => 100,
                                 'errors' => $errors ?? []
                             ]) ?>
                         </div>

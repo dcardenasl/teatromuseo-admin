@@ -9,14 +9,14 @@ use CodeIgniter\Config\BaseConfig;
 /**
  * Admin section UI gating.
  *
- * `AdminFilter` lets a user enter the admin section if they hold ANY of the
- * permissions listed below. Per-route enforcement is handled by the
- * fine-grained `permission:<code>` filter (see app/Config/Routes.php).
+ * `AdminFilter` is a broad section gate for route groups that explicitly opt
+ * into it. Domain resource modules must use `auth` plus a fine-grained
+ * `permission:<code>` filter on every endpoint and do not depend on this list.
  *
- * When a new admin-only module is added to the API:
+ * When a new section-gated admin module is added:
  *  1. Define its permissions in the API's RbacBootstrapSeeder.
  *  2. Add the module's *.read permission code to $permissions here.
- *  3. Add the per-route permission filter on the route group.
+ *  3. Keep the module's own per-route permission filters explicit.
  *
  * Centralizing this list here (instead of hardcoding in AdminFilter)
  * prevents the gate from drifting out of sync with the API.
@@ -35,6 +35,7 @@ class AdminAccess extends BaseConfig
         'audit.read',
         'apikeys.read',
         'metrics.read',
+        'system.public-cache.read',
         'iam.admin-access',
         'cms.languages.read',
         'cms.settings.read',

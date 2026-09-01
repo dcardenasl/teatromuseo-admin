@@ -218,14 +218,16 @@
             <?= lang('App.edit') ?>
         </a>
     <?php endif; ?>
-    <a href="<?= route_to('admin.cms.form_submissions') ?>?form_key=<?= urlencode((string) ($form['form_key'] ?? '')) ?>" class="<?= esc(action_button_class()) ?> w-full justify-center text-center">
-        <?= ui_icon('mail', 'h-3.5 w-3.5') ?>
-        <span><?= esc(lang('Forms.view_submissions')) ?></span>
-    </a>
+    <?php if (has_permission('cms.submissions.read')): ?>
+        <a href="<?= route_to('admin.cms.form_submissions') ?>?form_key=<?= urlencode((string) ($form['form_key'] ?? '')) ?>" class="<?= esc(action_button_class()) ?> w-full justify-center text-center">
+            <?= ui_icon('mail', 'h-3.5 w-3.5') ?>
+            <span><?= esc(lang('Forms.view_submissions')) ?></span>
+        </a>
+    <?php endif; ?>
     <?php $actionsContent = ob_get_clean(); ?>
 
     <?php ob_start(); ?>
-    <?php if (has_permission('cms.forms.write')): ?>
+    <?php if (has_permission('cms.forms.admin')): ?>
         <?php if (! $hasUsages): ?>
             <form method="post" action="<?= route_to('admin.cms.forms.delete', $itemId) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($form['form_key'] ?? null), 'js') ?>', () => $el.submit())">
                 <?= csrf_field() ?>

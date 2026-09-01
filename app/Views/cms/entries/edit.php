@@ -6,13 +6,15 @@
             <?= ui_icon('layout-template', 'h-3.5 w-3.5') ?>
             <?= esc(lang('Entries.blocks_title')) ?>
         </a>
-        <form method="post" action="<?= route_to('admin.cms.entries.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['title'] ?? $item['slug'] ?? null), 'js') ?>', () => $el.submit())">
-            <?= csrf_field() ?>
-            <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
-                <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
-                <?= esc(lang('App.delete')) ?>
-            </button>
-        </form>
+        <?php if (has_permission('cms.entries.admin')): ?>
+            <form method="post" action="<?= route_to('admin.cms.entries.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['title'] ?? $item['slug'] ?? null), 'js') ?>', () => $el.submit())">
+                <?= csrf_field() ?>
+                <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
+                    <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
+                    <?= esc(lang('App.delete')) ?>
+                </button>
+            </form>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -256,6 +258,7 @@ if ($selectedTagValues !== []) {
                                 'checkUrl' => route_to('admin.cms.entries.check_slug') . '?language_id=' . (int)$lang['id'],
                                 'currentId' => $item['id'] ?? '',
                                 'value' => old("translations.{$index}.slug", $transValue['slug'] ?? ''),
+                                'maxlength' => 150,
                                 'help' => 'Entries.translation_slug_help',
                                 'errors' => $errors ?? []
                             ]) ?>
@@ -279,6 +282,7 @@ if ($selectedTagValues !== []) {
                             'fieldKey' => 'featured_image',
                             'copyEnabled' => true,
                             'accept' => 'image',
+                            'maxlength' => 2048,
                         ]) ?>
 
                             <details class="group border border-gray-100 rounded-lg bg-gray-50/30" <?= (!empty($transValue['meta_title']) || !empty($transValue['meta_description']) || !empty($transValue['og_image']['file_id'] ?? null) || !empty($transValue['og_image']['url'] ?? null)) ? 'open' : '' ?>>
@@ -314,8 +318,9 @@ if ($selectedTagValues !== []) {
                                     'help' => lang('Entries.translation_og_image_help'),
                                     'value' => old("translations.{$index}.og_image", $transValue['og_image'] ?? []),
                                     'fieldKey' => 'og_image',
-                                    'copyEnabled' => true,
-                                    'accept' => 'image',
+                                'copyEnabled' => true,
+                                'accept' => 'image',
+                                'maxlength' => 2048,
                                 ]) ?>
                                 </div>
                             </details>

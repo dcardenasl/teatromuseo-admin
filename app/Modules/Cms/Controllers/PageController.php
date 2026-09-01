@@ -7,8 +7,9 @@ namespace App\Modules\Cms\Controllers;
 use App\Controllers\BaseWebController;
 use App\Modules\Cms\Requests\PageStoreRequest;
 use App\Modules\Cms\Requests\PageUpdateRequest;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
+use App\Modules\Cms\Services\CmsWorkspaceBffAdapter;
 use App\Modules\Cms\Services\PageApiService;
-use App\Modules\Cms\Services\TranslationAuditApiService;
 use App\Modules\Cms\Support\CmsPresetCatalog;
 use App\Modules\Cms\Support\PagePresetApplier;
 use CodeIgniter\HTTP\RedirectResponse;
@@ -19,99 +20,79 @@ use Psr\Log\LoggerInterface;
 class PageController extends BaseWebController
 {
     protected PageApiService $pageService;
-    protected \App\Modules\Cms\Services\CollectionApiService $collectionService;
-    protected TranslationAuditApiService $translationAuditService;
+    protected CmsBootstrapBffAdapter $cmsBootstrap;
+    protected CmsWorkspaceBffAdapter $cmsWorkspace;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->pageService = service('pageApiService');
-        $this->collectionService = service('collectionApiService');
-        $this->translationAuditService = service('translationAuditApiService');
+        $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
+        $this->cmsWorkspace = service('cmsWorkspaceBffAdapter');
     }
 
     public function index(): string
     {
+        $bootstrap = $this->cmsBootstrap->pageFormOptions() ?? [];
+
         return $this->render('cms/pages/index', [
             'title'        => lang('Pages.pages_title'),
             'limitOptions' => [10, 25, 50, 100],
-            'pages' => $this->pagesOptions(),
-            'languages'    => $this->getLanguages(),
+            'pages' => is_array($bootstrap['pages'] ?? null)
+                ? $this->pageOptionsFromBootstrap($bootstrap['pages'])
+                : [],
+            'languages' => is_array($bootstrap['languages'] ?? null) ? $bootstrap['languages'] : [],
         ]);
     }
 
     public function data(): ResponseInterface
     {
         return $this->tableDataResponse(
-            ['parent_id'],
-            ['name', 'created_at'],
-            fn (array $params) => $this->pageService->list([...$params, 'include_translations' => 1]),
+            ['parent_id', 'status', 'page_type'],
+            ['name', 'page_type', 'status', 'parent_id', 'is_in_sitemap', 'created_at'],
+            fn (array $params) => $this->pageService->list([...$params, 'projection' => 'list']),
         );
     }
 
     public function show(string $id): string
     {
-        $response = $this->safeApiCall(fn () => $this->pageService->get($id));
-
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
+        $workspace = $this->cmsWorkspace->page((int) $id);
+        if ($workspace === null || ! is_array($workspace['page'] ?? null)) {
             return $this->render('cms/pages/show', [
                 'title'      => lang('Pages.pages_details'),
                 'page'       => [],
-                'error'      => $this->firstMessage($response, lang('Pages.pages_not_found')),
-                'pages'      => $this->pagesOptions(),
+                'pages'      => [],
+                'collections' => [],
+                'publicSiteUrl' => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
                 'blocks'     => [],
                 'blockTypes' => [],
                 'languages'  => [],
-                'blockTranslationStatus'  => [],
+                'blockTranslationStatus' => [],
+                'quality'    => [],
+                'error'      => $this->cmsWorkspace->wasUnavailable()
+                    ? lang('App.connection_error')
+                    : lang('Pages.pages_not_found'),
             ]);
         }
 
-        $blocksResp = $this->safeApiCall(
-            fn () => service('blockInstanceApiService')->list($id, 'page')
-        );
-        $allBlocks = $blocksResp['ok'] ? $this->extractItems($blocksResp) : [];
+        $page = is_array($workspace['page'] ?? null) ? $workspace['page'] : [];
+        $allBlocks = is_array($workspace['blocks'] ?? null) ? $workspace['blocks'] : [];
         $blocks    = array_values(
             array_filter($allBlocks, static fn (array $b) => empty($b['parent_instance_id']))
         );
 
         return $this->render('cms/pages/show', [
             'title'         => lang('Pages.pages_details'),
-            'page'          => $this->extractData($response),
-            'pages'         => $this->pagesOptions(),
-            'collections'   => $this->collectionsOptions(),
+            'page'          => $page,
+            'pages'         => $this->pageOptionsFromBootstrap((array) ($workspace['pages'] ?? [])),
+            'collections'   => $this->collectionOptionsFromBootstrap((array) ($workspace['collections'] ?? [])),
             'publicSiteUrl' => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
             'blocks'        => $blocks,
-            'blockTypes'    => $this->fetchBlockTypesIndexed(),
-            'languages'     => $this->getLanguages(),
-            'blockTranslationStatus'  => $this->ownerBlockTranslationStatus('page', $id),
+            'blockTypes'    => (array) ($workspace['blockTypes'] ?? []),
+            'languages'     => (array) ($workspace['languages'] ?? []),
+            'blockTranslationStatus'  => (array) ($workspace['blockTranslationStatus'] ?? []),
+            'quality'       => (array) ($workspace['quality'] ?? []),
         ]);
-    }
-
-    /**
-     * Translation status for every top-level/child block of this page.
-     * Degrades to empty on API failure so a status outage never breaks the
-     * page detail page itself.
-     *
-     * @return array<int|string, array<string, array<string, mixed>>>
-     */
-    private function ownerBlockTranslationStatus(string $ownerType, string $ownerId): array
-    {
-        $response = $this->safeApiCall(fn () => $this->translationAuditService->auditOwnerBlocks($ownerType, $ownerId));
-        $data = $response['ok'] ? $this->extractData($response) : [];
-
-        return is_array($data['blocks'] ?? null) ? $data['blocks'] : [];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function getLanguages(): array
-    {
-        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
-        $this->maybeFlashDevError($response);
-
-        return $this->extractItems($response);
     }
 
     private function requireWrite(): ?RedirectResponse
@@ -124,7 +105,10 @@ class PageController extends BaseWebController
 
     public function create(): string
     {
-        $languages = $this->getLanguages();
+        $bootstrap = $this->cmsBootstrap->pageFormOptions() ?? [];
+        $languages = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
@@ -134,9 +118,13 @@ class PageController extends BaseWebController
 
         return $this->render('cms/pages/create', [
             'title' => lang('Pages.pages_create'),
-            'pages' => $this->pagesOptions(),
+            'pages' => is_array($bootstrap['pages'] ?? null)
+                ? $this->pageOptionsFromBootstrap($bootstrap['pages'])
+                : [],
             'languages' => $languages,
-            'collections' => $this->collectionsOptions(),
+            'collections' => is_array($bootstrap['collections'] ?? null)
+                ? $this->collectionOptionsFromBootstrap($bootstrap['collections'])
+                : [],
             'defaultLangId' => $languageContext['defaultLangId'],
             'defaultLangCode' => $languageContext['defaultLangCode'],
             'defaultLangIndex' => $languageContext['defaultLangIndex'],
@@ -166,44 +154,52 @@ class PageController extends BaseWebController
             $this->applyPagePreset($pageId, (string) ($payload['page_type'] ?? 'generic'), $payload);
         }
 
-        return redirect()->to(route_to('admin.cms.pages'))->with('success', lang('Pages.pages_create_success'));
+        return redirect()->to(route_to('admin.cms.pages.show', (string) $pageId))->with('success', lang('Pages.pages_create_success'));
     }
 
     public function edit(string $id): string|RedirectResponse
     {
-        $response = $this->safeApiCall(fn () => $this->pageService->get($id));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-            return $this->withError(lang('Pages.pages_not_found'), route_to('admin.cms.pages'));
+        $workspace = $this->cmsWorkspace->page((int) $id);
+        if ($workspace !== null && is_array($workspace['page'] ?? null)) {
+            $focusLangRaw = $this->request->getGet('focus_lang');
+            $focusLangId  = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
+                ? (int) $focusLangRaw
+                : 0;
+
+            $bootstrap = $workspace;
+            $languages = is_array($bootstrap['languages'] ?? null) ? $bootstrap['languages'] : [];
+            $languageContext = $this->resolveLanguageContext($languages);
+            $defaultLangId = $languageContext['defaultLangId'];
+            $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
+            $translateTargets = ($defaultLangId > 0 && !empty($languages))
+                ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
+                : [];
+
+            return $this->render('cms/pages/edit', [
+                'title' => lang('Pages.pages_edit'),
+                'item' => $workspace['page'],
+                'pages' => is_array($bootstrap['pages'] ?? null)
+                    ? $this->pageOptionsFromBootstrap($bootstrap['pages'], $id)
+                    : [],
+                'languages' => $languages,
+                'collections' => is_array($bootstrap['collections'] ?? null)
+                    ? $this->collectionOptionsFromBootstrap($bootstrap['collections'])
+                    : [],
+                'focusLangId' => $focusLangId,
+                'defaultLangId' => $languageContext['defaultLangId'],
+                'defaultLangCode' => $languageContext['defaultLangCode'],
+                'defaultLangIndex' => $languageContext['defaultLangIndex'],
+                'translateTargets' => $translateTargets,
+                'pageTypes' => $this->pageTypeOptions(),
+                'returnTo' => $this->incomingReturnTo(),
+                'quality' => (array) ($workspace['quality'] ?? []),
+            ]);
         }
 
-        $focusLangRaw = $this->request->getGet('focus_lang');
-        $focusLangId  = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
-            ? (int) $focusLangRaw
-            : 0;
-
-        $languages = $this->getLanguages();
-        $languageContext = $this->resolveLanguageContext($languages);
-        $defaultLangId = $languageContext['defaultLangId'];
-        $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
-        $translateTargets = ($defaultLangId > 0 && !empty($languages))
-            ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
-            : [];
-
-        return $this->render('cms/pages/edit', [
-            'title' => lang('Pages.pages_edit'),
-            'item' => $this->extractData($response),
-            'pages' => $this->pagesOptions($id),
-            'languages' => $languages,
-            'collections' => $this->collectionsOptions(),
-            'focusLangId' => $focusLangId,
-            'defaultLangId' => $languageContext['defaultLangId'],
-            'defaultLangCode' => $languageContext['defaultLangCode'],
-            'defaultLangIndex' => $languageContext['defaultLangIndex'],
-            'translateTargets' => $translateTargets,
-            'pageTypes' => $this->pageTypeOptions(),
-            'returnTo' => $this->incomingReturnTo(),
-        ]);
+        return $this->withError(
+            $this->cmsWorkspace->wasUnavailable() ? lang('App.connection_error') : lang('Pages.pages_not_found'),
+            route_to('admin.cms.pages'),
+        );
     }
 
     public function update(string $id): RedirectResponse
@@ -281,26 +277,42 @@ class PageController extends BaseWebController
     }
 
     /**
+     * @param array<int|string, mixed> $items
      * @return array<string, string>
      */
-    private function collectionsOptions(): array
+    private function collectionOptionsFromBootstrap(array $items): array
     {
-        $response = $this->safeApiCall(fn () => $this->collectionService->list(['limit' => 200, 'is_active' => true]));
-        $this->maybeFlashDevError($response);
-        $items = $this->extractItems($response);
         $options = [];
-
         foreach ($items as $item) {
-            if (! is_array($item)) {
+            if (! is_array($item) || ! isset($item['id'])) {
                 continue;
             }
+            $options[(string) $item['id']] = (string) ($item['name'] ?? $item['collection_key'] ?? $item['id']);
+        }
 
-            $id = (string) ($item['id'] ?? '');
-            if ($id === '') {
+        return $options;
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function pageOptionsFromBootstrap(array $items, ?string $excludeId = null): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id']) || ($excludeId !== null && (string) $item['id'] === $excludeId)) {
                 continue;
             }
-
-            $options[$id] = (string) ($item['name'] ?? $item['collection_key'] ?? $id);
+            $title = null;
+            $translations = is_array($item['translations'] ?? null) ? $item['translations'] : [];
+            foreach ($translations as $translation) {
+                if (is_array($translation) && ! empty($translation['title'])) {
+                    $title = (string) $translation['title'];
+                    break;
+                }
+            }
+            $options[(string) $item['id']] = $title ?? (string) ($item['name'] ?? $item['title'] ?? $item['id']);
         }
 
         return $options;
@@ -313,7 +325,11 @@ class PageController extends BaseWebController
             return $deny;
         }
 
-        $response = $this->safeApiCall(fn () => $this->pageService->list(['limit' => 250, 'sort' => 'sort_order']));
+        $response = $this->safeApiCall(fn () => $this->pageService->list([
+            'limit' => 250,
+            'sort' => 'sort_order',
+            'projection' => 'list',
+        ]));
         $this->maybeFlashDevError($response);
         $items = $this->extractItems($response);
 
@@ -333,38 +349,12 @@ class PageController extends BaseWebController
             ])->setStatusCode(403);
         }
 
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid request type',
-            ])->setStatusCode(400);
-        }
-
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
-
-        if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
-        }
-
-        foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '') {
-                $this->pageService->update($id, ['sort_order' => $value]);
-            }
-        }
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'message' => lang('Files.gallery_save_success') ?? 'Order saved.',
-        ]);
+        return $this->saveSortOrderFromJson(
+            'cms',
+            'pages',
+            [],
+            lang('Files.gallery_save_success') ?? 'Order saved.',
+        );
     }
 
 
@@ -391,49 +381,4 @@ class PageController extends BaseWebController
     }
 
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function fetchBlockTypesIndexed(): array
-    {
-        $types = service('blockCatalogService')->indexed();
-
-        $indexed = [];
-        foreach ((array) $types as $t) {
-            if (is_array($t) && isset($t['id'])) {
-                $indexed[(int) $t['id']] = $t;
-            }
-        }
-        return $indexed;
-    }
-
-    /** @return array<string, string> */
-    private function pagesOptions(?string $excludeId = null): array
-    {
-        $response = $this->safeApiCall(fn () => $this->pageService->pages(['limit' => 250]));
-        $this->maybeFlashDevError($response);
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-            if ($excludeId !== null && (string)$item['id'] === (string)$excludeId) {
-                continue;
-            }
-            $title = null;
-            if (! empty($item['translations']) && is_array($item['translations'])) {
-                foreach ($item['translations'] as $t) {
-                    if (is_array($t) && ! empty($t['title'])) {
-                        $title = $t['title'];
-                        break;
-                    }
-                }
-            }
-            $label = $title ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['email'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
 }

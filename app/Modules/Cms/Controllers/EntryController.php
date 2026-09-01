@@ -8,10 +8,10 @@ use App\Controllers\BaseWebController;
 use App\Modules\Cms\Requests\EntryStoreRequest;
 use App\Modules\Cms\Requests\EntryUpdateRequest;
 use App\Modules\Cms\Services\CategoryApiService;
-use App\Modules\Cms\Services\CollectionApiService;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
+use App\Modules\Cms\Services\CmsWorkspaceBffAdapter;
 use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\TagApiService;
-use App\Modules\Cms\Services\TranslationAuditApiService;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -20,28 +20,34 @@ use Psr\Log\LoggerInterface;
 class EntryController extends BaseWebController
 {
     protected EntryApiService $entryService;
-    protected CollectionApiService $collectionService;
     protected CategoryApiService $categoryService;
     protected TagApiService $tagService;
-    protected TranslationAuditApiService $translationAuditService;
+    protected CmsBootstrapBffAdapter $cmsBootstrap;
+    protected CmsWorkspaceBffAdapter $cmsWorkspace;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->entryService      = service('entryApiService');
-        $this->collectionService = service('collectionApiService');
         $this->categoryService   = service('categoryApiService');
         $this->tagService        = service('tagApiService');
-        $this->translationAuditService = service('translationAuditApiService');
+        $this->cmsBootstrap      = service('cmsBootstrapBffAdapter');
+        $this->cmsWorkspace       = service('cmsWorkspaceBffAdapter');
     }
 
     public function index(): string
     {
+        $bootstrap = $this->entryListBootstrap();
+
         return $this->render('cms/entries/index', [
             'title'        => lang('Entries.entries_title'),
             'limitOptions' => [10, 25, 50, 100],
-            'collections' => $this->collectionsOptions(),
-            'languages'   => $this->getLanguages(),
+            'collections'  => is_array($bootstrap['collections'] ?? null)
+                ? $this->optionMap($bootstrap['collections'], 'collection_key')
+                : [],
+            'languages'    => is_array($bootstrap['languages'] ?? null)
+                ? $bootstrap['languages']
+                : [],
         ]);
     }
 
@@ -50,103 +56,44 @@ class EntryController extends BaseWebController
         return $this->tableDataResponse(
             ['collection_id'],
             ['name', 'created_at'],
-            fn (array $params) => $this->entryService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->entryService->list([...$params, 'projection' => 'list']),
         );
     }
 
     public function show(string $id): string
     {
-        $response = $this->safeApiCall(fn () => $this->entryService->get($id));
-
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
+        $workspace = $this->cmsWorkspace->entry((int) $id);
+        if ($workspace !== null && is_array($workspace['entry'] ?? null)) {
+            $entry = $workspace['entry'];
+            $allBlocks = is_array($workspace['blocks'] ?? null) ? $workspace['blocks'] : [];
 
             return $this->render('cms/entries/show', [
                 'title' => lang('Entries.entries_details'),
-                'entry' => [],
-                'collection' => [],
-                'languages' => [],
-                'error' => $this->firstMessage($response, lang('Entries.entries_not_found')),
-                'collections' => $this->collectionsOptions(),
-                'blocks' => [],
-                'blockTypes' => [],
-                'blockTranslationStatus' => [],
-                'publicSiteUrl' => '',
+                'entry' => $entry,
+                'collection' => $this->workspaceCollection($workspace, (int) ($entry['collection_id'] ?? 0)),
+                'languages' => (array) ($workspace['languages'] ?? []),
+                'collections' => $this->optionMap((array) ($workspace['collections'] ?? []), 'collection_key'),
+                'blocks' => array_values(array_filter($allBlocks, static fn (array $block): bool => empty($block['parent_instance_id']))),
+                'blockTypes' => (array) ($workspace['blockTypes'] ?? []),
+                'blockTranslationStatus' => (array) ($workspace['blockTranslationStatus'] ?? []),
+                'publicSiteUrl' => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
             ]);
-        }
-
-        $entryData = $this->extractData($response);
-        $collectionId = $entryData['collection_id'] ?? '';
-        $collection = [];
-        if ($collectionId !== '') {
-            $colResponse = $this->safeApiCall(fn () => $this->collectionService->get((string) $collectionId));
-            if ($colResponse['ok']) {
-                $collection = $this->extractData($colResponse);
-            } else {
-                $this->maybeFlashDevError($colResponse);
-            }
         }
 
         return $this->render('cms/entries/show', [
             'title' => lang('Entries.entries_details'),
-            'entry' => $entryData,
-            'collection' => $collection,
-            'languages' => $this->getLanguages(),
-            'collections' => $this->collectionsOptions(),
-            'blocks' => $this->entryBlocks($id),
-            'blockTypes' => $this->fetchBlockTypesIndexed(),
-            'blockTranslationStatus' => $this->ownerBlockTranslationStatus('entry', $id),
-            'publicSiteUrl' => rtrim((string) env('PUBLIC_SITE_URL'), '/'),
+            'entry' => [],
+            'collection' => [],
+            'languages' => [],
+            'error' => $this->cmsWorkspace->wasUnavailable()
+                ? lang('App.connection_error')
+                : lang('Entries.entries_not_found'),
+            'collections' => [],
+            'blocks' => [],
+            'blockTypes' => [],
+            'blockTranslationStatus' => [],
+            'publicSiteUrl' => '',
         ]);
-    }
-
-    /**
-     * Translation status for every top-level/child block of this entry.
-     * Degrades to empty on API failure so a status outage never breaks the
-     * entry detail page itself.
-     *
-     * @return array<int|string, array<string, array<string, mixed>>>
-     */
-    private function ownerBlockTranslationStatus(string $ownerType, string $ownerId): array
-    {
-        $response = $this->safeApiCall(fn () => $this->translationAuditService->auditOwnerBlocks($ownerType, $ownerId));
-        $data = $response['ok'] ? $this->extractData($response) : [];
-
-        return is_array($data['blocks'] ?? null) ? $data['blocks'] : [];
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function entryBlocks(string $id): array
-    {
-        $response = $this->safeApiCall(fn () => service('blockInstanceApiService')->list($id, 'entry', ['sort' => 'sort_order']));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-
-            return [];
-        }
-
-        $blocks = $this->extractItems($response);
-
-        return array_values(array_filter($blocks, static fn (array $b) => empty($b['parent_instance_id'])));
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function fetchBlockTypesIndexed(): array
-    {
-        $types = service('blockCatalogService')->indexed();
-
-        $indexed = [];
-        foreach ((array) $types as $t) {
-            if (is_array($t) && isset($t['id'])) {
-                $indexed[(int) $t['id']] = $t;
-            }
-        }
-
-        return $indexed;
     }
 
     public function create(): string
@@ -157,7 +104,10 @@ class EntryController extends BaseWebController
             $item['collection_id'] = (int) $collectionId;
         }
 
-        $languages = $this->getLanguages();
+        $bootstrap = $this->cmsBootstrap->entryFormOptions();
+        $languages = is_array($bootstrap['languages'] ?? null)
+            ? $bootstrap['languages']
+            : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $defaultLangId = $languageContext['defaultLangId'];
         $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
@@ -167,7 +117,9 @@ class EntryController extends BaseWebController
 
         return $this->render('cms/entries/create', [
             'title'            => lang('Entries.entries_create'),
-            'collections'      => $this->collectionsOptions(),
+            'collections'      => is_array($bootstrap['collections'] ?? null)
+                ? $this->optionMap($bootstrap['collections'], 'collection_key')
+                : [],
             'languages'        => $languages,
             'defaultLangId'    => $languageContext['defaultLangId'],
             'defaultLangCode'  => $languageContext['defaultLangCode'],
@@ -197,72 +149,57 @@ class EntryController extends BaseWebController
 
     public function edit(string $id): string|RedirectResponse
     {
-        $response = $this->safeApiCall(fn () => $this->entryService->get($id));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
+        $workspace = $this->cmsWorkspace->entry((int) $id);
+        if ($workspace !== null && is_array($workspace['entry'] ?? null)) {
+            $item = $workspace['entry'];
+            $languages = is_array($workspace['languages'] ?? null) ? $workspace['languages'] : [];
+            $languageContext = $this->resolveLanguageContext($languages);
+            $defaultLangId = $languageContext['defaultLangId'];
+            $fieldMap = ['title', 'excerpt', 'meta_title', 'meta_description'];
+            $translateTargets = ($defaultLangId > 0 && $languages !== [])
+                ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
+                : [];
+            $focusLangRaw = $this->request->getGet('focus_lang');
+            $focusLangId = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
+                ? (int) $focusLangRaw
+                : 0;
+            $collection = $this->workspaceCollection($workspace, (int) ($item['collection_id'] ?? 0));
 
-            return $this->withError(lang('Entries.entries_not_found'), route_to('admin.cms.entries'));
+            return $this->render('cms/entries/edit', [
+                'title' => lang('Entries.entries_edit'),
+                'item' => $item,
+                'collections' => $this->optionMap((array) ($workspace['collections'] ?? []), 'collection_key'),
+                'languages' => $languages,
+                'focusLangId' => $focusLangId,
+                'defaultLangId' => $languageContext['defaultLangId'],
+                'defaultLangCode' => $languageContext['defaultLangCode'],
+                'defaultLangIndex' => $languageContext['defaultLangIndex'],
+                'blockTemplate' => is_array($collection['block_template'] ?? null) ? $collection['block_template'] : null,
+                'translateTargets' => $translateTargets,
+                'returnTo' => $this->incomingReturnTo(),
+                ...$this->taxonomyOptions($item, $workspace),
+            ]);
         }
 
-        $item           = $this->extractData($response);
-        $blockTemplate  = $this->resolveBlockTemplate($item);
-        $languages      = $this->getLanguages();
-        $languageContext = $this->resolveLanguageContext($languages);
-        $defaultLangId  = $languageContext['defaultLangId'];
-        $fieldMap       = ['title', 'excerpt', 'meta_title', 'meta_description'];
-        $translateTargets = ($defaultLangId > 0 && !empty($languages))
-            ? $this->buildTranslateTargets($languages, $fieldMap, $defaultLangId)
-            : [];
-
-        $focusLangRaw = $this->request->getGet('focus_lang');
-        $focusLangId  = ($focusLangRaw !== null && is_scalar($focusLangRaw) && (int) $focusLangRaw > 0)
-            ? (int) $focusLangRaw
-            : 0;
-
-        return $this->render('cms/entries/edit', [
-            'title'            => lang('Entries.entries_edit'),
-            'item'             => $item,
-            'collections'      => $this->collectionsOptions(),
-            'languages'        => $languages,
-            'focusLangId'      => $focusLangId,
-            'defaultLangId'    => $languageContext['defaultLangId'],
-            'defaultLangCode'  => $languageContext['defaultLangCode'],
-            'defaultLangIndex' => $languageContext['defaultLangIndex'],
-            'blockTemplate'    => $blockTemplate,
-            'translateTargets' => $translateTargets,
-            'returnTo'         => $this->incomingReturnTo(),
-            ...$this->taxonomyOptions($item),
-        ]);
+        return $this->withError(
+            $this->cmsWorkspace->wasUnavailable() ? lang('App.connection_error') : lang('Entries.entries_not_found'),
+            route_to('admin.cms.entries'),
+        );
     }
 
     /**
-     * Fetches block_template from the entry's parent collection (null if none).
-     *
-     * @param array<string, mixed> $item
-     * @return array<string, mixed>|null
+     * @param array<string, mixed> $workspace
+     * @return array<string, mixed>
      */
-    private function resolveBlockTemplate(array $item): ?array
+    private function workspaceCollection(array $workspace, int $collectionId): array
     {
-        $collectionId = $item['collection_id'] ?? null;
-        if (empty($collectionId)) {
-            return null;
+        foreach ((array) ($workspace['collections'] ?? []) as $collection) {
+            if (is_array($collection) && (int) ($collection['id'] ?? 0) === $collectionId) {
+                return $collection;
+            }
         }
 
-        $response = $this->safeApiCall(fn () => $this->collectionService->get((string) $collectionId));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-
-            return null;
-        }
-
-        $collection = $this->extractData($response);
-        $template   = $collection['block_template'] ?? null;
-
-        if (!is_array($template) || empty($template['blocks'])) {
-            return null;
-        }
-
-        return $template;
+        return [];
     }
 
     public function update(string $id): RedirectResponse
@@ -290,9 +227,10 @@ class EntryController extends BaseWebController
 
     /**
      * @param array<string, mixed> $entry
+     * @param array<string, mixed>|null $bootstrap
      * @return array{categoryOptions: array<string, string>, tagOptions: array<string, string>, selectedCategoryIds: list<int>, selectedTagIds: list<int>}
      */
-    private function taxonomyOptions(array $entry): array
+    private function taxonomyOptions(array $entry, ?array $bootstrap = null): array
     {
         $selectedCategoryIds = $this->taxonomyIds($entry['categories'] ?? []);
         $selectedTagIds = $this->taxonomyIds($entry['tags'] ?? []);
@@ -302,8 +240,27 @@ class EntryController extends BaseWebController
         /** @var array<string, string> $tagOptions */
         $tagOptions = $this->taxonomyLabels($entry['tags'] ?? []);
 
+        if ($bootstrap !== null) {
+            foreach (['categories' => 'categoryOptions', 'tags' => 'tagOptions'] as $section => $target) {
+                $items = $bootstrap[$section] ?? [];
+                if (! is_array($items)) {
+                    continue;
+                }
+                foreach ($items as $item) {
+                    if (is_array($item) && isset($item['id'])) {
+                        ${$target}[(string) $item['id']] = $this->taxonomyLabel($item);
+                    }
+                }
+            }
+
+            return compact('categoryOptions', 'tagOptions', 'selectedCategoryIds', 'selectedTagIds');
+        }
+
         $collectionId = isset($entry['collection_id']) ? (int) $entry['collection_id'] : 0;
-        $categories = $this->safeApiCall(fn () => $this->categoryService->list(['per_page' => 1000]));
+        $categories = $this->safeApiCall(fn () => $this->categoryService->list([
+            'per_page' => 1000,
+            'projection' => 'list',
+        ]));
         if (! $categories['ok']) {
             $this->maybeFlashDevError($categories);
         }
@@ -317,7 +274,10 @@ class EntryController extends BaseWebController
             $categoryOptions[(string) $category['id']] = $this->taxonomyLabel($category);
         }
 
-        $tags = $this->safeApiCall(fn () => $this->tagService->list(['per_page' => 1000]));
+        $tags = $this->safeApiCall(fn () => $this->tagService->list([
+            'per_page' => 1000,
+            'projection' => 'list',
+        ]));
         if (! $tags['ok']) {
             $this->maybeFlashDevError($tags);
         }
@@ -329,6 +289,24 @@ class EntryController extends BaseWebController
         }
 
         return compact('categoryOptions', 'tagOptions', 'selectedCategoryIds', 'selectedTagIds');
+    }
+
+    /**
+     * @param array<int|string, mixed> $items
+     * @return array<string, string>
+     */
+    private function optionMap(array $items, string $preferredKey): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! isset($item['id'])) {
+                continue;
+            }
+            $label = $item[$preferredKey] ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
+            $options[(string) $item['id']] = (string) $label;
+        }
+
+        return $options;
     }
 
     /**
@@ -448,7 +426,10 @@ class EntryController extends BaseWebController
             return $deny;
         }
 
-        $collections = $this->collectionsOptions();
+        $bootstrap = $this->entryListBootstrap();
+        $collections = is_array($bootstrap['collections'] ?? null)
+            ? $this->optionMap($bootstrap['collections'], 'collection_key')
+            : [];
         $collectionIdParam = $this->request->getGet('collection_id');
         $collectionId = is_numeric($collectionIdParam) ? (int) $collectionIdParam : null;
 
@@ -489,38 +470,20 @@ class EntryController extends BaseWebController
             ])->setStatusCode(403);
         }
 
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
+        $collectionId = $this->request->getGet('collection_id');
+        if (! is_numeric($collectionId) || (int) $collectionId < 1) {
             return $this->response->setJSON([
                 'ok' => false,
-                'message' => 'Invalid request type',
+                'message' => 'A collection scope is required.',
             ])->setStatusCode(400);
         }
 
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
-
-        if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
-        }
-
-        foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '') {
-                $this->entryService->update($id, ['sort_order' => $value]);
-            }
-        }
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'message' => lang('Files.gallery_save_success') ?? 'Order saved.',
-        ]);
+        return $this->saveSortOrderFromJson(
+            'cms',
+            'entries',
+            ['collection_id' => (int) $collectionId],
+            lang('Files.gallery_save_success') ?? 'Order saved.',
+        );
     }
 
 
@@ -547,26 +510,6 @@ class EntryController extends BaseWebController
     }
 
 
-    /** @return array<string, string> */
-    private function collectionsOptions(): array
-    {
-        $response = $this->safeApiCall(fn () => $this->entryService->collections(['limit' => 100, 'is_active' => true]));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
-        }
-        $options = [];
-
-        foreach ($this->extractItems($response) as $item) {
-            if (! is_array($item) || ! isset($item['id'])) {
-                continue;
-            }
-            $label = $item['collection_key'] ?? $item['name'] ?? $item['title'] ?? $item['label'] ?? $item['id'];
-            $options[(string) $item['id']] = (string) $label;
-        }
-
-        return $options;
-    }
-
     private function requireWrite(): ?RedirectResponse
     {
         if (! has_permission('cms.entries.write')) {
@@ -576,14 +519,22 @@ class EntryController extends BaseWebController
     }
 
     /**
+     * The list only requests optional filter metadata when the caller can
+     * read all of those metadata sources. The entries table itself remains
+     * available with just cms.entries.read and never falls back to direct
+     * one-request-per-filter reads.
+     *
      * @return array<string, mixed>
      */
-    private function getLanguages(): array
+    private function entryListBootstrap(): array
     {
-        $response = $this->safeApiCall(fn () => service('languageApiService')->list(['limit' => 100, 'is_active' => true]));
-        if (! $response['ok']) {
-            $this->maybeFlashDevError($response);
+        foreach (['cms.entries.read', 'cms.languages.read', 'cms.collections.read'] as $permission) {
+            if (! has_permission($permission)) {
+                return [];
+            }
         }
-        return $this->extractItems($response);
+
+        return $this->cmsBootstrap->entryFormOptions() ?? [];
     }
+
 }

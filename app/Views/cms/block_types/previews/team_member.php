@@ -16,8 +16,8 @@ $bio = $data['bio'] ?? '';
         <?php endif; ?>
     </div>
     <div class="flex-grow min-w-0">
-        <div class="text-[10px] font-bold text-violet-500 uppercase mb-0.5">Miembro del Equipo</div>
-        <h4 class="text-xs font-bold text-slate-800 truncate"><?= $name !== '' ? esc($name) : 'Nombre sin definir' ?></h4>
+        <div class="text-[10px] font-bold text-violet-500 uppercase mb-0.5"><?= esc(lang('BlockPreview.team.label')) ?></div>
+        <h4 class="text-xs font-bold text-slate-800 truncate"><?= $name !== '' ? esc($name) : esc(lang('BlockPreview.team.empty_name')) ?></h4>
         <?php if ($position !== ''): ?>
             <p class="text-[10px] text-slate-500 truncate"><?= esc($position) ?></p>
         <?php endif; ?>

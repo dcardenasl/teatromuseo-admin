@@ -15,8 +15,8 @@ $linkUrl = $data['link_url'] ?? '';
         <?php endif; ?>
     </div>
     <div class="flex-grow min-w-0">
-        <div class="text-[10px] font-bold text-violet-500 uppercase mb-0.5">Logo de Auspiciador</div>
-        <h4 class="text-xs font-bold text-slate-800 truncate"><?= $name !== '' ? esc($name) : 'Auspiciador sin nombre' ?></h4>
+        <div class="text-[10px] font-bold text-violet-500 uppercase mb-0.5"><?= esc(lang('BlockPreview.asset.item_label')) ?></div>
+        <h4 class="text-xs font-bold text-slate-800 truncate"><?= $name !== '' ? esc($name) : esc(lang('BlockPreview.asset.empty_name')) ?></h4>
         <?php if ($linkUrl !== ''): ?>
             <span class="text-[8px] text-slate-400 truncate block mt-0.5"><?= esc($linkUrl) ?></span>
         <?php endif; ?>

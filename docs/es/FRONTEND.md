@@ -50,6 +50,26 @@ El componente `remoteTable` (`public/assets/js/app.js`) es una herramienta poder
 - **Estados de Carga:** Indicadores incorporados y manejo de errores.
 - **Sincronización de URL:** Actualiza la URL del navegador para que los filtros sean compartibles.
 
+Cada tabla remota debe declarar un `mode` estable y propio del módulo. El
+componente también centraliza las preferencias de interfaz:
+
+- `viewMode`: `table` o `grid` (por defecto: `table`).
+- `density`: `sm`, `md` o `lg` (por defecto: `md`).
+
+Se guardan en `sessionStorage` como `admin_table_view_{mode}` y
+`admin_table_density_{mode}`. Así la preferencia sobrevive al recargar la
+misma pestaña, queda aislada por módulo y una pestaña nueva parte de los
+valores por defecto. Si el almacenamiento no está disponible, se usan esos
+valores por defecto.
+
+El parcial `layouts/partials/table_toolbar.php` muestra cada control solo si
+la vista lo solicita mediante `showViewToggle` y/o `showDensityToggle`; ambos
+flags son `false` por defecto. Los 30 módulos remotos estándar exponen solo
+densidad; Files y Users exponen densidad y modo de vista. La tabla debe
+enlazar la densidad mediante `:class="'density-' + density"`. Las tarjetas
+deben mapear sus campos explícitamente: Files conserva su galería de
+miniaturas y Users es el ejemplo de tarjetas con campos declarados.
+
 ---
 
 ## 🧩 Ayudantes UI de PHP

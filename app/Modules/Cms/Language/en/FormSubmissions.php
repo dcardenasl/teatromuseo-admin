@@ -20,6 +20,18 @@ return [
     'submissions_empty'           => 'No submissions yet.',
     'submissions_empty_desc'      => 'Form submissions will appear here.',
 
+    'field_date'     => 'Date',
+    'field_email'    => 'Email',
+    'field_ip'       => 'IP address',
+    'field_message'  => 'Message',
+    'field_name'     => 'Name',
+    'field_phone'    => 'Phone',
+    'field_company'  => 'Company',
+    'field_status'   => 'Status',
+    'field_form_key' => 'Form',
+    'field_page_id'  => 'Page',
+    'submissions_invalid_status' => 'Invalid status value.',
+
     'sidebar_label' => 'Submissions',
 
     'status_new'    => 'New',

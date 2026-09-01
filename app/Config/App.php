@@ -13,7 +13,7 @@ class App extends BaseConfig
      * Application Name
      * --------------------------------------------------------------------------
      */
-    public string $appName = 'API Client';
+    public string $appName = 'Teatromuseo Admin';
 
     /**
      * --------------------------------------------------------------------------
@@ -129,6 +129,8 @@ class App extends BaseConfig
      *
      * @var list<string>
      */
+    // These are the Admin UI locales. Domain content locales are managed by
+    // the CMS/domain APIs and must not be added to this application list.
     public array $supportedLocales = ['es', 'en'];
 
     /**
@@ -142,7 +144,10 @@ class App extends BaseConfig
      * @see https://www.php.net/manual/en/timezones.php for list of timezones
      *      supported by PHP.
      */
-    public string $appTimezone = 'UTC';
+    // User-facing dates are shown in the museum's venue timezone. Technical
+    // timestamps received from the APIs remain UTC and are converted at the
+    // presentation boundary.
+    public string $appTimezone = 'America/Santiago';
 
     /**
      * --------------------------------------------------------------------------

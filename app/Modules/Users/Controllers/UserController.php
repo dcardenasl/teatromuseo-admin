@@ -38,7 +38,7 @@ class UserController extends BaseWebController
         return $this->tableDataResponse(
             ['status'],
             ['created_at', 'email', 'status', 'first_name', 'last_name'],
-            fn (array $params) => $this->userService->list($params),
+            fn (array $params) => $this->userService->list([...$params, 'projection' => 'list']),
         );
     }
 

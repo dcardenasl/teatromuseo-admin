@@ -5,188 +5,168 @@ declare(strict_types=1);
 namespace App\Modules\Dashboard\Controllers;
 
 use App\Controllers\BaseWebController;
-use App\Modules\Analytics\Services\AnalyticsApiService;
-use App\Modules\Cms\Services\CategoryApiService;
-use App\Modules\Cms\Services\CollectionApiService;
-use App\Modules\Cms\Services\EntryApiService;
-use App\Modules\Cms\Services\FormApiService;
-use App\Modules\Cms\Services\FormSubmissionApiService;
-use App\Modules\Cms\Services\MenuApiService;
-use App\Modules\Cms\Services\PageApiService;
-use App\Modules\Cms\Services\TagApiService;
-use App\Modules\Cms\Services\TranslationAuditApiService;
-use App\Modules\Dashboard\Services\HealthApiService;
-use App\Modules\Files\Services\FileApiService;
-use App\Modules\Metrics\Services\MetricsApiService;
-use App\Modules\Users\Services\UserApiService;
-use CodeIgniter\Cache\CacheInterface;
+use App\Modules\Dashboard\Services\DashboardDataService;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
 
 class DashboardController extends BaseWebController
 {
-    protected FileApiService $fileService;
-    protected HealthApiService $healthService;
-    protected MetricsApiService $metricsService;
-    protected UserApiService $userService;
-    protected TranslationAuditApiService $translationAuditService;
-    protected FormSubmissionApiService $formSubmissionService;
-    protected PageApiService $pageService;
-    protected EntryApiService $entryService;
-    protected CollectionApiService $collectionService;
-    protected MenuApiService $menuService;
-    protected CategoryApiService $categoryService;
-    protected TagApiService $tagService;
-    protected FormApiService $formService;
-    protected AnalyticsApiService $analyticsService;
+    protected DashboardDataService $dashboardDataService;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
-        $this->fileService             = service('fileApiService');
-        $this->healthService           = service('healthApiService');
-        $this->metricsService          = service('metricsApiService');
-        $this->userService             = service('userApiService');
-        $this->translationAuditService = service('translationAuditApiService');
-        $this->formSubmissionService   = service('formSubmissionApiService');
-        $this->pageService             = service('pageApiService');
-        $this->entryService            = service('entryApiService');
-        $this->collectionService       = service('collectionApiService');
-        $this->menuService             = service('menuApiService');
-        $this->categoryService         = service('categoryApiService');
-        $this->tagService               = service('tagApiService');
-        $this->formService             = service('formApiService');
-        $this->analyticsService         = service('analyticsApiService');
+        $this->dashboardDataService = service('dashboardDataService');
     }
 
     public function index(): string
     {
+        $user = is_array(session('user')) ? session('user') : [];
+        $dashboard = $this->dashboardDataService->read($this->currentUserId(), $this->currentPermissions());
+        $displayName = trim((string) ($user['first_name'] ?? ''));
+        if ($displayName === '') {
+            $displayName = trim((string) ($user['username'] ?? ''));
+        }
+        if ($displayName === '') {
+            $displayName = trim((string) ($user['email'] ?? ''));
+        }
+        if ($displayName === '') {
+            $displayName = lang('Dashboard.user_fallback');
+        }
+
+        $canViewAnalytics = has_permission('cms.analytics.read');
+        $widgets = [
+            'stats' => $this->renderStats($dashboard),
+            'summary' => $this->renderSummary($dashboard),
+            'translations' => $this->renderTranslations($dashboard),
+            'activity' => $this->renderCmsActivity($dashboard),
+            'analytics' => $this->renderAnalytics($dashboard),
+            'health' => $this->renderSourceHealth($dashboard),
+            'recentFiles' => $this->renderRecentFiles($dashboard),
+        ];
+
+        $this->closeSessionSafely();
+
         return $this->render('dashboard/index', [
-            'title' => lang('Dashboard.title'),
-            'user'  => session('user') ?? [],
+            'title'       => lang('Dashboard.title'),
+            'user'        => $user,
+            'displayName' => $displayName,
+            'widgets'     => $widgets,
+            'canViewAnalytics' => $canViewAnalytics,
         ]);
     }
 
-    public function widgetStats(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderStats(array $dashboard): string
     {
+        $hub       = $this->dashboardSection($dashboard, 'hub');
+        $hubState  = $this->dashboardSourceState($dashboard, 'hub');
+        $metrics   = is_array($hub['metrics'] ?? null) ? $hub['metrics'] : [];
+        $uptime    = $metrics['request_stats']['availability_percent']
+            ?? $metrics['slo']['availability_percent']
+            ?? null;
         $isAdmin   = has_permission('users.read');
-        $userId    = (int) ((session('user') ?? [])['id'] ?? 0);
-        $cache     = service('cache');
-        $dateRange = $this->resolveDateRange();
 
-        $metricsCacheKey = 'dashboard_metrics_' . md5(serialize($dateRange));
-        $metricsResponse = $cache->get($metricsCacheKey);
-        if (!is_array($metricsResponse)) {
-            $metricsResponse = $this->safeApiCall(fn () => $this->metricsService->summary($dateRange));
-            if ($metricsResponse['ok'] ?? false) {
-                $cache->save($metricsCacheKey, $metricsResponse, 120);
-            }
+        $stats = [];
+        if ($hubState !== 'unavailable') {
+            $stats = [
+                'users' => ['label' => lang('Dashboard.total_users'), 'value' => $isAdmin ? (int) ($hub['users']['total'] ?? 0) : 0, 'icon' => 'users'],
+                'files' => ['label' => lang('Dashboard.total_files'), 'value' => (int) ($hub['files']['total'] ?? 0), 'icon' => 'files'],
+            ];
         }
-        $metrics = $this->extractData($metricsResponse);
-
-        $filesCacheKey = 'dashboard_files_' . $userId;
-        $filesResponse = $cache->get($filesCacheKey);
-        if (!is_array($filesResponse)) {
-            $filesResponse = $this->safeApiCall(fn () => $this->fileService->list(['limit' => 5]));
-            if ($filesResponse['ok'] ?? false) {
-                $cache->save($filesCacheKey, $filesResponse, 60);
-            }
-        }
-        $totalFiles = $this->extractTotal($filesResponse);
-
-        $usersResponse = ['ok' => false, 'data' => []];
-        if ($isAdmin) {
-            $usersResponse = $cache->get('dashboard_users');
-            if (!is_array($usersResponse)) {
-                $usersResponse = $this->safeApiCall(fn () => $this->userService->list(['limit' => 1]));
-                if ($usersResponse['ok'] ?? false) {
-                    $cache->save('dashboard_users', $usersResponse, 120);
-                }
-            }
-        }
-        $totalUsers = $isAdmin ? $this->extractTotal($usersResponse) : 0;
-
-        $uptime = $metrics['request_stats']['availability_percent']
-               ?? $metrics['slo']['availability_percent']
-               ?? null;
-
-        $stats = [
-            'users' => ['label' => lang('Dashboard.total_users'), 'value' => $totalUsers, 'icon' => 'users'],
-            'files' => ['label' => lang('Dashboard.total_files'), 'value' => $totalFiles, 'icon' => 'files'],
-        ];
         if ($uptime !== null) {
             $stats['uptime'] = ['label' => lang('Dashboard.api_uptime'), 'value' => $uptime . '%', 'icon' => 'activity'];
         }
 
-        $devPanel = $this->renderDevApiErrorPanel($metricsResponse)
-            . $this->renderDevApiErrorPanel($filesResponse)
-            . ($isAdmin ? $this->renderDevApiErrorPanel($usersResponse) : '');
-
-        return $this->response->setBody($devPanel . view('dashboard/partials/widget_stats', ['stats' => $stats]));
+        return view('dashboard/partials/widget_stats', [
+            'stats' => $stats,
+            'sourceState' => $hubState,
+        ]);
     }
 
-    public function widgetHealth(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderSourceHealth(array $dashboard): string
     {
-        $cache = service('cache');
-
-        $hubHealth = $this->fetchCachedHealth('dashboard_health_hub', $this->healthService, $cache);
-
-        $domainUrl    = config('DomainApiClient')->baseUrl;
-        $domainHealth = ($domainUrl !== '')
-            ? $this->fetchCachedHealth('dashboard_health_domain', service('domainHealthApiService'), $cache)
-            : null;
-
-        $bffUrl    = config('BffApiClient')->baseUrl;
-        $bffHealth = ($bffUrl !== '')
-            ? $this->fetchCachedHealth('dashboard_health_bff', service('bffHealthApiService'), $cache)
-            : null;
-
-        $webUrl    = config('WebApiClient')->baseUrl;
-        $webHealth = ($webUrl !== '')
-            ? $this->fetchCachedHealth('dashboard_health_web', service('webHealthApiService'), $cache)
-            : null;
-
-        $healthServices = [
-            ['name' => lang('Dashboard.service_hub'), 'health' => $hubHealth],
+        $labels = [
+            'hub' => lang('Dashboard.service_hub'),
+            'cms' => lang('Dashboard.source_cms'),
+            'catalog' => lang('Dashboard.source_catalog'),
+            'event' => lang('Dashboard.source_event'),
         ];
-        if ($domainHealth !== null) {
-            $healthServices[] = ['name' => lang('Dashboard.service_domain'), 'health' => $domainHealth];
-        }
-        if ($bffHealth !== null) {
-            $healthServices[] = ['name' => lang('Dashboard.service_bff'), 'health' => $bffHealth];
-        }
-        if ($webHealth !== null) {
-            $healthServices[] = ['name' => lang('Dashboard.service_web'), 'health' => $webHealth];
+        $healthServices = [];
+        foreach ($labels as $source => $label) {
+            $state = $this->dashboardSourceState($dashboard, $source);
+            $diagnostics = is_array($dashboard['diagnostics'] ?? null)
+                ? $dashboard['diagnostics']
+                : [];
+            $diagnostic = is_array($diagnostics[$source] ?? null)
+                ? $diagnostics[$source]
+                : [];
+            $latencyMs = is_numeric($diagnostic['latency_ms'] ?? null)
+                ? round(max(0.0, (float) $diagnostic['latency_ms']), 2)
+                : null;
+            $checks = is_array($diagnostic['checks'] ?? null) ? $diagnostic['checks'] : [];
+            $healthServices[] = [
+                'name' => $label,
+                'health' => [
+                    'state' => $state === 'fresh' ? 'up' : ($state === 'stale' ? 'degraded' : 'down'),
+                    'status' => $state === 'unavailable' ? 503 : 200,
+                    'data' => [
+                        'timestamp' => $dashboard['generated_at'] ?? null,
+                        'checks' => $checks,
+                    ],
+                ] + ($latencyMs !== null ? ['latency_ms' => $latencyMs] : []),
+            ];
         }
 
-        $devPanel = $this->renderDevApiErrorPanel($hubHealth)
-            . ($domainHealth !== null ? $this->renderDevApiErrorPanel($domainHealth) : '')
-            . ($bffHealth !== null ? $this->renderDevApiErrorPanel($bffHealth) : '')
-            . ($webHealth !== null ? $this->renderDevApiErrorPanel($webHealth) : '');
+        $hosting = is_array($diagnostics['hosting'] ?? null) ? $diagnostics['hosting'] : [];
+        $hostingChecks = is_array($hosting['checks'] ?? null) ? $hosting['checks'] : [];
+        if ($hostingChecks !== []) {
+            $healthServices[] = [
+                'name' => lang('Dashboard.service_hosting'),
+                'health' => [
+                    'state' => $this->healthStateFromChecks($hostingChecks),
+                    'status' => 200,
+                    'data' => [
+                        'timestamp' => $dashboard['generated_at'] ?? null,
+                        'checks' => $hostingChecks,
+                    ],
+                ],
+            ];
+        }
 
-        return $this->response->setBody($devPanel . view('dashboard/partials/widget_health', [
-            'healthServices' => $healthServices,
-        ]));
+        return view('dashboard/partials/widget_health', ['healthServices' => $healthServices]);
     }
 
-    public function widgetRecentFiles(): ResponseInterface
+    /** @param array<string, mixed> $checks */
+    private function healthStateFromChecks(array $checks): string
     {
-        $userId        = (int) ((session('user') ?? [])['id'] ?? 0);
-        $cache         = service('cache');
-        $filesCacheKey = 'dashboard_files_' . $userId;
-
-        $filesResponse = $cache->get($filesCacheKey);
-        if (!is_array($filesResponse)) {
-            $filesResponse = $this->safeApiCall(fn () => $this->fileService->list(['limit' => 5]));
-            if ($filesResponse['ok'] ?? false) {
-                $cache->save($filesCacheKey, $filesResponse, 60);
+        foreach ($checks as $check) {
+            if (is_array($check) && ($check['status'] ?? null) === 'unhealthy') {
+                return 'down';
             }
         }
 
-        return $this->response->setBody($this->renderDevApiErrorPanel($filesResponse) . view('dashboard/partials/widget_recent_files', [
-            'recentFiles' => $this->extractItems($filesResponse),
-        ]));
+        foreach ($checks as $check) {
+            if (is_array($check) && in_array($check['status'] ?? null, ['warning', 'critical', 'unknown'], true)) {
+                return 'degraded';
+            }
+        }
+
+        return 'up';
+    }
+
+    /** @param array<string, mixed> $dashboard */
+    private function renderRecentFiles(array $dashboard): string
+    {
+        $hub       = $this->dashboardSection($dashboard, 'hub');
+        $hubState  = $this->dashboardSourceState($dashboard, 'hub');
+
+        return view('dashboard/partials/widget_recent_files', [
+            'recentFiles' => is_array($hub['files']['recent'] ?? null) ? $hub['files']['recent'] : [],
+            'sourceState' => $hubState,
+        ]);
     }
 
     /**
@@ -194,24 +174,18 @@ class DashboardController extends BaseWebController
      * stat cards) so the dashboard surfaces the project's actual translation
      * health instead of only generic ops metrics.
      */
-    public function widgetTranslations(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderTranslations(array $dashboard): string
     {
-        if (! has_permission('cms.languages.read')) {
-            return $this->response->setBody(view('dashboard/partials/widget_translations', ['stats' => null]));
-        }
+        $section  = $this->dashboardSection($dashboard, 'translations');
+        $state    = $this->dashboardSourceState($dashboard, 'translations');
+        $stats    = $state === 'unavailable'
+            ? null
+            : (is_array($section['translations'] ?? null) ? $section['translations'] : []);
 
-        $cache    = service('cache');
-        $response = $cache->get('dashboard_translation_stats');
-        if (!is_array($response)) {
-            $response = $this->safeApiCall(fn () => $this->translationAuditService->getStats());
-            if ($response['ok'] ?? false) {
-                $cache->save('dashboard_translation_stats', $response, 300);
-            }
-        }
-
-        return $this->response->setBody($this->renderDevApiErrorPanel($response) . view('dashboard/partials/widget_translations', [
-            'stats' => $this->extractItems($response),
-        ]));
+        return view('dashboard/partials/widget_translations', [
+            'stats' => $stats,
+        ]);
     }
 
     /**
@@ -220,24 +194,18 @@ class DashboardController extends BaseWebController
      * endpoint the full Analytics page uses for its KPI cards — never the
      * heavier per-page/referrer/timeseries breakdowns.
      */
-    public function widgetAnalytics(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderAnalytics(array $dashboard): string
     {
-        if (! has_permission('cms.analytics.read')) {
-            return $this->response->setBody(view('dashboard/partials/widget_analytics', ['overview' => null]));
-        }
+        $section  = $this->dashboardSection($dashboard, 'analytics');
+        $state    = $this->dashboardSourceState($dashboard, 'analytics');
+        $overview = $state === 'unavailable'
+            ? null
+            : (is_array($section['analytics'] ?? null) ? $section['analytics'] : []);
 
-        $cache    = service('cache');
-        $response = $cache->get('dashboard_analytics_overview');
-        if (!is_array($response)) {
-            $response = $this->safeApiCall(fn () => $this->analyticsService->overview(['period' => '7d']));
-            if ($response['ok'] ?? false) {
-                $cache->save('dashboard_analytics_overview', $response, 300);
-            }
-        }
-
-        return $this->response->setBody($this->renderDevApiErrorPanel($response) . view('dashboard/partials/widget_analytics', [
-            'overview' => $this->extractData($response),
-        ]));
+        return view('dashboard/partials/widget_analytics', [
+            'overview' => $overview,
+        ]);
     }
 
     /**
@@ -252,61 +220,158 @@ class DashboardController extends BaseWebController
      * counter here added no information: it was removed in favor of the one
      * real actionable signal (submissions) living directly on its card.
      */
-    public function widgetSummary(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderSummary(array $dashboard): string
     {
-        $cache    = service('cache');
-        $devPanel = '';
-        $items    = [];
+        $cms       = $this->dashboardSection($dashboard, 'cms');
+        $catalog    = $this->dashboardSection($dashboard, 'catalog');
+        $event      = $this->dashboardSection($dashboard, 'event');
+        $cmsState   = $this->dashboardSourceState($dashboard, 'cms');
+        $catalogState = $this->dashboardSourceState($dashboard, 'catalog');
+        $eventState = $this->dashboardSourceState($dashboard, 'event');
+        $counts    = is_array($cms['counts'] ?? null) ? $cms['counts'] : [];
+        $catalogCounts = is_array($catalog['counts'] ?? null) ? $catalog['counts'] : [];
+        $eventCounts = is_array($event['counts'] ?? null) ? $event['counts'] : [];
+        $items = [];
+        $warnings = [];
 
-        /** @var list<array{permission: string, cacheKey: string, call: callable(): array<string, mixed>, label: string, url: string, icon: string}> $resources */
+        foreach (['cms' => $cmsState, 'catalog' => $catalogState, 'event' => $eventState] as $source => $state) {
+            if ($state === 'unavailable') {
+                $warnings[] = lang('Dashboard.source_unavailable_named', [
+                    'source' => lang('Dashboard.source_' . $source),
+                ]);
+            }
+        }
+
+        /** @var list<array{source: string, permission: string, countKey: string, label: string, url: string, icon: string}> $resources */
         $resources = [
             [
+                'source' => 'cms',
                 'permission' => 'cms.pages.read',
-                'cacheKey'   => 'dashboard_count_pages',
-                'call'       => fn () => $this->pageService->list(['limit' => 1]),
+                'countKey'   => 'pages',
                 'label'      => lang('Pages.pages_title'),
                 'url'        => route_to('admin.cms.pages'),
                 'icon'       => 'cms-page',
             ],
             [
+                'source' => 'cms',
                 'permission' => 'cms.entries.read',
-                'cacheKey'   => 'dashboard_count_entries',
-                'call'       => fn () => $this->entryService->list(['limit' => 1]),
+                'countKey'   => 'entries',
                 'label'      => lang('Entries.entries_title'),
                 'url'        => route_to('admin.cms.entries'),
                 'icon'       => 'cms-entry',
             ],
             [
+                'source' => 'cms',
                 'permission' => 'cms.collections.read',
-                'cacheKey'   => 'dashboard_count_collections',
-                'call'       => fn () => $this->collectionService->list(['limit' => 1]),
+                'countKey'   => 'collections',
                 'label'      => lang('Collections.collections_title'),
                 'url'        => route_to('admin.cms.collections'),
                 'icon'       => 'cms-collection',
             ],
             [
+                'source' => 'cms',
                 'permission' => 'cms.menus.read',
-                'cacheKey'   => 'dashboard_count_menus',
-                'call'       => fn () => $this->menuService->list(['limit' => 1]),
+                'countKey'   => 'menus',
                 'label'      => lang('Menus.menus_title'),
                 'url'        => route_to('admin.cms.menus'),
                 'icon'       => 'cms-menu',
             ],
             [
+                'source' => 'cms',
                 'permission' => 'cms.categories.read',
-                'cacheKey'   => 'dashboard_count_categories',
-                'call'       => fn () => $this->categoryService->list(['limit' => 1]),
+                'countKey'   => 'categories',
                 'label'      => lang('Categories.categories_title'),
                 'url'        => route_to('admin.cms.categories'),
                 'icon'       => 'folder-open',
             ],
             [
+                'source' => 'cms',
                 'permission' => 'cms.tags.read',
-                'cacheKey'   => 'dashboard_count_tags',
-                'call'       => fn () => $this->tagService->list(['limit' => 1]),
+                'countKey'   => 'tags',
                 'label'      => lang('Tags.tags_title'),
                 'url'        => route_to('admin.cms.tags'),
                 'icon'       => 'tag',
+            ],
+            [
+                'source' => 'catalog',
+                'permission' => 'catalog.collectionItem.read',
+                'countKey' => 'collection_items',
+                'label' => lang('Museum.collection_items_title'),
+                'url' => route_to('admin.museum.collection_items'),
+                'icon' => 'landmark',
+            ],
+            [
+                'source' => 'catalog',
+                'permission' => 'catalog.category.read',
+                'countKey' => 'categories',
+                'label' => lang('Museum.categories_title'),
+                'url' => route_to('admin.museum.categories'),
+                'icon' => 'folder-tree',
+            ],
+            [
+                'source' => 'catalog',
+                'permission' => 'catalog.technique.read',
+                'countKey' => 'techniques',
+                'label' => lang('Museum.techniques_title'),
+                'url' => route_to('admin.museum.techniques'),
+                'icon' => 'brush',
+            ],
+            [
+                'source' => 'event',
+                'permission' => 'event.events.read',
+                'countKey' => 'events',
+                'label' => lang('Events.events_title'),
+                'url' => route_to('admin.events.events'),
+                'icon' => 'calendar-days',
+            ],
+            [
+                'source' => 'event',
+                'permission' => 'event.event-types.read',
+                'countKey' => 'event_types',
+                'label' => lang('Events.event_types_title'),
+                'url' => route_to('admin.events.event_types'),
+                'icon' => 'layers-3',
+            ],
+            [
+                'source' => 'event',
+                'permission' => 'event.venues.read',
+                'countKey' => 'venues',
+                'label' => lang('Venues.venues_title'),
+                'url' => route_to('admin.venues.venues'),
+                'icon' => 'map-pin',
+            ],
+            [
+                'source' => 'event',
+                'permission' => 'event.occurrences.read',
+                'countKey' => 'occurrences',
+                'label' => lang('Occurrences.occurrences_title'),
+                'url' => route_to('admin.occurrences.occurrences'),
+                'icon' => 'clock-3',
+            ],
+            [
+                'source' => 'event',
+                'permission' => 'event.ticket-types.read',
+                'countKey' => 'ticket_types',
+                'label' => lang('TicketTypes.ticket_types_title'),
+                'url' => route_to('admin.tickettypes.ticket_types'),
+                'icon' => 'ticket',
+            ],
+            [
+                'source' => 'event',
+                'permission' => 'event.bookings.read',
+                'countKey' => 'bookings',
+                'label' => lang('Bookings.bookings_title'),
+                'url' => route_to('admin.bookings.bookings'),
+                'icon' => 'clipboard-check',
+            ],
+            [
+                'source' => 'event',
+                'permission' => 'event.tickets.read',
+                'countKey' => 'tickets',
+                'label' => lang('Tickets.tickets_title'),
+                'url' => route_to('admin.tickets.tickets'),
+                'icon' => 'badge-check',
             ],
         ];
 
@@ -315,63 +380,39 @@ class DashboardController extends BaseWebController
                 continue;
             }
 
-            $response = $cache->get($resource['cacheKey']);
-            if (!is_array($response)) {
-                $response = $this->safeApiCall($resource['call']);
-                if ($response['ok'] ?? false) {
-                    $cache->save($resource['cacheKey'], $response, 300);
-                }
+            if ($this->dashboardSourceState($dashboard, $resource['source']) === 'unavailable') {
+                continue;
             }
-            $devPanel .= $this->renderDevApiErrorPanel($response);
+
+            $sourceCounts = match ($resource['source']) {
+                'catalog' => $catalogCounts,
+                'event' => $eventCounts,
+                default => $counts,
+            };
 
             $items[] = [
                 'label' => $resource['label'],
-                'count' => $this->extractTotal($response),
+                'count' => (int) ($sourceCounts[$resource['countKey']] ?? 0),
                 'url'   => $resource['url'],
                 'icon'  => $resource['icon'],
                 'badge' => null,
             ];
         }
 
-        if (has_permission('cms.forms.read')) {
-            // The domain's /cms/forms list endpoint is intentionally unpaginated
-            // (FormService::list() ignores filters and always returns every
-            // form), unlike Pages/Entries/etc which return a {data, meta}
-            // envelope — so this can't reuse extractTotal()'s meta.total
-            // lookup and instead counts the flat array directly.
-            $formsCacheKey  = 'dashboard_count_forms';
-            $formsResponse = $cache->get($formsCacheKey);
-            if (!is_array($formsResponse)) {
-                $formsResponse = $this->safeApiCall(fn () => $this->formService->list());
-                if ($formsResponse['ok'] ?? false) {
-                    $cache->save($formsCacheKey, $formsResponse, 300);
-                }
-            }
-            $devPanel .= $this->renderDevApiErrorPanel($formsResponse);
-
+        if (has_permission('cms.forms.read') && $cmsState !== 'unavailable') {
             $items[] = [
                 'label' => lang('Forms.title'),
-                'count' => count($this->extractItems($formsResponse)),
+                'count' => (int) ($counts['forms'] ?? 0),
                 'url'   => route_to('admin.cms.forms'),
                 'icon'  => 'clipboard-list',
                 'badge' => null,
             ];
         }
 
-        if (has_permission('cms.submissions.read')) {
-            $countsCacheKey = 'dashboard_submission_counts';
-            $countsResponse = $cache->get($countsCacheKey);
-            if (!is_array($countsResponse)) {
-                $countsResponse = $this->safeApiCall(fn () => $this->formSubmissionService->counts());
-                if ($countsResponse['ok'] ?? false) {
-                    $cache->save($countsCacheKey, $countsResponse, 60);
-                }
-            }
-            $devPanel .= $this->renderDevApiErrorPanel($countsResponse);
-
-            $counts  = $this->extractData($countsResponse);
-            $pending = (int) ($counts['new'] ?? 0);
-            $total   = array_sum(array_map(static fn ($value): int => (int) $value, $counts));
+        if (has_permission('cms.submissions.read') && $cmsState !== 'unavailable') {
+            $submissionCounts = is_array($cms['submissions'] ?? null) ? $cms['submissions'] : [];
+            $pending = (int) ($submissionCounts['new'] ?? 0);
+            $total   = array_sum(array_map(static fn ($value): int => (int) $value, $submissionCounts));
 
             $items[] = [
                 'label' => lang('FormSubmissions.submissions_title'),
@@ -386,68 +427,85 @@ class DashboardController extends BaseWebController
             ];
         }
 
-        return $this->response->setBody($devPanel . view('dashboard/partials/widget_summary', ['items' => $items]));
+        return view('dashboard/partials/widget_summary', [
+            'items' => $items,
+            'warnings' => $warnings,
+        ]);
     }
 
     /**
      * Most recently updated Pages and Entries, merged and sorted — the
      * project-relevant equivalent of a generic "recent activity" feed.
      */
-    public function widgetCmsActivity(): ResponseInterface
+    /** @param array<string, mixed> $dashboard */
+    private function renderCmsActivity(array $dashboard): string
     {
-        $cache    = service('cache');
-        $devPanel = '';
-        $entries  = [];
+        $cms       = $this->dashboardSection($dashboard, 'cms');
+        $catalog   = $this->dashboardSection($dashboard, 'catalog');
+        $event     = $this->dashboardSection($dashboard, 'event');
+        $entries   = [];
+        $activity  = is_array($cms['recent_activity'] ?? null) ? $cms['recent_activity'] : [];
 
-        if (has_permission('cms.pages.read')) {
-            $response = $cache->get('dashboard_recent_pages');
-            if (!is_array($response)) {
-                $response = $this->safeApiCall(fn () => $this->pageService->list([
-                    'limit' => 5,
-                    'sort' => '-updated_at',
-                    'include_translations' => 1,
-                ]));
-                if ($response['ok'] ?? false) {
-                    $cache->save('dashboard_recent_pages', $response, 60);
-                }
+        foreach ($activity as $activityItem) {
+            if (! is_array($activityItem)) {
+                continue;
             }
-            $devPanel .= $this->renderDevApiErrorPanel($response);
-            foreach ($this->extractItems($response) as $page) {
-                $entries[] = $this->buildActivityEntry(
-                    $page,
-                    lang('Translations.resource_page'),
-                    route_to('admin.cms.pages.show', (string) ($page['id'] ?? ''))
-                );
-            }
+
+            $type = (string) ($activityItem['type'] ?? '');
+            $isPage = $type === 'page';
+            $entries[] = $this->buildActivityEntry(
+                $activityItem,
+                $isPage ? lang('Translations.resource_page') : lang('Translations.resource_entry'),
+                $isPage
+                    ? route_to('admin.cms.pages.show', (string) ($activityItem['id'] ?? ''))
+                    : route_to('admin.cms.entries.show', (string) ($activityItem['id'] ?? ''))
+            );
         }
 
-        if (has_permission('cms.entries.read')) {
-            $response = $cache->get('dashboard_recent_entries');
-            if (!is_array($response)) {
-                $response = $this->safeApiCall(fn () => $this->entryService->list([
-                    'limit' => 5,
-                    'sort' => '-updated_at',
-                    'include_translations' => 1,
-                ]));
-                if ($response['ok'] ?? false) {
-                    $cache->save('dashboard_recent_entries', $response, 60);
+        $domainActivity = [
+            'catalog' => is_array($catalog['recent_activity'] ?? null) ? $catalog['recent_activity'] : [],
+            'event' => is_array($event['recent_activity'] ?? null) ? $event['recent_activity'] : [],
+        ];
+        $domainActivityMap = [
+            'collection_items' => [lang('Museum.collection_items_title'), 'admin.museum.collection_items.show'],
+            'categories' => [lang('Museum.categories_title'), 'admin.museum.categories.show'],
+            'techniques' => [lang('Museum.techniques_title'), 'admin.museum.techniques.show'],
+            'events' => [lang('Events.events_title'), 'admin.events.events.show'],
+            'event_types' => [lang('Events.event_types_title'), 'admin.events.event_types.show'],
+            'venues' => [lang('Venues.venues_title'), 'admin.venues.venues.show'],
+            'occurrences' => [lang('Occurrences.occurrences_title'), 'admin.occurrences.occurrences.show'],
+            'ticket_types' => [lang('TicketTypes.ticket_types_title'), 'admin.tickettypes.ticket_types.show'],
+            'bookings' => [lang('Bookings.bookings_title'), 'admin.bookings.bookings.show'],
+            'tickets' => [lang('Tickets.tickets_title'), 'admin.tickets.tickets.show'],
+        ];
+        foreach ($domainActivity as $sourceItems) {
+            foreach ($sourceItems as $activityItem) {
+                if (! is_array($activityItem)) {
+                    continue;
                 }
-            }
-            $devPanel .= $this->renderDevApiErrorPanel($response);
-            foreach ($this->extractItems($response) as $entry) {
+                $type = (string) ($activityItem['type'] ?? '');
+                if (! isset($domainActivityMap[$type])) {
+                    continue;
+                }
+                [$label, $route] = $domainActivityMap[$type];
                 $entries[] = $this->buildActivityEntry(
-                    $entry,
-                    lang('Translations.resource_entry'),
-                    route_to('admin.cms.entries.show', (string) ($entry['id'] ?? ''))
+                    $activityItem,
+                    $label,
+                    route_to($route, (string) ($activityItem['id'] ?? ''))
                 );
             }
         }
 
         usort($entries, static fn (array $a, array $b): int => strcmp((string) $b['updated_at'], (string) $a['updated_at']));
 
-        return $this->response->setBody($devPanel . view('dashboard/partials/widget_cms_activity', [
+        return view('dashboard/partials/widget_cms_activity', [
             'items' => array_slice($entries, 0, 6),
-        ]));
+            'sourceStates' => [
+                'cms' => $this->dashboardSourceState($dashboard, 'cms'),
+                'catalog' => $this->dashboardSourceState($dashboard, 'catalog'),
+                'event' => $this->dashboardSourceState($dashboard, 'event'),
+            ],
+        ]);
     }
 
     /**
@@ -471,31 +529,56 @@ class DashboardController extends BaseWebController
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function fetchCachedHealth(string $cacheKey, HealthApiService $service, CacheInterface $cache): array
+    private function currentUserId(): int
     {
-        $cached = $cache->get($cacheKey);
-        if (is_array($cached)) {
-            return $cached;
+        return (int) ((session('user') ?? [])['id'] ?? 0);
+    }
+
+    /** @return list<string> */
+    private function currentPermissions(): array
+    {
+        $permissions = (session('user') ?? [])['permissions'] ?? [];
+
+        if (! is_array($permissions)) {
+            return [];
         }
 
-        $response = $this->safeApiCall(fn () => $service->check());
-        if ($response['ok'] ?? false) {
-            $cache->save($cacheKey, $response, 30);
-        }
-
-        return $response;
+        return array_values(array_filter($permissions, 'is_string'));
     }
 
     /**
-     * @param array<string, mixed> $response
+     * @param array<string, mixed> $dashboard
+     * @return array<string, mixed>
      */
-    private function extractTotal(array $response): int
+    private function dashboardSection(array $dashboard, string $name): array
     {
-        $payload = $response['data'] ?? [];
+        $sections = $dashboard['sections'] ?? [];
+        $section = is_array($sections) ? ($sections[$name] ?? []) : [];
 
-        return (int) ($payload['meta']['total'] ?? $payload['data']['meta']['total'] ?? $payload['total'] ?? 0);
+        return is_array($section) ? $section : [];
+    }
+
+    /**
+     * @param array<string, mixed> $dashboard
+     */
+    private function dashboardSourceState(array $dashboard, string $name): string
+    {
+        $source = $dashboard['source'] ?? [];
+        if (! is_array($source)) {
+            return 'unavailable';
+        }
+
+        $state = $source[$name] ?? null;
+
+        return is_string($state) && in_array($state, ['fresh', 'stale', 'unavailable'], true)
+            ? $state
+            : 'unavailable';
+    }
+
+    private function closeSessionSafely(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session()->close();
+        }
     }
 }

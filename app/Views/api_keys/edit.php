@@ -18,7 +18,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700" for="name"><?= lang('ApiKeys.name') ?></label>
             <input id="name" name="name" type="text" value="<?= esc(old('name', $apiKey['name'] ?? '')) ?>"
-                class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error('name') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+                maxlength="100" class="<?= esc(input_class('name')) ?>" <?= field_aria_attrs('name') ?>>
             <?= render_field_error('name') ?>
         </div>
 
@@ -26,7 +26,7 @@
                     <label class="block text-sm font-medium text-gray-700" for="is_active"><?= lang('ApiKeys.status') ?></label>
                     <?php $currentActive = old('is_active', isset($apiKey['is_active']) ? ((int) ((bool) $apiKey['is_active'])) : 1); ?>
                     <select id="is_active" name="is_active"
-                        class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error('is_active') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+                        class="<?= esc(input_class('is_active')) ?>" <?= field_aria_attrs('is_active') ?>>
                         <?php foreach (($statusOptions ?? []) as $option): ?>
                             <?php
                             $value = (string) ($option['value'] ?? '');
@@ -58,7 +58,7 @@ $labels = [
                         <div>
                             <label class="block text-sm font-medium text-gray-700" for="<?= esc($field) ?>"><?= esc($label) ?></label>
                             <input id="<?= esc($field) ?>" name="<?= esc($field) ?>" type="number" min="1" value="<?= esc(old($field, $fieldMapping[$field])) ?>"
-                                class="mt-1 w-full rounded-lg border px-3 py-2 <?= has_field_error($field) ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-brand-500 focus:ring-brand-500' ?>">
+                                class="<?= esc(input_class($field)) ?>" <?= field_aria_attrs($field) ?>>
                             <?= render_field_error($field) ?>
                         </div>
                     <?php endforeach; ?>

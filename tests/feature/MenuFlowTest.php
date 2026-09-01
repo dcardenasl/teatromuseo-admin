@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Cms\Services\MenuApiService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -51,16 +52,45 @@ final class MenuFlowTest extends CIUnitTestCase
         $result->assertStatus(200);
     }
 
-    public function testDataInjectsMenuItemCounts(): void
+    public function testShowUsesSingleMenuBootstrapProjection(): void
+    {
+        $fixtures = new AdminFixtureFactory(__METHOD__);
+        $menu = $fixtures->menu();
+        $item = $fixtures->menuItem($menu['id'], 1);
+
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminCmsMenuEditorBootstrap')
+            ->with((int) $menu['id'], null)
+            ->willReturn($fixtures->response([
+                'sections' => [
+                    'menu' => $menu,
+                    'items' => [$item],
+                    'languages' => $fixtures->languages(),
+                    'pages' => [],
+                    'entries' => [],
+                    'collections' => [],
+                ],
+            ]));
+        Services::injectMock('bffApiClient', $bff);
+
+        $result = $this->withSession([
+            'access_token' => 'token',
+            'permissions_refreshed_at' => time(),
+            'user' => ['permissions' => ['cms.menus.read']],
+        ])->get('/admin/cms/menus/' . $menu['id']);
+
+        $result->assertStatus(200);
+        $this->assertStringContainsString((string) $menu['menu_key'], (string) $result->getBody());
+    }
+
+    public function testDataUsesMenuProjectionCounts(): void
     {
         $fixtures = new AdminFixtureFactory(__METHOD__);
         $headerMenu = $fixtures->menu('header');
         $footerMenu = $fixtures->menu('footer');
-        $headerItems = [
-            $fixtures->menuItem($headerMenu['id'], 1),
-            $fixtures->menuItem($headerMenu['id'], 2),
-        ];
-        $footerItems = [$fixtures->menuItem($footerMenu['id'])];
+        $headerMenu['items_count'] = 2;
+        $footerMenu['items_count'] = 1;
 
         $mock = $this->createMock(MenuApiService::class);
         $mock->method('list')
@@ -82,33 +112,11 @@ final class MenuFlowTest extends CIUnitTestCase
                         'to' => 2,
                     ],
                 ],
-                'raw' => '{"status":"success","data":{"items":[]}}',
+                'raw' => '',
                 'headers' => [],
                 'messages' => [],
                 'fieldErrors' => [],
             ]);
-        $mock->method('listItems')
-            ->willReturn([
-                'ok' => true,
-                'status' => 200,
-                'data' => [
-                    'status' => 'success',
-                    'data' => [
-                        ...$headerItems,
-                        ...$footerItems,
-                    ],
-                    'meta' => [
-                        'total' => count([...$headerItems, ...$footerItems]),
-                        'page' => 1,
-                        'per_page' => 100,
-                    ],
-                ],
-                'raw' => '{"status":"success","data":{"data":[]}}',
-                'headers' => [],
-                'messages' => [],
-                'fieldErrors' => [],
-            ]);
-
         Services::injectMock('menuApiService', $mock);
 
         $result = $this->withSession([

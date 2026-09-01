@@ -27,4 +27,8 @@ return [
     'not_found'                => 'El recurso solicitado no fue encontrado.',
     'server_error'             => 'Ocurrió un error inesperado en el servidor.',
     'too_many_requests'        => 'Demasiadas solicitudes. Por favor espera un momento.',
+    'validation_unique'       => 'Este campo debe contener un valor único.',
+    'validation_required'     => 'Este campo es obligatorio.',
+    'validation_min_length'   => 'Este campo no alcanza la longitud mínima.',
+    'validation_max_length'   => 'Este campo no debe exceder la longitud máxima.',
 ];

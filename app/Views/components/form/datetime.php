@@ -12,6 +12,13 @@ helper('form');
 
 $required = $required ?? false;
 $value = old($name, $value ?? '');
+if (is_string($value) && trim($value) !== '') {
+    try {
+        $value = (new DateTimeImmutable($value))->format('Y-m-d\\TH:i');
+    } catch (Throwable) {
+        $value = str_replace(' ', 'T', substr($value, 0, 16));
+    }
+}
 $placeholder = $placeholder ?? '';
 $help = $help ?? '';
 ?>

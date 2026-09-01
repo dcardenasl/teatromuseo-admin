@@ -4,17 +4,19 @@
     x-data="remoteTable({
         apiUrl: '<?= route_to('admin.cms.redirects.data') ?>',
         pageUrl: '<?= route_to('admin.cms.redirects') ?>',
+        mode: 'cms_redirects',
         defaultSort: '-created_at',
         routes: {
             showBase: '<?= route_to('admin.cms.redirects') ?>',
             editBase: '<?= route_to('admin.cms.redirects') ?>'
         },
         limitOptions: <?= esc(json_encode(array_map('strval', $limitOptions ?? [10, 25, 50, 100]))) ?>
-    })" x-init="init()">
+    })">
 
     <?= view('layouts/partials/table_toolbar', [
         'title'       => lang('Redirects.redirects_title'),
         'actionsView' => 'cms/redirects/partials/toolbar_actions',
+        'showDensityToggle' => true,
     ]) ?>
     <?php /* CSV scaffold hooks: components/table/export_button, components/form/export_import, components/form/import_preview */ ?>
 
@@ -58,7 +60,7 @@
                 </div>
             </div>
             <div class="<?= esc(table_scroll_class()) ?>">
-            <table class="<?= esc(table_class()) ?>">
+            <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
                 <thead class="<?= esc(table_head_class()) ?>">
                     <tr>
                         <th class="<?= esc(table_th_class()) ?>" :aria-sort="sortAria('old_path')">
@@ -121,9 +123,11 @@
                                 <div class="flex items-center gap-2">
                                     <a :href="showUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.view') ?></a>
                                     <a :href="editUrl(row.id)" class="<?= esc(action_button_class()) ?>"><?= lang('App.edit') ?></a>
+                                    <?php if (has_permission('cms.redirects.admin')): ?>
                                     <button type="button" class="<?= esc(action_button_class('danger')) ?>"
                                         @click="$store.confirm.show(window.confirmDeleteMessage(String(row.old_path ?? row.new_url ?? row.note ?? '')), () => { const f = document.createElement('form'); f.method = 'post'; f.action = `<?= rtrim(route_to('admin.cms.redirects'), '/') ?>/${row.id}/delete`; const i=document.createElement('input');i.type='hidden';i.name='<?= csrf_token() ?>';i.value='<?= csrf_hash() ?>';f.appendChild(i); document.body.appendChild(f); f.submit(); })"
                                     ><?= lang('App.delete') ?></button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

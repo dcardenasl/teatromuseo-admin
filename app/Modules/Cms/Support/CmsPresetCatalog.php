@@ -11,7 +11,7 @@ final class CmsPresetCatalog
      */
     public static function collectionTypes(): array
     {
-        return ['blog', 'news', 'portfolio', 'services', 'other'];
+        return ['blog', 'news', 'portfolio', 'services', 'companias', 'personas', 'obras', 'videos', 'festivales', 'exposiciones', 'cursos', 'publicaciones', 'other'];
     }
 
     /**
@@ -19,7 +19,7 @@ final class CmsPresetCatalog
      */
     public static function pageTypes(): array
     {
-        return ['home', 'generic', 'contact', 'privacy', 'terms', '404', '500', 'maintenance', 'collection_index'];
+        return ['home', 'generic', 'contact', 'privacy', 'terms', '404', '500', 'maintenance', 'about', 'history', 'events', 'catalog_listing', 'collection_index', 'template_catalog_item', 'template_event_item', 'press', 'publications', 'transparency'];
     }
 
     /**
@@ -49,7 +49,7 @@ final class CmsPresetCatalog
      */
     public static function collectionPresets(): array
     {
-        return [
+        $presets = [
             self::collectionPreset('blog', [
                 ['block_key' => 'rich_text', 'label' => 'Introducción', 'help_text' => 'Primer bloque editorial', 'required' => true, 'locked' => false, 'block_config_defaults' => new \stdClass()],
                 ['block_key' => 'image', 'label' => 'Imagen destacada', 'help_text' => 'Apoyo visual para la entrada', 'required' => false, 'locked' => false, 'block_config_defaults' => new \stdClass()],
@@ -99,6 +99,43 @@ final class CmsPresetCatalog
                 ]],
                 ['step_title' => 'Imagen destacada', 'step_hint' => 'Portada de la entrada (biblioteca o URL)', 'fields' => [['key' => 'featured_image', 'label' => 'Imagen destacada', 'type' => 'image', 'required' => false]]],
             ]),
+        ];
+
+        foreach (self::domainCollectionDefinitions() as $definition) {
+            $presets[] = self::collectionPreset(
+                $definition['type'],
+                [
+                    ['block_key' => $definition['block'], 'label' => $definition['label'], 'help_text' => $definition['help'], 'required' => true, 'locked' => true, 'auto_create' => true, 'block_config_defaults' => new \stdClass()],
+                    ['block_key' => 'related_entries', 'label' => 'Relaciones editoriales', 'help_text' => 'Vínculos opcionales con otras entradas', 'required' => false, 'locked' => false, 'auto_create' => false, 'block_config_defaults' => new \stdClass()],
+                ],
+                [
+                    ['step_title' => $definition['label'], 'step_hint' => $definition['help'], 'fields' => [
+                        ['key' => 'title', 'label' => $definition['label'], 'type' => 'text', 'required' => true],
+                        ['key' => 'excerpt', 'label' => 'Resumen', 'type' => 'textarea', 'required' => false],
+                    ]],
+                    ['step_title' => 'Publicación', 'step_hint' => 'Metadatos y publicación', 'fields' => [
+                        ['key' => 'meta_title', 'label' => 'Título SEO', 'type' => 'text', 'required' => false],
+                        ['key' => 'featured_image', 'label' => 'Imagen destacada', 'type' => 'image', 'required' => false],
+                    ]],
+                ]
+            );
+        }
+
+        return $presets;
+    }
+
+    /** @return list<array{type: string, block: string, label: string, help: string}> */
+    private static function domainCollectionDefinitions(): array
+    {
+        return [
+            ['type' => 'companias', 'block' => 'compania_ficha', 'label' => 'Compañías', 'help' => 'Ficha de compañía artística.'],
+            ['type' => 'personas', 'block' => 'persona_ficha', 'label' => 'Personas', 'help' => 'Ficha de persona y trayectoria.'],
+            ['type' => 'obras', 'block' => 'obra_ficha', 'label' => 'Obras', 'help' => 'Ficha artística con referencias.'],
+            ['type' => 'videos', 'block' => 'video_ficha', 'label' => 'Videos', 'help' => 'Video y metadatos editoriales.'],
+            ['type' => 'festivales', 'block' => 'festival_ficha', 'label' => 'Festivales', 'help' => 'Festival, edición y programación.'],
+            ['type' => 'exposiciones', 'block' => 'exposicion_ficha', 'label' => 'Exposiciones', 'help' => 'Fechas, autoría y media.'],
+            ['type' => 'cursos', 'block' => 'curso_ficha', 'label' => 'Cursos', 'help' => 'Modalidad, fechas e inscripción.'],
+            ['type' => 'publicaciones', 'block' => 'publicacion_metadata', 'label' => 'Editorial', 'help' => 'Metadatos y documentos.'],
         ];
     }
 
@@ -166,7 +203,7 @@ final class CmsPresetCatalog
         return [
             self::pagePreset('home', [
                 ['block_key' => 'hero_slider', 'label' => 'Hero principal', 'help_text' => 'Bloque de bienvenida', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) []],
-                ['block_key' => 'collection_grid', 'label' => 'Últimas entradas', 'help_text' => 'Grilla de una colección', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['collection_key' => '', 'items_limit' => 3, 'order_by' => 'published_at', 'order_direction' => 'desc', 'layout_variant' => 'cards', 'css_class' => '']],
+                ['block_key' => 'collection_grid', 'label' => 'Últimas entradas', 'help_text' => 'Grilla de una colección', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['collection_key' => '', 'items_limit' => 3, 'order_by' => 'published_at', 'order_direction' => 'desc', 'layout_variant' => 'cards', 'image_aspect_ratio' => '1/1', 'css_class' => '']],
                 ['block_key' => 'cta', 'label' => 'Llamado a la acción', 'help_text' => 'Invitación final', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['variant' => 'blue', 'css_class' => '']],
             ]),
             self::pagePreset('generic', [
@@ -204,13 +241,23 @@ final class CmsPresetCatalog
             ]),
             self::pagePreset('events', [
                 ['block_key' => 'page_header', 'label' => 'Encabezado', 'help_text' => 'Título de la página', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) ['bg_color' => 'bg-gray-100', 'css_class' => '']],
-                ['block_key' => 'collection_grid', 'label' => 'Cartelera', 'help_text' => 'Grilla de una colección', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['collection_key' => '', 'items_limit' => 6, 'order_by' => 'published_at', 'order_direction' => 'asc', 'layout_variant' => 'cards', 'css_class' => '']],
-                ['block_key' => 'image', 'label' => 'Imagen', 'help_text' => 'Apoyo visual', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['aspect_ratio' => '16/9', 'css_class' => '']],
+                ['block_key' => 'collection_listing', 'label' => 'Cartelera', 'help_text' => 'Listado público de eventos', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) ['source_type' => 'event_items', 'per_page' => 12, 'order_by' => 'start_time', 'order_direction' => 'asc', 'layout_variant' => 'cards', 'show_search' => true, 'show_categories' => false, 'show_tags' => true, 'show_excerpt' => true, 'show_date' => true, 'show_button' => true, 'show_item_categories' => true, 'show_extra_richtext' => false, 'show_extra_link' => false, 'show_extra_image' => false, 'css_class' => 'public-listing public-listing--event']],
+            ]),
+            self::pagePreset('catalog_listing', [
+                ['block_key' => 'page_header', 'label' => 'Encabezado', 'help_text' => 'Título de la página', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) ['bg_color' => 'bg-gray-100', 'css_class' => '']],
+                ['block_key' => 'collection_listing', 'label' => 'Colección del museo', 'help_text' => 'Listado público de piezas y obras del museo', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) ['source_type' => 'catalog_items', 'per_page' => 12, 'order_by' => 'name', 'order_direction' => 'asc', 'layout_variant' => 'cards', 'show_search' => true, 'show_categories' => true, 'show_tags' => false, 'show_excerpt' => true, 'show_date' => false, 'show_button' => true, 'show_item_categories' => true, 'show_extra_richtext' => false, 'show_extra_link' => false, 'show_extra_image' => false, 'css_class' => 'public-listing public-listing--museum']],
+            ]),
+            self::pagePreset('template_catalog_item', [
+                ['block_key' => 'catalog_item_header', 'label' => 'Cabecera de ficha', 'help_text' => 'Bloque dinámico para la pieza del catálogo', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) []],
+                ['block_key' => 'catalog_item_gallery', 'label' => 'Galería de ficha', 'help_text' => 'Bloque dinámico con imágenes complementarias', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) []],
+            ]),
+            self::pagePreset('template_event_item', [
+                ['block_key' => 'event_item_header', 'label' => 'Cabecera de evento', 'help_text' => 'Bloque dinámico para la cartelera', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) []],
             ]),
             self::pagePreset('collection_index', [
                 ['block_key' => 'page_header', 'label' => 'Encabezado', 'help_text' => 'Título de la página índice', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) ['bg_color' => 'bg-gray-100', 'css_class' => '']],
                 ['block_key' => 'rich_text', 'label' => 'Introducción', 'help_text' => 'Contenido editorial antes del listado', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['css_class' => '']],
-                ['block_key' => 'collection_listing', 'label' => 'Listado de colección', 'help_text' => 'Listado completo administrable', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) ['collection_id' => 0, 'per_page' => 12, 'order_by' => 'published_at', 'order_direction' => 'desc', 'layout_variant' => 'cards', 'show_search' => true, 'show_categories' => true, 'show_tags' => false, 'show_excerpt' => true, 'show_date' => true, 'show_button' => true, 'show_item_categories' => true, 'show_extra_richtext' => false, 'show_extra_link' => false, 'show_extra_image' => false, 'css_class' => '']],
+                ['block_key' => 'collection_listing', 'label' => 'Listado de colección', 'help_text' => 'Listado completo administrable', 'required' => true, 'locked' => false, 'block_config_defaults' => (object) ['source_type' => 'cms_collection', 'collection_id' => 0, 'per_page' => 12, 'order_by' => 'published_at', 'order_direction' => 'desc', 'layout_variant' => 'cards', 'show_search' => true, 'show_categories' => true, 'show_tags' => false, 'show_excerpt' => true, 'show_date' => true, 'show_button' => true, 'show_item_categories' => true, 'show_extra_richtext' => false, 'show_extra_link' => false, 'show_extra_image' => false, 'css_class' => '']],
                 ['block_key' => 'cta', 'label' => 'Cierre', 'help_text' => 'Contenido editorial después del listado', 'required' => false, 'locked' => false, 'block_config_defaults' => (object) ['variant' => 'blue', 'css_class' => '']],
             ]),
             self::pagePreset('maintenance', [

@@ -22,8 +22,9 @@ $rows        = $rows ?? 4;
 $class       = $class ?? '';
 $maxlength   = isset($maxlength) ? (int) $maxlength : null;
 $attributes  = is_array($attributes ?? null) ? $attributes : [];
+$valueLength = function_exists('mb_strlen') ? mb_strlen((string) $value) : strlen((string) $value);
 ?>
-<div<?= $maxlength !== null ? ' x-data="{ _len: ' . strlen((string) $value) . ' }"' : '' ?>>
+<div<?= $maxlength !== null ? ' x-data="{ _len: ' . $valueLength . ' }"' : '' ?>>
     <div class="flex items-center justify-between">
         <label class="block text-sm font-medium text-gray-700" for="<?= esc($name, 'attr') ?>">
             <?= lang($label) ?>
@@ -32,7 +33,7 @@ $attributes  = is_array($attributes ?? null) ? $attributes : [];
             <?php endif; ?>
         </label>
         <?php if ($maxlength !== null): ?>
-            <span class="text-xs text-gray-400" x-text="''+_len+'/<?= $maxlength ?>'"><?= strlen((string) $value) ?>/<?= $maxlength ?></span>
+            <span class="text-xs text-gray-400" x-text="''+_len+'/<?= $maxlength ?>'"><?= $valueLength ?>/<?= $maxlength ?></span>
         <?php endif; ?>
     </div>
     <textarea

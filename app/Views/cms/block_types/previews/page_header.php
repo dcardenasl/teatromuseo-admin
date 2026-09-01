@@ -1,10 +1,11 @@
 <?php
 /** @var array<string, mixed> $config */
 /** @var array<string, mixed> $data */
-$heading         = esc($data['heading'] ?? 'Título de la página');
+$heading         = esc($data['heading'] ?? lang('BlockPreview.page.title'));
 $subheading      = esc($data['subheading'] ?? '');
-$breadcrumbLabel = esc($data['breadcrumb_label'] ?? 'Inicio');
-$breadcrumbUrl   = esc($data['breadcrumb_url'] ?? '/');
+$breadcrumbLabel = esc($data['breadcrumb_label'] ?? lang('BlockPreview.page.home'));
+$navigation      = is_array($data['navigation'] ?? null) ? $data['navigation'] : [];
+$breadcrumbUrl   = esc((string) ($navigation['url'] ?? '#'));
 $bgColor         = esc($config['bg_color'] ?? 'bg-gray-100');
 $cssClass        = esc($config['css_class'] ?? '');
 ?>

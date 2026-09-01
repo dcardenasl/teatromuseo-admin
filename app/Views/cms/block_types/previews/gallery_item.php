@@ -14,9 +14,9 @@ $caption = $data['caption'] ?? '';
         <?php endif; ?>
     </div>
     <div class="min-w-0 flex-1">
-        <div class="text-[10px] font-bold text-violet-500 uppercase">Imagen de Galería</div>
+        <div class="text-[10px] font-bold text-violet-500 uppercase"><?= esc(lang('BlockPreview.gallery.item_label')) ?></div>
         <div class="text-xs text-slate-700 font-medium truncate">
-            <?= $caption !== '' ? esc($caption) : 'Sin leyenda' ?>
+            <?= $caption !== '' ? esc($caption) : esc(lang('BlockPreview.gallery.empty_caption')) ?>
         </div>
     </div>
 </div>

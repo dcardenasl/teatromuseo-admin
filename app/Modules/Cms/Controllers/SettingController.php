@@ -66,9 +66,9 @@ class SettingController extends BaseWebController
         }
 
         return $this->tableDataResponse(
-            [],
+            ['setting_group'],
             ['setting_key', 'setting_value', 'setting_type', 'setting_group', 'is_translatable', 'created_at'],
-            fn (array $params) => $this->settingService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->settingService->list([...$params, 'projection' => 'list']),
         );
     }
 

@@ -174,7 +174,7 @@ class ContentSecurityPolicy extends BaseConfig
     /**
      * Replace nonce tag automatically
      */
-    public bool $autoNonce = true;
+    public bool $autoNonce = false;
 
     public function __construct()
     {
@@ -190,9 +190,28 @@ class ContentSecurityPolicy extends BaseConfig
             "'self'",
             'https://cdn.jsdelivr.net',
             'https://accounts.google.com',
+            // Required because the UI uses Alpine.js's standard build, which
+            // evaluates x-data/x-on expressions via `new Function()`. Alpine
+            // ships a CSP-compliant build (@alpinejs/csp) that avoids this,
+            // but it only supports named Alpine.data() components — not the
+            // inline expressions used throughout these templates. Switching
+            // is a real refactor, tracked separately; until then this is
+            // required or every x-data/x-on binding silently fails (e.g. the
+            // login page's loading spinner never resolves).
+            // TRACKED: TASKS.md FRONT-01g.
+            "'unsafe-eval'",
         ];
         $this->styleSrc = [
             "'self'",
+            // Required for the same reason as scriptSrc's 'unsafe-eval': Alpine's
+            // x-show directive toggles visibility by writing el.style.display
+            // directly, which CSP treats as an inline style regardless of nonce
+            // (nonces don't cover CSSStyleDeclaration mutations via JS). Removed
+            // once x-show is replaced with class-based toggling (Tailwind
+            // `hidden`) as part of the same Alpine CSP migration.
+            // TRACKED: TASKS.md FRONT-01g.
+            "'unsafe-inline'",
+            'https://accounts.google.com',
         ];
         $this->imageSrc = [
             "'self'",
@@ -200,6 +219,18 @@ class ContentSecurityPolicy extends BaseConfig
             'blob:',
             'https://*.googleusercontent.com',
         ];
+
+        // Files are served with absolute URLs built from the API's own base
+        // URL (see FileController: `$data['url']`), which differs from this
+        // app's own origin — allow it explicitly or the browser blocks every
+        // file preview/thumbnail under img-src 'self'.
+        $apiBaseUrl = env('apiClient.baseUrl') ?: env('API_BASE_URL');
+        if (is_string($apiBaseUrl) && trim($apiBaseUrl) !== '') {
+            $apiOrigin = $this->originOf($apiBaseUrl);
+            if ($apiOrigin !== null) {
+                $this->imageSrc[] = $apiOrigin;
+            }
+        }
         $this->connectSrc = [
             "'self'",
             'https://accounts.google.com',
@@ -220,5 +251,23 @@ class ContentSecurityPolicy extends BaseConfig
         if (is_string($reportUri) && trim($reportUri) !== '') {
             $this->reportURI = trim($reportUri);
         }
+    }
+
+    /**
+     * Reduces a full URL to a CSP source expression (scheme://host[:port]).
+     */
+    private function originOf(string $url): ?string
+    {
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        $host   = parse_url($url, PHP_URL_HOST);
+
+        if (! is_string($scheme) || $scheme === '' || ! is_string($host) || $host === '') {
+            return null;
+        }
+
+        $port   = parse_url($url, PHP_URL_PORT);
+        $origin = $scheme . '://' . $host;
+
+        return is_int($port) ? $origin . ':' . $port : $origin;
     }
 }

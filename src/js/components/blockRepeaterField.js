@@ -34,6 +34,10 @@ const isMediaReferenceSubField = (subField = {}) => {
 export const blockRepeaterField = (existingItems = [], itemFields = {}, fieldKey = '', langIdx = 0) => {
     const initItems = (existingItems || []).map((item) => {
         const out = {};
+        const itemKeys = Object.keys(itemFields || {});
+        const legacyScalar = (typeof item === 'string' || typeof item === 'number')
+            ? String(item)
+            : null;
         Object.keys(itemFields || {}).forEach((subKey) => {
             const subField = itemFields[subKey] || {};
             if (isMediaReferenceSubField(subField)) {
@@ -49,7 +53,12 @@ export const blockRepeaterField = (existingItems = [], itemFields = {}, fieldKey
                 out[subKey + '_preview_url'] = '';
                 out[subKey + '_url'] = String(item[subKey + '_url'] || '');
             } else {
-                out[subKey] = item[subKey] ?? '';
+                // Older repeater payloads stored one-field items as plain
+                // strings. Normalize them so legacy values remain editable
+                // instead of disappearing from the form.
+                out[subKey] = legacyScalar !== null && itemKeys.length === 1
+                    ? legacyScalar
+                    : (item?.[subKey] ?? '');
             }
         });
         return out;

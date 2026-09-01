@@ -18,6 +18,10 @@ return [
     'update_success' => 'Site identity updated successfully.',
     'update_failed'  => 'Could not update site identity.',
     'cache_note'     => 'Changes appear on the public site after ~1 hour (cache). To see changes immediately, run <code>php spark cache:clear</code> in ci4-website-builder-web.',
+    'social_section' => 'Social media',
+    'social_section_intro' => 'Configure the links to the organization\'s social media profiles. They will be automatically displayed in the footer.',
+    'footer_section' => 'Footer Customization',
+    'footer_section_intro' => 'Configure the navigation and legal menu layouts in the footer.',
 
     // Generic file labels (used for new metadata-driven fields)
     'select_file'  => 'Select file',

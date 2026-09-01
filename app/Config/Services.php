@@ -11,17 +11,21 @@ use App\Libraries\BffApiClientInterface;
 use App\Libraries\DomainApiClient;
 use App\Libraries\DomainApiClientInterface;
 use App\Libraries\PermissionsSessionRefresher;
-use App\Libraries\WebApiClient;
-use App\Libraries\WebApiClientInterface;
+use App\Libraries\PublicSiteCacheInvalidator;
 use App\Modules\ApiKeys\Services\ApiKeyApiService;
 use App\Modules\Audit\Services\AuditApiService;
 use App\Modules\Auth\Services\AuthApiService;
+use App\Modules\Bookings\Services\BookingApiService;
+use App\Modules\Bookings\Services\BookingApiServiceInterface;
 use App\Modules\Cms\Services\BlockCatalogService;
 use App\Modules\Cms\Services\BlockCatalogServiceInterface;
 use App\Modules\Cms\Services\BlockInstanceApiService;
 use App\Modules\Cms\Services\BlockTypeApiService;
 use App\Modules\Cms\Services\BlockTypeOptionsResolver;
 use App\Modules\Cms\Services\CategoryApiService;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
+use App\Modules\Cms\Services\CmsCategoryBffAdapter;
+use App\Modules\Cms\Services\CmsWorkspaceBffAdapter;
 use App\Modules\Cms\Services\CollectionApiService;
 use App\Modules\Cms\Services\EntryApiService;
 use App\Modules\Cms\Services\FileTranslationApiService;
@@ -32,15 +36,46 @@ use App\Modules\Cms\Services\RedirectApiService;
 use App\Modules\Cms\Services\SettingApiService;
 use App\Modules\Cms\Services\TagApiService;
 use App\Modules\Cms\Services\TranslationAuditApiService;
-use App\Modules\Dashboard\Services\HealthApiService;
+use App\Modules\Dashboard\Services\DashboardDataService;
+use App\Modules\Dashboard\Services\FileDashboardLock;
+use App\Modules\EventReferences\Services\EventReferenceApiService;
+use App\Modules\EventReferences\Services\EventReferenceApiServiceInterface;
+use App\Modules\Events\Services\EventApiService;
+use App\Modules\Events\Services\EventApiServiceInterface;
+use App\Modules\Events\Services\EventListBffAdapter;
+use App\Modules\Events\Services\EventLookupBffAdapter;
+use App\Modules\Events\Services\EventTypeApiService;
+use App\Modules\Events\Services\EventTypeApiServiceInterface;
+use App\Modules\Events\Services\EventWorkspaceBffAdapter;
 use App\Modules\Files\Services\FileApiService;
 use App\Modules\Iam\Services\ApplicationApiService;
 use App\Modules\Iam\Services\PermissionApiService;
 use App\Modules\Iam\Services\RoleApiService;
 use App\Modules\Iam\Services\RoleMatrixApiService;
+use App\Modules\Iam\Services\RoleWorkspaceBffAdapter;
 use App\Modules\Metrics\Services\MetricsApiService;
+use App\Modules\Metrics\Services\MetricsWorkspaceBffAdapter;
+use App\Modules\Museum\Services\CatalogCollectionItemBffAdapter;
+use App\Modules\Museum\Services\CatalogCollectionItemListBffAdapter;
+use App\Modules\Museum\Services\CatalogTechniqueBffAdapter;
+use App\Modules\Museum\Services\CategoryApiService as MuseumCategoryApiService;
+use App\Modules\Museum\Services\CategoryApiServiceInterface;
+use App\Modules\Museum\Services\CollectionItemApiService;
+use App\Modules\Museum\Services\CollectionItemApiServiceInterface;
+use App\Modules\Museum\Services\TechniqueApiService;
+use App\Modules\Museum\Services\TechniqueApiServiceInterface;
+use App\Modules\Occurrences\Services\OccurrenceApiService;
+use App\Modules\Occurrences\Services\OccurrenceApiServiceInterface;
 use App\Modules\Profile\Services\ProfileApiService;
+use App\Modules\Tickets\Services\TicketApiService;
+use App\Modules\Tickets\Services\TicketApiServiceInterface;
+use App\Modules\TicketTypes\Services\TicketTypeApiService;
+use App\Modules\TicketTypes\Services\TicketTypeApiServiceInterface;
 use App\Modules\Users\Services\UserApiService;
+use App\Modules\Venues\Services\VenueApiService;
+use App\Modules\Venues\Services\VenueApiServiceInterface;
+use App\Services\SortOrderApiService;
+use App\Services\SortOrderApiServiceInterface;
 use App\Support\Requests\FormRequestInterface;
 use CodeIgniter\Config\BaseService;
 use InvalidArgumentException;
@@ -60,6 +95,29 @@ use InvalidArgumentException;
  */
 class Services extends BaseService
 {
+    public static function dashboardDataService(bool $getShared = true): DashboardDataService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('dashboardDataService');
+        }
+
+        $dashboardConfig = config('Dashboard');
+
+        return new DashboardDataService(
+            static::bffApiClient(),
+            service('cache'),
+            new FileDashboardLock(
+                WRITEPATH . 'cache/dashboard-locks',
+                $dashboardConfig->lockMaxAge,
+                $dashboardConfig->lockWaitMs,
+            ),
+            $dashboardConfig->freshTtl,
+            $dashboardConfig->staleTtl,
+            $dashboardConfig->failureCooldownTtl,
+            $dashboardConfig->upstreamMaxRetries,
+        );
+    }
+
     public static function formRequest(string $class, bool $getShared = true): FormRequestInterface
     {
         if ($getShared) {
@@ -90,6 +148,20 @@ class Services extends BaseService
         return new ApiClient(config('ApiClient'));
     }
 
+    public static function sortOrderApiService(bool $getShared = true): SortOrderApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var SortOrderApiServiceInterface */
+            return static::getSharedInstance('sortOrderApiService');
+        }
+
+        return new SortOrderApiService(
+            static::domainApiClient(),
+            static::catalogDomainApiClient(),
+            static::eventDomainApiClient(),
+        );
+    }
+
     public static function domainApiClient(bool $getShared = true): DomainApiClientInterface
     {
         if ($getShared) {
@@ -97,7 +169,27 @@ class Services extends BaseService
             return static::getSharedInstance('domainApiClient');
         }
 
-        return new DomainApiClient(config('DomainApiClient'));
+        return new DomainApiClient(config('DomainApiClient'), static::apiClient());
+    }
+
+    public static function eventDomainApiClient(bool $getShared = true): DomainApiClientInterface
+    {
+        if ($getShared) {
+            /** @var DomainApiClientInterface */
+            return static::getSharedInstance('eventDomainApiClient');
+        }
+
+        return new DomainApiClient(config(EventDomainApiClient::class), static::apiClient());
+    }
+
+    public static function catalogDomainApiClient(bool $getShared = true): DomainApiClientInterface
+    {
+        if ($getShared) {
+            /** @var DomainApiClientInterface */
+            return static::getSharedInstance('catalogDomainApiClient');
+        }
+
+        return new DomainApiClient(config(CatalogDomainApiClient::class), static::apiClient());
     }
 
     public static function bffApiClient(bool $getShared = true): BffApiClientInterface
@@ -107,7 +199,7 @@ class Services extends BaseService
             return static::getSharedInstance('bffApiClient');
         }
 
-        return new BffApiClient(config('BffApiClient'));
+        return new BffApiClient(config('BffApiClient'), static::apiClient());
     }
 
     public static function authApiService(bool $getShared = true): AuthApiService
@@ -136,7 +228,7 @@ class Services extends BaseService
             return static::getSharedInstance('fileApiService');
         }
 
-        return new FileApiService(static::apiClient(), static::domainApiClient());
+        return new FileApiService(static::apiClient(), static::bffApiClient());
     }
 
     public static function userApiService(bool $getShared = true): UserApiService
@@ -179,54 +271,27 @@ class Services extends BaseService
         return new MetricsApiService(static::apiClient());
     }
 
-    public static function healthApiService(bool $getShared = true): HealthApiService
+    public static function metricsWorkspaceBffAdapter(bool $getShared = true): MetricsWorkspaceBffAdapter
     {
         if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('healthApiService');
+            return static::getSharedInstance('metricsWorkspaceBffAdapter');
         }
 
-        return new HealthApiService(static::apiClient(), config('ApiClient')->healthPaths);
+        return new MetricsWorkspaceBffAdapter(static::bffApiClient());
     }
 
-    public static function domainHealthApiService(bool $getShared = true): HealthApiService
+    public static function publicSiteCacheInvalidator(bool $getShared = true): PublicSiteCacheInvalidator
     {
         if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('domainHealthApiService');
+            /** @var PublicSiteCacheInvalidator */
+            return static::getSharedInstance('publicSiteCacheInvalidator');
         }
 
-        return new HealthApiService(static::domainApiClient(), config('DomainApiClient')->healthPaths);
-    }
-
-    public static function bffHealthApiService(bool $getShared = true): HealthApiService
-    {
-        if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('bffHealthApiService');
-        }
-
-        return new HealthApiService(static::bffApiClient(), config('BffApiClient')->healthPaths);
-    }
-
-    public static function webApiClient(bool $getShared = true): WebApiClientInterface
-    {
-        if ($getShared) {
-            /** @var WebApiClientInterface */
-            return static::getSharedInstance('webApiClient');
-        }
-
-        return new WebApiClient(config('WebApiClient'));
-    }
-
-    public static function webHealthApiService(bool $getShared = true): HealthApiService
-    {
-        if ($getShared) {
-            /** @var HealthApiService */
-            return static::getSharedInstance('webHealthApiService');
-        }
-
-        return new HealthApiService(static::webApiClient(), config('WebApiClient')->healthPaths);
+        return new PublicSiteCacheInvalidator(
+            rtrim((string) env('PUBLIC_SITE_URL', ''), '/'),
+            (string) env('CACHE_INVALIDATE_KEY', ''),
+            5
+        );
     }
 
     public static function profileApiService(bool $getShared = true): ProfileApiService
@@ -247,6 +312,15 @@ class Services extends BaseService
         }
 
         return new RoleApiService(static::apiClient());
+    }
+
+    public static function roleWorkspaceBffAdapter(bool $getShared = true): RoleWorkspaceBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('roleWorkspaceBffAdapter');
+        }
+
+        return new RoleWorkspaceBffAdapter(static::bffApiClient());
     }
     public static function roleMatrixApiService(bool $getShared = true): RoleMatrixApiService
     {
@@ -345,6 +419,7 @@ class Services extends BaseService
             static::collectionApiService(),
             static::pageApiService(),
             static::entryApiService(),
+            static::categoryApiService(),
         );
     }
 
@@ -415,19 +490,180 @@ class Services extends BaseService
         return new \App\Modules\Cms\Services\FormSubmissionApiService(static::domainApiClient());
     }
 
-    public static function analyticsApiService(bool $getShared = true): \App\Modules\Analytics\Services\AnalyticsApiService
-    {
-        if ($getShared) {
-            return static::getSharedInstance('analyticsApiService');
-        }
-        return new \App\Modules\Analytics\Services\AnalyticsApiService(static::domainApiClient());
-    }
-
     public static function formApiService(bool $getShared = true): \App\Modules\Cms\Services\FormApiService
     {
         if ($getShared) {
             return static::getSharedInstance('formApiService');
         }
         return new \App\Modules\Cms\Services\FormApiService(static::domainApiClient());
+    }
+    public static function eventApiService(bool $getShared = true): EventApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var EventApiService */
+            return static::getSharedInstance('eventApiService');
+        }
+        return new EventApiService(static::eventDomainApiClient());
+    }
+
+    public static function eventLookupBffAdapter(bool $getShared = true): EventLookupBffAdapter
+    {
+        if ($getShared) {
+            /** @var EventLookupBffAdapter */
+            return static::getSharedInstance('eventLookupBffAdapter');
+        }
+
+        return new EventLookupBffAdapter(static::bffApiClient());
+    }
+
+    public static function eventWorkspaceBffAdapter(bool $getShared = true): EventWorkspaceBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('eventWorkspaceBffAdapter');
+        }
+
+        return new EventWorkspaceBffAdapter(static::bffApiClient());
+    }
+
+    public static function eventListBffAdapter(bool $getShared = true): EventListBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('eventListBffAdapter');
+        }
+
+        return new EventListBffAdapter(static::bffApiClient());
+    }
+
+    public static function cmsBootstrapBffAdapter(bool $getShared = true): CmsBootstrapBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cmsBootstrapBffAdapter');
+        }
+
+        return new CmsBootstrapBffAdapter(static::bffApiClient());
+    }
+
+    public static function cmsCategoryBffAdapter(bool $getShared = true): CmsCategoryBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cmsCategoryBffAdapter');
+        }
+
+        return new CmsCategoryBffAdapter(static::bffApiClient());
+    }
+
+    public static function cmsWorkspaceBffAdapter(bool $getShared = true): CmsWorkspaceBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cmsWorkspaceBffAdapter');
+        }
+
+        return new CmsWorkspaceBffAdapter(static::bffApiClient());
+    }
+
+    public static function eventTypeApiService(bool $getShared = true): EventTypeApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var EventTypeApiServiceInterface */
+            return static::getSharedInstance('eventTypeApiService');
+        }
+
+        return new EventTypeApiService(static::eventDomainApiClient());
+    }
+    public static function ticketTypeApiService(bool $getShared = true): TicketTypeApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var TicketTypeApiService */
+            return static::getSharedInstance('ticketTypeApiService');
+        }
+        return new TicketTypeApiService(static::eventDomainApiClient());
+    }
+    public static function bookingApiService(bool $getShared = true): BookingApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var BookingApiService */
+            return static::getSharedInstance('bookingApiService');
+        }
+        return new BookingApiService(static::eventDomainApiClient());
+    }
+    public static function ticketApiService(bool $getShared = true): TicketApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var TicketApiService */
+            return static::getSharedInstance('ticketApiService');
+        }
+        return new TicketApiService(static::eventDomainApiClient());
+    }
+    public static function venueApiService(bool $getShared = true): VenueApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var VenueApiService */
+            return static::getSharedInstance('venueApiService');
+        }
+        return new VenueApiService(static::eventDomainApiClient());
+    }
+    public static function occurrenceApiService(bool $getShared = true): OccurrenceApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var OccurrenceApiService */
+            return static::getSharedInstance('occurrenceApiService');
+        }
+        return new OccurrenceApiService(static::eventDomainApiClient());
+    }
+    public static function eventReferenceApiService(bool $getShared = true): EventReferenceApiServiceInterface
+    {
+        if ($getShared) {
+            /** @var EventReferenceApiService */
+            return static::getSharedInstance('eventReferenceApiService');
+        }
+        return new EventReferenceApiService(static::eventDomainApiClient());
+    }
+    public static function museumCategoryApiService(bool $getShared = true): CategoryApiServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('museumCategoryApiService');
+        }
+        return new MuseumCategoryApiService(static::catalogDomainApiClient());
+    }
+    public static function museumTechniqueApiService(bool $getShared = true): TechniqueApiServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('museumTechniqueApiService');
+        }
+        return new TechniqueApiService(static::catalogDomainApiClient());
+    }
+    public static function museumCollectionItemApiService(bool $getShared = true): CollectionItemApiServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('museumCollectionItemApiService');
+        }
+        return new CollectionItemApiService(static::catalogDomainApiClient());
+    }
+
+    public static function catalogCollectionItemBffAdapter(bool $getShared = true): CatalogCollectionItemBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('catalogCollectionItemBffAdapter');
+        }
+
+        return new CatalogCollectionItemBffAdapter(static::bffApiClient());
+    }
+
+    public static function catalogCollectionItemListBffAdapter(bool $getShared = true): CatalogCollectionItemListBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('catalogCollectionItemListBffAdapter');
+        }
+
+        return new CatalogCollectionItemListBffAdapter(static::bffApiClient());
+    }
+
+    public static function catalogTechniqueBffAdapter(bool $getShared = true): CatalogTechniqueBffAdapter
+    {
+        if ($getShared) {
+            return static::getSharedInstance('catalogTechniqueBffAdapter');
+        }
+
+        return new CatalogTechniqueBffAdapter(static::bffApiClient());
     }
 }

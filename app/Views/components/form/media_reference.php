@@ -12,6 +12,7 @@
  *   $fieldKey     - optional block_data key used to copy the value to other languages
  *   $copyEnabled  - whether the copy-to-all-languages action should be shown
  *   $previewClass - CSS classes for the preview element
+ *   $maxlength    - maximum number of characters for an external URL
  */
 
 helper('form');
@@ -23,11 +24,14 @@ $required = (bool) ($required ?? false);
 $accept = (string) ($accept ?? 'image');
 $fieldKey = trim((string) ($fieldKey ?? ''));
 $copyEnabled = (bool) ($copyEnabled ?? false);
-$previewClass = (string) ($previewClass ?? 'h-36 w-full rounded-xl border border-gray-200 object-cover');
+$previewClass = (string) ($previewClass ?? 'h-32 w-full rounded-xl border border-gray-200 object-contain bg-slate-50');
+$maxlength = isset($maxlength) ? (int) $maxlength : null;
 $payload = normalize_media_reference_value(is_array($value ?? null) ? $value : []);
+$urlField = $name . '[url]';
+$errorField = has_field_error($urlField) ? $urlField : $name;
 ?>
 
-<div class="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+<div class="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm <?= esc(field_error_class($errorField, 'border-red-500 bg-red-50/40'), 'attr') ?>"
      x-data="mediaReferenceField(<?= esc(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'attr') ?>, <?= esc(json_encode($accept), 'attr') ?>, <?= esc(json_encode($fieldKey), 'attr') ?>)">
     <div class="flex items-start gap-3">
         <div class="min-w-0">
@@ -88,7 +92,9 @@ $payload = normalize_media_reference_value(is_array($value ?? null) ? $value : [
            placeholder="https://..."
            inputmode="url"
            spellcheck="false"
-           class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+           <?= $maxlength !== null ? 'maxlength="' . $maxlength . '"' : '' ?>
+           class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 <?= esc(field_error_class($errorField), 'attr') ?>"
+           <?= field_aria_attrs($errorField, $required) ?> >
 
     <div x-show="previewUrl" x-cloak class="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
         <div class="flex items-center justify-between gap-2 border-b border-gray-200 px-3 py-2">
@@ -149,5 +155,7 @@ $payload = normalize_media_reference_value(is_array($value ?? null) ? $value : [
             <p class="mt-1 text-xs text-gray-500"><?= esc($help) ?></p>
         <?php endif; ?>
     </div>
+
+    <?= render_field_error($errorField) ?>
 
 </div>

@@ -30,6 +30,8 @@ final class TranslationAuditFlowTest extends CIUnitTestCase
             'resource' => 'page',
             'status' => 'missing',
             'search' => 'home',
+            'page' => 1,
+            'limit' => 25,
         ])->willReturn([
             'ok' => true, 'status' => 200, 'data' => ['data' => [['resource' => 'page']]],
             'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],

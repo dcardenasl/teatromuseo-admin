@@ -37,7 +37,7 @@ class TagController extends BaseWebController
         return $this->tableDataResponse(
             [],
             ['name', 'created_at'],
-            fn (array $params) => $this->tagService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->tagService->list([...$params, 'projection' => 'list']),
         );
     }
 

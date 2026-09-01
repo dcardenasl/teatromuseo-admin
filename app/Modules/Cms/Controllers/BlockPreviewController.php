@@ -30,6 +30,12 @@ class BlockPreviewController extends BaseWebController
         if ($publicSiteUrl !== '') {
             try {
                 $client = \Config\Services::curlrequest();
+                $headers = ['Accept' => 'application/json'];
+                $previewKey = (string) env('BLOCK_PREVIEW_KEY', '');
+                if ($previewKey !== '') {
+                    $headers['X-Block-Preview-Key'] = $previewKey;
+                }
+
                 $response = $client->post($publicSiteUrl . '/blocks/preview', [
                     'form_params' => [
                         'block_key'    => $blockKey,
@@ -37,9 +43,7 @@ class BlockPreviewController extends BaseWebController
                         'block_data'   => $dataRaw,
                         'preview_mode' => $previewMode,
                     ],
-                    'headers' => [
-                        'Accept' => 'application/json',
-                    ],
+                    'headers' => $headers,
                     'http_errors' => false,
                     'timeout'     => 3,
                 ]);

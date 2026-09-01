@@ -52,3 +52,12 @@ ServerSignature Off
     php_value upload_max_filesize 20M
     php_value post_max_size 25M
 </IfModule>
+
+# Force Referrer-Policy to allow Google Identity Services to see the origin in production (cPanel override)
+<IfModule mod_headers.c>
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    <FilesMatch "^(?:favicon\.(?:ico|svg)|favicon-[0-9]+x[0-9]+\.png|apple-touch-icon\.png|web-app-manifest-[0-9]+x[0-9]+\.png|site\.webmanifest)$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+</IfModule>

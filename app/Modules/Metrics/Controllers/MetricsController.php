@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Metrics\Controllers;
 
 use App\Controllers\BaseWebController;
-use App\Modules\Metrics\Services\MetricsApiService;
+use App\Modules\Metrics\Services\MetricsWorkspaceBffAdapter;
 use App\Support\CatalogOptions;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -13,12 +13,12 @@ use Psr\Log\LoggerInterface;
 
 class MetricsController extends BaseWebController
 {
-    protected MetricsApiService $metricsService;
+    protected MetricsWorkspaceBffAdapter $metricsWorkspace;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
-        $this->metricsService = service('metricsApiService');
+        $this->metricsWorkspace = service('metricsWorkspaceBffAdapter');
     }
 
     public function index(): string
@@ -40,18 +40,14 @@ class MetricsController extends BaseWebController
 
         $viewFilters = ['period' => $period];
 
-        $apiParams = [
-            'period' => $period,
-        ];
-
-        $summaryResponse = $this->safeApiCall(fn () => $this->metricsService->summary($apiParams));
-        $timeseriesResponse = $this->safeApiCall(fn () => $this->metricsService->timeseries($apiParams));
-
-        $this->maybeFlashDevError($summaryResponse);
-        $this->maybeFlashDevError($timeseriesResponse);
-
-        $summaryData = $this->extractData($summaryResponse);
-        $timeseriesData = $this->extractData($timeseriesResponse);
+        $workspace = $this->metricsWorkspace->read($period);
+        if ($workspace !== null) {
+            $summaryData = $workspace['summary'];
+            $timeseriesData = $workspace['timeseries'];
+        } else {
+            $summaryData = [];
+            $timeseriesData = [];
+        }
 
         return $this->render('metrics/index', [
             'title'          => lang('Metrics.title'),

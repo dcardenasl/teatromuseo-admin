@@ -237,44 +237,11 @@ class LanguageController extends BaseWebController
             ])->setStatusCode(403);
         }
 
-        $request = $this->request;
-        if (! $request instanceof \CodeIgniter\HTTP\IncomingRequest) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid request type',
-            ])->setStatusCode(400);
-        }
-
-        $json = $request->getJSON(true);
-        $jsonArray = is_array($json) ? $json : [];
-        $items = $jsonArray['items'] ?? [];
-
-        if (! is_array($items)) {
-            return $this->response->setJSON([
-                'ok' => false,
-                'message' => 'Invalid payload structure',
-            ])->setStatusCode(400);
-        }
-
-        foreach ($items as $item) {
-            $id = (string) ($item['id'] ?? '');
-            $value = isset($item['sort_order']) ? (int) $item['sort_order'] : 0;
-
-            if ($id !== '') {
-                $response = $this->safeApiCall(fn () => $this->languageService->update($id, ['sort_order' => $value]));
-
-                if (! $response['ok']) {
-                    return $this->response->setJSON([
-                        'ok' => false,
-                        'message' => $this->firstMessage($response, lang('CmsLanguages.languages_update_failed')),
-                    ])->setStatusCode(422);
-                }
-            }
-        }
-
-        return $this->response->setJSON([
-            'ok' => true,
-            'message' => lang('Files.gallery_save_success') ?? 'Order saved.',
-        ]);
+        return $this->saveSortOrderFromJson(
+            'cms',
+            'languages',
+            [],
+            lang('Files.gallery_save_success') ?? 'Order saved.',
+        );
     }
 }

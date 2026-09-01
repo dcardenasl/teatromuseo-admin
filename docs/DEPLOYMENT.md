@@ -18,7 +18,35 @@ Configure these values in your `.env` file for production. **Never commit your `
 - `apiClient.apiPrefix = '/api/v1'`: The base path for API endpoints.
 - `apiClient.appKey = 'apk_...'`: (Optional) Your API key for higher rate limits.
 - `apiClient.logRequests = false`: Disable in production unless debugging connection issues.
+- `apiClient.maxRetries = 0`: Do not repeat upstream reads on this low-capacity host.
 - `WEBAPP_BASE_URL = 'https://admin.yourdomain.com'`: Used for deep-linking in emails sent by the API.
+
+### 📊 Dashboard protection
+
+The dashboard's primary widgets use the Hub and CMS aggregate read models.
+Configure these values in production when the host has different capacity:
+
+```dotenv
+ADMIN_CACHE_HANDLER = file
+ADMIN_DASHBOARD_FRESH_TTL = 300
+ADMIN_DASHBOARD_STALE_TTL = 3600
+ADMIN_DASHBOARD_FAILURE_COOLDOWN = 15
+ADMIN_DASHBOARD_LOCK_MAX_AGE = 120
+ADMIN_DASHBOARD_LOCK_WAIT_MS = 0
+ADMIN_DASHBOARD_MAX_RETRIES = 0
+```
+
+`file` is the safe default for a single host. For multiple PHP-FPM hosts,
+configure a shared cache/session backend and replace the file-backed dashboard
+lock with a shared lock implementation before enabling horizontal scaling.
+The `writable/cache/` and `writable/cache/dashboard-locks/` directories must be
+writable by PHP-FPM. Do not set the dashboard retry budget above `1` without a
+load test against the real Hub/CMS capacity.
+
+The lock wait is deliberately zero: status `0` and upstream `5xx` can serve stale
+data; `4xx` responses are returned as unavailable and are never masked. The
+failure cooldown prevents a cold upstream outage from being retried by every
+sequential widget request.
 
 ### 📁 Upload Settings
 - `FILE_MAX_SIZE = 10485760`: Maximum file size in bytes (10MB). Ensure this matches or is lower than the backend's limit.
@@ -135,3 +163,8 @@ server {
 5.  [ ] **Assets:** Run `npm ci && npm run build:css` to generate optimized styles.
 6.  [ ] **Permissions:** Verify `writable/` is writable by the web server.
 7.  [ ] **Security:** Verify `app.CSPEnabled = true` and `cookie.secure = true`.
+8.  [ ] **Dashboard cache:** Verify the configured handler and writable cache/lock directories.
+9.  [ ] **Dashboard contract:** Verify Admin can reach `/api/v1/admin/dashboard/summary` and `/api/v1/cms/dashboard/summary` with an authenticated session.
+10. [ ] **Capacity smoke test:** Load the dashboard cold and warm while observing PHP-FPM workers, DB connections, upstream requests and response latency.
+11. [ ] **Failure test:** During a controlled Hub/CMS 5xx or timeout, confirm stale/partial rendering and no retry storm; then verify recovery after the cooldown.
+12. [ ] **Rollback readiness:** Keep the previous release available and record the cache-key version (`dashboard_data_v1`) for invalidation during rollback.

@@ -6,6 +6,7 @@ namespace App\Modules\Cms\Controllers;
 
 use App\Controllers\BaseWebController;
 use App\Modules\Cms\Requests\SiteIdentityUpdateRequest;
+use App\Modules\Cms\Services\CmsBootstrapBffAdapter;
 use App\Modules\Cms\Services\SettingApiService;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\RequestInterface;
@@ -15,11 +16,13 @@ use Psr\Log\LoggerInterface;
 class SiteIdentityController extends BaseWebController
 {
     protected SettingApiService $settingService;
+    protected CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
         parent::initController($request, $response, $logger);
         $this->settingService = service('settingApiService');
+        $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
     }
 
     private function requireWrite(): ?RedirectResponse
@@ -38,19 +41,18 @@ class SiteIdentityController extends BaseWebController
         }
         helper('cms_settings');
 
-        $response = $this->safeApiCall(fn () => $this->settingService->getByGroup('identity'));
-        if (! ($response['ok'] ?? false)) {
-            return $this->failApi(
-                $response,
-                lang('SiteIdentity.update_failed'),
-                route_to('admin.cms.site_identity'),
-                false
-            );
+        $bootstrap = $this->cmsBootstrap->siteIdentityBootstrap();
+        if ($bootstrap === null) {
+            return $this->render('cms/site-identity/show', [
+                'title'            => lang('SiteIdentity.page_title'),
+                'contentSettings'  => [],
+                'assetSettings'    => [],
+                'translationPanel' => [],
+                'error'            => lang('App.connection_error'),
+            ]);
         }
-        $items    = $this->extractItems($response);
-
-        $langsRes       = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
-        $languages      = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
+        $items = is_array($bootstrap['settings'] ?? null) ? $bootstrap['settings'] : [];
+        $languages = is_array($bootstrap['languages'] ?? null) ? array_values($bootstrap['languages']) : [];
         $languageContext = $this->resolveLanguageContext($languages);
         $settingsMap    = $this->indexSettingsByKey($items);
         $sortedSettings = $this->sortSettingsByOrder($settingsMap);
@@ -72,11 +74,13 @@ class SiteIdentityController extends BaseWebController
             return $deny;
         }
 
-        $identityResponse = $this->settingService->getByGroup('identity');
-        $items            = $this->extractItems($identityResponse);
-
-        $langsRes       = $this->safeApiCall(fn () => service('languageApiService')->list(['is_active' => 1]));
-        $languages      = array_values($langsRes['ok'] ? $this->extractItems($langsRes) : []);
+        $bootstrap = $this->cmsBootstrap->siteIdentityBootstrap();
+        if ($bootstrap === null) {
+            return redirect()->to(route_to('admin.cms.site_identity'))
+                ->with('error', lang('App.connection_error'));
+        }
+        $items = is_array($bootstrap['settings'] ?? null) ? $bootstrap['settings'] : [];
+        $languages = is_array($bootstrap['languages'] ?? null) ? array_values($bootstrap['languages']) : [];
         $languageContext = $this->resolveLanguageContext($languages);
 
         /** @var SiteIdentityUpdateRequest $formRequest */
@@ -123,9 +127,11 @@ class SiteIdentityController extends BaseWebController
             ? ['ok' => true]
             : $this->safeApiCall(fn () => $this->settingService->batchUpdate($batchUpdates));
         if (! ($result['ok'] ?? false)) {
-            $this->maybeFlashDevError($result);
-            return redirect()->to(route_to('admin.cms.site_identity') . '?saved=error')
-                ->with('error', $this->firstMessage($result, lang('SiteIdentity.update_failed')));
+            return $this->failApi(
+                $result,
+                lang('SiteIdentity.update_failed'),
+                route_to('admin.cms.site_identity'),
+            );
         }
 
         return redirect()->to(route_to('admin.cms.site_identity') . '?saved=success')

@@ -4,7 +4,7 @@
 $image      = is_array($config['image'] ?? null) ? $config['image'] : (is_array($data['image'] ?? null) ? $data['image'] : []);
 $imageUrl   = esc($image['url'] ?? 'https://placehold.co/1200x400/3b82f6/ffffff?text=Hero+Banner');
 $alt        = esc($data['alt'] ?? '');
-$heading    = esc($data['heading'] ?? 'Título principal');
+$heading    = esc($data['heading'] ?? lang('BlockPreview.hero.heading'));
 $subheading = esc($data['subheading'] ?? '');
 $ctaLabel   = esc($data['cta_label'] ?? '');
 $ctaUrl     = esc($data['cta_url'] ?? '#');

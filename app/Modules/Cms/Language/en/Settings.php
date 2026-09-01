@@ -35,7 +35,6 @@ return [
     'field_setting_group_placeholder' => 'general',
     'field_setting_group_help'    => 'Group used to organize settings.',
     'group_identity'              => 'Identity',
-    'group_contact'               => 'Contact',
     'group_integration'           => 'Integrations',
     'group_analytics'             => 'Analytics',
     'group_social'                => 'Social media',

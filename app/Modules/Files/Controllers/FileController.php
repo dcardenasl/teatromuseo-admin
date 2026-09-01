@@ -152,30 +152,26 @@ class FileController extends BaseWebController
             return redirect()->to(route_to('files'))->with('error', lang('Files.file_not_found'));
         }
 
-        $usages    = $this->safeApiCall(fn () => $this->fileService->usages($id));
-        $usageData = ($usages['ok'] ?? false) ? $this->extractData($usages) : [];
-        if (isset($usageData['data']) && is_array($usageData['data'])) {
-            $usageData = $usageData['data'];
-        }
-
-        $usageData = array_map(fn (array $u) => array_merge($u, [
-            'edit_url' => $this->resolveEditUrl(
-                (string) ($u['resource'] ?? ''),
-                (int) ($u['resource_id'] ?? 0),
-                is_array($u['context'] ?? null) ? (array) $u['context'] : [],
-            ),
-        ]), array_values($usageData));
-
         return $this->render('files/show', [
             'title'  => lang('Files.detail_title'),
             'file'   => $this->extractData($info),
-            'usages' => $usageData,
+            // Usage verification is intentionally deferred. It is a
+            // cross-domain read and must not hold the server-rendered page
+            // open while Hub checks every domain in sequence.
+            'usages' => [],
+            'usagesComplete' => false,
+            'usagesDeferred' => true,
         ]);
     }
 
     public function usagesJson(string $id): ResponseInterface
     {
         $response = $this->safeApiCall(fn () => $this->fileService->usages($id));
+
+        if (($response['ok'] ?? false) === true) {
+            $usageData = $this->extractData($response);
+            $response['data']['data'] = $this->decorateUsages($usageData);
+        }
 
         return $this->response->setJSON($response);
     }
@@ -298,28 +294,9 @@ class FileController extends BaseWebController
         return redirect()->to($back)->with('success', $message);
     }
 
-    public function pickerData(): ResponseInterface
+    public function pickerManifest(): ResponseInterface
     {
-        $rawPage     = $this->request->getGet('page');
-        $rawPerPage  = $this->request->getGet('per_page');
-        $rawSearch   = $this->request->getGet('search');
-        $rawCategory = $this->request->getGet('category');
-        $filters     = [
-            'page'     => max(1, is_scalar($rawPage) ? (int) $rawPage : 1),
-            'per_page' => min(50, max(12, is_scalar($rawPerPage) ? (int) $rawPerPage : 24)),
-            'sort'     => '-id',
-        ];
-        $search = is_scalar($rawSearch) ? (string) $rawSearch : '';
-        if ($search !== '') {
-            $filters['search'] = $search;
-        }
-        $category = is_scalar($rawCategory) ? (string) $rawCategory : '';
-        if ($category !== '') {
-            $filters['category'] = $category;
-        }
-        $filters = $this->mapCategoryToMimeFilter($filters);
-
-        $response = $this->safeApiCall(fn () => $this->fileService->listForPicker($filters));
+        $response = $this->safeApiCall(fn () => $this->fileService->pickerManifest());
 
         return $this->response->setJSON($response);
     }
@@ -353,8 +330,12 @@ class FileController extends BaseWebController
 
     public function delete(string $id): RedirectResponse
     {
-        $usages    = $this->safeApiCall(fn () => $this->fileService->usages($id));
-        $usageData = ($usages['ok'] ?? false) ? $this->extractData($usages) : [];
+        $usages = $this->safeApiCall(fn () => $this->fileService->usages($id));
+        if (! $this->isCompleteUsageResponse($usages)) {
+            return redirect()->to(route_to('files'))->with('error', lang('Files.usages_unavailable_body'));
+        }
+
+        $usageData = $this->extractData($usages);
         if (isset($usageData['data']) && is_array($usageData['data'])) {
             $usageData = $usageData['data'];
         }
@@ -424,13 +405,23 @@ class FileController extends BaseWebController
 
             $safeFilename = str_replace(['"', "\r", "\n", "\0"], '', basename((string) $filename));
 
-            return $this->response
-                ->setStatusCode(200)
-                ->setHeader('Content-Type', $contentType)
-                ->setHeader('Content-Disposition', $disposition . '; filename="' . $safeFilename . '"')
+            // Binary bodies must go through DownloadResponse: CI4's debug toolbar
+            // (dev env) crashes trying to collect non-UTF8 body content, but it
+            // explicitly skips instances of DownloadResponse.
+            $download = $this->response->download($safeFilename, $raw);
+            if ($download === null) {
+                return $this->response->setStatusCode(404)->setBody('File content empty or invalid');
+            }
+
+            $download->setContentType($contentType, '')
                 ->setHeader('Cache-Control', 'private, max-age=3600')
-                ->setHeader('ETag', $etag)
-                ->setBody($raw);
+                ->setHeader('ETag', $etag);
+
+            if ($disposition === 'inline') {
+                $download->inline();
+            }
+
+            return $download;
         }
 
         return $this->response->setStatusCode(404)->setBody('File content empty or invalid');
@@ -508,6 +499,47 @@ class FileController extends BaseWebController
         ];
 
         return isset($map[$resource]) ? $map[$resource]($resourceId) : null;
+    }
+
+    /**
+     * @param array<int|string, mixed> $usages
+     * @return list<array<string, mixed>>
+     */
+    private function decorateUsages(array $usages): array
+    {
+        $decorated = [];
+        foreach ($usages as $usage) {
+            if (! is_array($usage)) {
+                continue;
+            }
+            $decorated[] = array_merge($usage, [
+                'edit_url' => $this->resolveEditUrl(
+                    (string) ($usage['resource'] ?? ''),
+                    (int) ($usage['resource_id'] ?? 0),
+                    is_array($usage['context'] ?? null) ? $usage['context'] : [],
+                ),
+            ]);
+        }
+
+        return $decorated;
+    }
+
+    /**
+     * The file service keeps the BFF projection metadata inside the typed
+     * response payload so it remains compatible with the shared ApiResponse
+     * contract.
+     *
+     * @param array<string, mixed> $response
+     */
+    private function isCompleteUsageResponse(array $response): bool
+    {
+        if (($response['ok'] ?? false) !== true) {
+            return false;
+        }
+
+        $payload = is_array($response['data'] ?? null) ? $response['data'] : [];
+
+        return ($payload['complete'] ?? false) === true;
     }
 
     /**

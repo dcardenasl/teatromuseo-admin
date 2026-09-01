@@ -44,7 +44,7 @@ class FormController extends BaseWebController
         return $this->tableDataResponse(
             [],
             ['form_key', 'is_active', 'created_at'],
-            fn (array $params) => $this->formService->list([...$params, 'include_translations' => 1]),
+            fn (array $params) => $this->formService->list([...$params, 'projection' => 'list']),
         );
     }
 
@@ -322,7 +322,14 @@ class FormController extends BaseWebController
         if ($this->request instanceof \CodeIgniter\HTTP\IncomingRequest) {
             $json = $this->request->getJSON(true);
             if (is_array($json)) {
-                return $json;
+                $payload = [];
+                foreach ($json as $key => $value) {
+                    if (is_string($key)) {
+                        $payload[$key] = $value;
+                    }
+                }
+
+                return $payload;
             }
         }
 

@@ -50,6 +50,7 @@ foreach ($languages as $l) {
                 $langId  = (int) ($lang['id'] ?? 0);
             $trans   = $translations[$langId] ?? [];
             $existId = isset($trans['id']) ? (string) $trans['id'] : '';
+            $fieldPrefix = 'translations.' . $index;
             ?>
             <div x-show="isActive(<?= $langId ?>)" class="space-y-4">
                 <input type="hidden" name="translations[<?= $index ?>][language_id]" value="<?= $langId ?>">
@@ -57,27 +58,32 @@ foreach ($languages as $l) {
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"><?= esc(lang('FileTranslations.field_alt_text')) ?></label>
-                    <input type="text" name="translations[<?= $index ?>][alt_text]" value="<?= esc((string) ($trans['alt_text'] ?? '')) ?>" maxlength="255" class="form-input w-full" placeholder="<?= esc(lang('FileTranslations.placeholder_alt_text')) ?>">
+                    <input type="text" name="translations[<?= $index ?>][alt_text]" value="<?= esc(old($fieldPrefix . '.alt_text', $trans['alt_text'] ?? '')) ?>" maxlength="255" class="<?= esc(input_class($fieldPrefix . '.alt_text')) ?>" placeholder="<?= esc(lang('FileTranslations.placeholder_alt_text')) ?>" <?= field_aria_attrs($fieldPrefix . '.alt_text') ?>>
+                    <?= render_field_error($fieldPrefix . '.alt_text') ?>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"><?= esc(lang('FileTranslations.field_caption')) ?></label>
-                    <input type="text" name="translations[<?= $index ?>][caption]" value="<?= esc((string) ($trans['caption'] ?? '')) ?>" maxlength="500" class="form-input w-full" placeholder="<?= esc(lang('FileTranslations.placeholder_caption')) ?>">
+                    <input type="text" name="translations[<?= $index ?>][caption]" value="<?= esc(old($fieldPrefix . '.caption', $trans['caption'] ?? '')) ?>" maxlength="500" class="<?= esc(input_class($fieldPrefix . '.caption')) ?>" placeholder="<?= esc(lang('FileTranslations.placeholder_caption')) ?>" <?= field_aria_attrs($fieldPrefix . '.caption') ?>>
+                    <?= render_field_error($fieldPrefix . '.caption') ?>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"><?= esc(lang('FileTranslations.field_title')) ?></label>
-                    <input type="text" name="translations[<?= $index ?>][title]" value="<?= esc((string) ($trans['title'] ?? '')) ?>" maxlength="255" class="form-input w-full" placeholder="<?= esc(lang('FileTranslations.placeholder_title')) ?>">
+                    <input type="text" name="translations[<?= $index ?>][title]" value="<?= esc(old($fieldPrefix . '.title', $trans['title'] ?? '')) ?>" maxlength="255" class="<?= esc(input_class($fieldPrefix . '.title')) ?>" placeholder="<?= esc(lang('FileTranslations.placeholder_title')) ?>" <?= field_aria_attrs($fieldPrefix . '.title') ?>>
+                    <?= render_field_error($fieldPrefix . '.title') ?>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"><?= esc(lang('FileTranslations.field_credit')) ?></label>
-                    <input type="text" name="translations[<?= $index ?>][credit]" value="<?= esc((string) ($trans['credit'] ?? '')) ?>" maxlength="255" class="form-input w-full" placeholder="<?= esc(lang('FileTranslations.placeholder_credit')) ?>">
+                    <input type="text" name="translations[<?= $index ?>][credit]" value="<?= esc(old($fieldPrefix . '.credit', $trans['credit'] ?? '')) ?>" maxlength="255" class="<?= esc(input_class($fieldPrefix . '.credit')) ?>" placeholder="<?= esc(lang('FileTranslations.placeholder_credit')) ?>" <?= field_aria_attrs($fieldPrefix . '.credit') ?>>
+                    <?= render_field_error($fieldPrefix . '.credit') ?>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"><?= esc(lang('FileTranslations.field_description')) ?></label>
-                    <textarea name="translations[<?= $index ?>][description]" rows="3" class="form-input w-full" placeholder="<?= esc(lang('FileTranslations.placeholder_description')) ?>"><?= esc((string) ($trans['description'] ?? '')) ?></textarea>
+                    <textarea name="translations[<?= $index ?>][description]" rows="3" class="<?= esc(input_class($fieldPrefix . '.description')) ?>" placeholder="<?= esc(lang('FileTranslations.placeholder_description')) ?>" <?= field_aria_attrs($fieldPrefix . '.description') ?>><?= esc(old($fieldPrefix . '.description', $trans['description'] ?? '')) ?></textarea>
+                    <?= render_field_error($fieldPrefix . '.description') ?>
                 </div>
             </div>
         <?php endforeach; ?>

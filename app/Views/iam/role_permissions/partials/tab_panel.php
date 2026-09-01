@@ -153,12 +153,14 @@ $actionBadgeClass = static function (string $action): string {
                             <div class="flex items-center gap-2">
                                 <button type="button"
                                     class="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50"
-                                    onclick="window.togglePermissionGroup('<?= esc($resourceKey) ?>', true, this.closest('form'))">
+                                    data-permission-group-resource="<?= esc($resourceKey, 'attr') ?>"
+                                    data-permission-group-state="true">
                                     Seleccionar todo
                                 </button>
                                 <button type="button"
                                     class="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50"
-                                    onclick="window.togglePermissionGroup('<?= esc($resourceKey) ?>', false, this.closest('form'))">
+                                    data-permission-group-resource="<?= esc($resourceKey, 'attr') ?>"
+                                    data-permission-group-state="false">
                                     Ninguno
                                 </button>
                             </div>
@@ -205,27 +207,3 @@ $actionBadgeClass = static function (string $action): string {
         </p>
     </div>
 </form>
-
-<script>
-window.togglePermissionGroup = window.togglePermissionGroup || function (resource, state, form) {
-    if (!form) {
-        return;
-    }
-
-    const selector = 'input[type="checkbox"][data-resource="' + resource + '"]';
-    const checkboxes = Array.from(form.querySelectorAll(selector));
-
-    checkboxes.forEach((checkbox) => {
-        checkbox.checked = state;
-    });
-
-    const checked = form.querySelectorAll('input[name="permission_ids[]"]:checked').length;
-    const counter = form.querySelector('[x-text="selectedCount"]');
-    if (counter && counter.__x && counter.__x.$data) {
-        counter.__x.$data.selectedCount = checked;
-        counter.__x.$data.isDirty = true;
-    }
-
-    form.dispatchEvent(new Event('change', { bubbles: true }));
-};
-</script>

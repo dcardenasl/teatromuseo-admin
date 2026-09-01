@@ -1,7 +1,118 @@
 # TASKS_ARCHIVE — ci4-admin-starter
 
 > Historial de tareas completadas.
-> Última actualización: 2026-07-22
+> Última actualización: 2026-08-20
+
+---
+
+## ✅ Cierres 2026-08-11..19 — archivados 2026-08-20
+
+### ADM-BFF-11 — Carga no bloqueante del detalle de archivos
+
+Cerrada 2026-08-19. La vista entrega metadata y preview sin esperar el
+fan-out de usos; la verificación se carga una vez contra el BFF, actualiza
+el borrado sólo con snapshot completo y vacío, y usa la URL directa del
+archivo cuando no hay variante. Verificado con `composer quality` (829
+tests, 3.442 assertions, 1 skip) y 106 tests JS.
+
+### CMS-EDITOR-02 — Flujos y guards de Admin para `cms-editor`
+
+Cerrada 2026-08-18. Entries, collections, redirects y forms separan
+`.write` de `.admin` para eliminación; bloques de entries y traducciones de
+archivos usan los permisos correctos; Files quedó protegido por
+`files.read/write`; sidebar y wizard ocultan acciones fuera del alcance.
+Verificado con `composer quality` (826 tests, 3.437 asserts, 1 skip).
+
+### ADM-BFF-01/02 — Dashboard: consumir `analytics`/`translations` del snapshot BFF + retiro
+
+Cerradas 2026-08-17. `DashboardDataService` traduce las nuevas fuentes,
+incrementa la versión de caché y conserva sus estados; ambos widgets leen
+el snapshot común. `rg` confirmó cero referencias directas a
+`AnalyticsApiService`/`TranslationAuditApiService` desde el Dashboard.
+Verificado con `composer quality` (798/800 tests según el paso).
+
+### ADM-BFF-03/04 — Analytics administrativo vía BFF + retiro de `AnalyticsApiService`
+
+Cerradas 2026-08-17. `BffApiClient::getAdminAnalytics()` con período y
+retry budget; `AnalyticsController` traduce el aggregate versionado. `rg`
+confirmó cero consumidores del servicio legado, retirado junto a su
+factory. `composer quality` verde (800 tests, 3.328 assertions, 1 skipped).
+
+### ADM-BFF-05/06 — Usos de archivos cross-domain vía BFF
+
+Cerradas 2026-08-17. `FileApiService::usages()` hace una única llamada a
+`/api/v1/me/admin-files/{fileId}/usages`; se retiró su `DomainApiClient`.
+La suite funcional cubre respuesta incompleta y bloquea borrado hasta
+completar fuentes. `composer quality` verde (804 tests, 3.347 assertions).
+
+### ADM-BFF-07/08/09 — Lookups administrativos de Event vía BFF
+
+Cerradas 2026-08-17. `EventLookupBffAdapter`; Occurrence, ticket_type,
+ticket, booking y event_reference consumen bundles BFF por pantalla;
+escrituras siguen directas al Event domain. `rg` confirmó cero consumidores
+de los métodos directos retirados; UI distingue catálogo vacío de fuente no
+disponible. `composer quality` verde (810 tests, 3.376 assertions).
+
+### ADM-BFF-10 — Consumo de bootstraps CMS aprobados
+
+Cerrada 2026-08-17 tras la medición runtime de `BFF-ADMINREAD-14`. Entry,
+Page, Menu e Identity consumen un adapter BFF por pantalla con fallback
+directo; BlockInstance consume el workspace BFF; Wizard consume
+`wizard-bootstrap` con fallback directo.
+
+### ADM-DASH-03..06 — Dashboard vía BFF (cliente, migración, verificación, documentación)
+
+Cerradas 2026-08-16. `BffApiClient::getAdminDashboard()` hace una sola
+lectura autenticada a `/api/v1/me/admin-dashboard`; `DashboardDataService`
+conserva shape `sections/source.state`, cache/lock/stale/cooldown.
+Verificado visualmente con stack completo (degradación por fuente
+confirmada apagando Eventos) y documentado en `CLAUDE.md`.
+
+### FRONT-01b — Propiedad de namespaces de idioma
+
+Cerrada 2026-08-16. Se eliminaron las colisiones entre catálogos raíz y
+modulares, se separaron `Pages`, `Blocks` y `ContentTranslations`, se
+normalizaron los consumidores y se añadió una guarda de unicidad de
+namespaces con paridad `es`/`en`.
+
+### ADM-TABLEUX-01..09 — Vistas de tabla y densidad compartida
+
+Cerradas 2026-08-16. `remoteTableFactory` centraliza `viewMode`/`density`
+por módulo en `sessionStorage`; CSS de densidad sin `!important`; Files
+migrado al estado compartido; Users gana vista de tarjetas explícita; los 30
+módulos restantes reciben densidad compartida sin habilitar tarjetas fuera
+de Users. Verificación e2e: `composer quality` (798 tests / 3317 asserts),
+101 tests JS, ESLint verde, smoke visual real en `localhost:8182`
+(Files/Users/Audit/Roles). Documentación actualizada en `FRONTEND.md`,
+`COMPONENTS.md` y el Consistency Contract de `CLAUDE.md`.
+
+### CFG-02/05/06 — Saneamiento: `.env.example`, quality gate, pre-push
+
+Cerradas 2026-08-17. `.env.example` reconstruido desde las variables
+realmente leídas; `composer quality` endurecido (falla ante
+warnings/deprecations, 814 tests / 3.386 aserciones / 1 skip); pre-push vía
+`.husky` + `scripts/check-pre-push.sh`.
+
+### FRONT-01c/01d — Previews con i18n + lógica frontend fuera de vistas
+
+Cerradas 2026-08-17. Cadenas de previews movidas a `BlockPreview` con
+paridad `es`/`en`; builders/formularios/timers/errores/preview de bloques
+viven en módulos ES registrados en el bundle. Lint, 21 archivos / 104 tests
+JS, build y contratos de vistas verdes.
+
+### ADM-SEC-01 — Autorización declarativa en módulos Event y Catalog
+
+Cerrada 2026-08-12. Los módulos operativos usan autenticación más permiso
+explícito por endpoint; se retiraron los checks duplicados, se alineó la UI
+y se añadieron regresiones funcionales y una guarda arquitectónica.
+
+### ADM-DASH-01/02 — Dashboard administrativo resistente + cross-domain
+
+Cerradas 2026-08-11. Entrega agregada y protegida contra fan-out,
+reintentos y carreras de caché; consume Hub, CMS, Catálogo y Eventos desde
+una lectura cacheada versionada; cada fuente no disponible se representa
+como estado explícito, nunca como cero. Rollout documentado en
+`docs/DEPLOYMENT.md`.
 
 ---
 
@@ -126,3 +237,15 @@
 
 Los bloques completos se retiraron del tracker activo para que solo queden decisiones pendientes,
 backlog real y el contrato de calidad del repositorio.
+
+---
+
+## ✅ Saneamiento y estabilidad — cierres 2026-08-06..07
+
+- `CFG-08`, `CORE-04`, `FRONT-01a`, `FRONT-02` y `FRONT-01h` quedaron
+  completadas y ya no aparecen como tareas activas.
+- El incidente de 508 por miniaturas y lock de sesión del dashboard quedó
+  corregido con carga lazy y cierre seguro de sesión.
+- Las tareas de CSP, i18n, build, vistas, limpieza documental y estados
+  editoriales permanecen abiertas en `TASKS.md`; no se consideran resueltas por
+  este archivo.

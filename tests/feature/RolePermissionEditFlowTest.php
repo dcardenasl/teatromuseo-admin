@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\BffApiClientInterface;
 use App\Modules\Iam\Services\ApplicationApiService;
 use App\Modules\Iam\Services\PermissionApiService;
 use App\Modules\Iam\Services\RoleApiService;
@@ -132,22 +133,24 @@ final class RolePermissionEditFlowTest extends CIUnitTestCase
 
     public function testEditViewPreMarksAssignedPermissions(): void
     {
-        $roleMock = $this->createMock(RoleApiService::class);
-        $roleMock->method('get')->with('uuid-3')->willReturn([
-            'ok'          => true,
-            'status'      => 200,
-            'data'        => ['id' => 'uuid-3', 'code' => 'qa', 'name' => 'QA', 'description' => '', 'is_system' => false],
-            'raw'         => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-        ]);
-        $roleMock->method('listPermissions')->with('uuid-3')->willReturn([
-            'ok'     => true,
-            'status' => 200,
-            'data'   => [
-                ['id' => 11, 'code' => 'users.read', 'description' => ''],
-                ['id' => 22, 'code' => 'users.write', 'description' => ''],
-            ],
-            'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-        ]);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminIamRoleWorkspace')
+            ->with('uuid-3')
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => ['data' => [
+                    'role' => ['id' => 'uuid-3', 'code' => 'qa', 'name' => 'QA', 'description' => '', 'is_system' => false],
+                    'allPermissions' => [
+                        ['id' => 11, 'code' => 'users.read', 'description' => ''],
+                        ['id' => 22, 'code' => 'users.write', 'description' => ''],
+                        ['id' => 33, 'code' => 'audit.read', 'description' => ''],
+                    ],
+                    'assignedPermissionIds' => [11, 22],
+                ]],
+                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
+            ]);
 
         $permMock = $this->createMock(PermissionApiService::class);
         $permMock->method('list')->willReturn([
@@ -168,7 +171,7 @@ final class RolePermissionEditFlowTest extends CIUnitTestCase
             'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
         ]);
 
-        Services::injectMock('roleApiService', $roleMock);
+        Services::injectMock('bffApiClient', $bff);
         Services::injectMock('permissionApiService', $permMock);
         Services::injectMock('applicationApiService', $appMock);
 
@@ -201,26 +204,22 @@ final class RolePermissionEditFlowTest extends CIUnitTestCase
 
     public function testShowPageIsReadOnly(): void
     {
-        $roleMock = $this->createMock(RoleApiService::class);
-        $roleMock->method('get')->willReturn([
-            'ok'     => true,
-            'status' => 200,
-            'data'   => ['id' => 'uuid-4', 'code' => 'qa', 'name' => 'QA', 'description' => '', 'is_system' => false],
-            'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-        ]);
-        $roleMock->method('listPermissions')->willReturn([
-            'ok' => true, 'status' => 200, 'data' => [],
-            'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-        ]);
+        $bff = $this->createMock(BffApiClientInterface::class);
+        $bff->expects($this->once())
+            ->method('getAdminIamRoleWorkspace')
+            ->with('uuid-4')
+            ->willReturn([
+                'ok' => true,
+                'status' => 200,
+                'data' => ['data' => [
+                    'role' => ['id' => 'uuid-4', 'code' => 'qa', 'name' => 'QA', 'description' => '', 'is_system' => false],
+                    'allPermissions' => [],
+                    'assignedPermissionIds' => [],
+                ]],
+                'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
+            ]);
 
-        $permMock = $this->createMock(PermissionApiService::class);
-        $permMock->method('list')->willReturn([
-            'ok' => true, 'status' => 200, 'data' => [],
-            'raw' => '', 'headers' => [], 'messages' => [], 'fieldErrors' => [],
-        ]);
-
-        Services::injectMock('roleApiService', $roleMock);
-        Services::injectMock('permissionApiService', $permMock);
+        Services::injectMock('bffApiClient', $bff);
 
         $result = $this->withSession(self::ADMIN_SESSION)->get('/admin/iam/roles/uuid-4');
 

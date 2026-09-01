@@ -23,6 +23,7 @@ class PageStoreRequest extends BaseFormRequest
             'sitemap_changefreq',
             'published_at',
             'scheduled_at',
+            'translations',
         ];
     }
 
@@ -42,6 +43,12 @@ class PageStoreRequest extends BaseFormRequest
             'published_at' => 'permit_empty|valid_date',
             'scheduled_at' => 'permit_empty|valid_date',
             'translations' => 'permit_empty',
+            'translations.*.slug' => 'permit_empty|string|max_length[150]',
+            'translations.*.title' => 'permit_empty|string|max_length[255]',
+            'translations.*.excerpt' => 'permit_empty|string|max_length[500]',
+            'translations.*.og_image.url' => 'permit_empty|string|max_length[2048]',
+            'translations.*.meta_title' => 'permit_empty|string|max_length[255]',
+            'translations.*.meta_description' => 'permit_empty|string|max_length[500]',
             'translations.*.og_image' => 'permit_empty',
         ];
     }

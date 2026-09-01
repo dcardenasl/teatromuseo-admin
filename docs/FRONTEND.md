@@ -50,6 +50,49 @@ The `remoteTable` component (`public/assets/js/app.js`) is a powerful tool for b
 - **Loading States:** Built-in indicators and error handling.
 - **URL Synchronization:** Updates the browser URL so filters are shareable.
 
+Every remote table must declare a stable, module-specific `mode` in its
+configuration. The component also owns the two UI preferences used by the
+admin tables:
+
+- `viewMode`: `table` or `grid` (default: `table`).
+- `density`: `sm`, `md`, or `lg` (default: `md`).
+
+Preferences are stored in `sessionStorage` under
+`admin_table_view_{mode}` and `admin_table_density_{mode}`. This keeps the
+preference alive while the same tab is open, isolates it by module, and
+ensures a new tab starts from the defaults. Storage failures are treated as a
+normal unavailable-storage case and fall back to the defaults.
+
+Use `layouts/partials/table_toolbar.php` for the controls. Both flags are
+`false` by default, so a module opts in explicitly with
+`showViewToggle` and/or `showDensityToggle`. The standard 30 remote modules
+expose density only; Files and Users expose both density and view controls.
+The table itself must bind the state to its class:
+
+```php
+<section x-data="remoteTable({
+    apiUrl: '<?= route_to('admin.example.data') ?>',
+    pageUrl: '<?= route_to('admin.example') ?>',
+    mode: 'example'
+})">
+    <?= view('layouts/partials/table_toolbar', [
+        'title' => lang('Example.title'),
+        'showDensityToggle' => true,
+    ]) ?>
+
+    <table class="<?= esc(table_class()) ?>" :class="'density-' + density">
+        <!-- rows -->
+    </table>
+</section>
+```
+
+`density-md` intentionally preserves the base table padding. The `sm` and
+`lg` variants are defined in `src/css/app.css` without a forced-priority
+escape hatch. Grid views must map their fields explicitly to the resource;
+do not infer card content from arbitrary API keys. Files is the intentional
+exception to a generic card layout: its grid mode remains the thumbnail
+gallery already used by the file manager.
+
 ---
 
 ## 🧩 PHP UI Helpers

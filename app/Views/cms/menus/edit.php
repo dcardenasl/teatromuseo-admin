@@ -26,6 +26,7 @@ $showUrl = $itemId !== '' ? route_to('admin.cms.menus.show', $itemId) : route_to
             'value' => $item['menu_key'] ?? '',
             'placeholder' => 'Menus.field_menu_key_placeholder',
             'help' => 'Menus.field_menu_key_help',
+            'maxlength' => 50,
             'errors' => $errors ?? []
         ]) ?>
 
@@ -36,6 +37,7 @@ $showUrl = $itemId !== '' ? route_to('admin.cms.menus.show', $itemId) : route_to
             'value' => $item['location'] ?? '',
             'placeholder' => 'Menus.field_location_placeholder',
             'help' => 'Menus.field_location_help',
+            'maxlength' => 50,
             'errors' => $errors ?? []
         ]) ?>
         <?php $mainFields = ob_get_clean(); ?>

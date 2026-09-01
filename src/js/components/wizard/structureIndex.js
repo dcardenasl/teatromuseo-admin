@@ -50,6 +50,7 @@ const navigation = {
     start(kind) {
         this.message = '';
         this.errorMsg = '';
+        this.fieldErrors = {};
         this.createdCollectionId = '';
         this.collectionCompleted = null;
         this.collectionErrors = { step1: '', slug_base: '' };
@@ -91,6 +92,7 @@ export function structureWizard(bootConfig = (typeof window !== 'undefined' ? wi
 
         // ── State ─────────────────────────────────────────────────────────
         screen: 'loading', config: null, errorMsg: '', message: '', saving: false, createdCollectionId: '', collectionCompleted: null,
+        fieldErrors: {},
         collectionErrors: { step1: '', slug_base: '' },
         collectionSlugAvailability: '',
         form: { name: '', slug_base: '', collection_key: '', sort_order: 0, collection_type: 'blog' },

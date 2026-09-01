@@ -92,6 +92,8 @@ final class PagePresetApplier
         if ($blockKey === 'collection_listing') {
             $collectionId = isset($context['collection_id']) ? (int) $context['collection_id'] : 0;
             $defaults['collection_id'] = $collectionId > 0 ? $collectionId : (int) ($defaults['collection_id'] ?? 0);
+        } elseif ($blockKey === 'collection_grid') {
+            $defaults['image_aspect_ratio'] = (string) ($defaults['image_aspect_ratio'] ?? '1/1');
         }
 
         return $defaults;

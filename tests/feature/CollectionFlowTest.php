@@ -775,7 +775,7 @@ final class CollectionFlowTest extends CIUnitTestCase
 
         $result = $this->withSession([
             'access_token' => 'token',
-            'user'         => ['permissions' => ['cms.collections.write', 'cms.collections.read']],
+            'user'         => ['permissions' => ['cms.collections.admin', 'cms.collections.read']],
             'permissions_refreshed_at' => time(),
         ])->post('/admin/cms/collections/test-uuid/delete', [
             csrf_token() => csrf_hash(),

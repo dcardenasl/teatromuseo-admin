@@ -50,4 +50,10 @@ class PageApiService extends ResourceApiService
         }
         return $this->apiClient->get('/cms/pages/check-slug', $params);
     }
+
+    /** @return ApiResponse */
+    public function quality(int|string $id): array
+    {
+        return $this->apiClient->get($this->resourcePath() . '/' . $id . '/quality');
+    }
 }

@@ -1,9 +1,10 @@
 <?php
 /** @var array<string, mixed> $config */
 /** @var array<string, mixed> $data */
-$sectionTitle  = $data['section_title'] ?? 'Contenido destacado';
-$viewAllLabel  = $data['view_all_label'] ?? 'Ver todo';
-$viewAllUrl    = $data['view_all_url'] ?? '#';
+$sectionTitle  = $data['section_title'] ?? lang('BlockPreview.collection.title');
+$viewAllLabel  = $data['view_all_label'] ?? lang('BlockPreview.collection.view_all');
+$navigation    = is_array($data['navigation'] ?? null) ? $data['navigation'] : [];
+$viewAllUrl   = (string) ($navigation['url'] ?? '');
 $collectionKey = $config['collection_key'] ?? '';
 $itemsLimit    = (int) ($config['items_limit'] ?? 3);
 $orderBy       = $config['order_by'] ?? 'published_at';
@@ -12,27 +13,27 @@ $variant       = $config['layout_variant'] ?? 'cards';
 $cssClass      = $config['css_class'] ?? '';
 
 $items = [
-    ['title' => 'Entrada destacada A', 'excerpt' => 'Resumen breve de una entrada publicada.', 'date' => '10 Jun 2026'],
-    ['title' => 'Entrada destacada B', 'excerpt' => 'Texto de apoyo para previsualizar la grilla.', 'date' => '02 Jun 2026'],
-    ['title' => 'Entrada destacada C', 'excerpt' => 'Otra tarjeta de ejemplo de la colección.', 'date' => '25 May 2026'],
+    ['title' => lang('BlockPreview.collection.item_a'), 'excerpt' => lang('BlockPreview.collection.excerpt_a'), 'date' => '10 Jun 2026'],
+    ['title' => lang('BlockPreview.collection.item_b'), 'excerpt' => lang('BlockPreview.collection.excerpt_b'), 'date' => '02 Jun 2026'],
+    ['title' => lang('BlockPreview.collection.item_c'), 'excerpt' => lang('BlockPreview.collection.excerpt_c'), 'date' => '25 May 2026'],
 ];
 ?>
 <section class="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4 <?= esc((string) $cssClass) ?>">
     <div class="mb-3 flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
         <div>
-            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Grilla de Colección</div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500"><?= esc(lang('BlockPreview.collection.grid_title')) ?></div>
             <div class="text-sm font-bold text-slate-900"><?= esc((string) $sectionTitle) ?></div>
         </div>
-        <?php if ($viewAllLabel !== ''): ?>
+        <?php if ($viewAllLabel !== '' && $viewAllUrl !== ''): ?>
             <a href="<?= esc((string) $viewAllUrl) ?>" class="text-xs font-medium text-blue-600"><?= esc((string) $viewAllLabel) ?></a>
         <?php endif; ?>
     </div>
 
     <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-        Colección: <code><?= esc((string) ($collectionKey ?: 'seleccionar')) ?></code>
-        · Límite: <?= esc((string) $itemsLimit) ?>
-        · Orden: <?= esc((string) $orderBy) ?> <?= esc((string) $direction) ?>
-        · Variante: <?= esc((string) $variant) ?>
+        <?= esc(lang('BlockPreview.collection.collection')) ?> <code><?= esc((string) ($collectionKey ?: lang('BlockPreview.collection.select'))) ?></code>
+        <?= esc(lang('BlockPreview.collection.limit')) ?> <?= esc((string) $itemsLimit) ?>
+        <?= esc(lang('BlockPreview.collection.order')) ?> <?= esc((string) $orderBy) ?> <?= esc((string) $direction) ?>
+        <?= esc(lang('BlockPreview.collection.variant')) ?> <?= esc((string) $variant) ?>
     </div>
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">

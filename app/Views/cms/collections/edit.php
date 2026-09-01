@@ -1,13 +1,15 @@
 <?php $item = $item ?? []; ?>
 <div class="mb-4 flex items-center justify-between">
     <a href="<?= route_to('admin.cms.collections') ?>" class="text-sm text-brand-600 hover:text-brand-700">&larr; <?= esc(lang('App.back')) ?></a>
-    <form method="post" action="<?= route_to('admin.cms.collections.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['collection_key'] ?? null), 'js') ?>', () => $el.submit())">
-        <?= csrf_field() ?>
-        <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
-            <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
-            <?= esc(lang('App.delete')) ?>
-        </button>
-    </form>
+    <?php if (has_permission('cms.collections.admin')): ?>
+        <form method="post" action="<?= route_to('admin.cms.collections.delete', (string) ($item['id'] ?? '')) ?>" x-data @submit.prevent="$store.confirm.show('<?= esc(confirm_delete_message($item['name'] ?? $item['collection_key'] ?? null), 'js') ?>', () => $el.submit())">
+            <?= csrf_field() ?>
+            <button type="submit" class="<?= esc(action_button_class('danger')) ?>">
+                <?= ui_icon('trash', 'h-3.5 w-3.5') ?>
+                <?= esc(lang('App.delete')) ?>
+            </button>
+        </form>
+    <?php endif; ?>
 </div>
 
 <?php ob_start(); ?>
@@ -98,6 +100,7 @@
                                 'placeholder' => 'Collections.translation_slug_placeholder',
                                 'help' => 'Collections.translation_slug_help',
                                 'value' => old("translations.{$index}.slug", $transValue['slug'] ?? ''),
+                                'maxlength' => 150,
                                 'errors' => $errors ?? []
                             ]) ?>
 
@@ -140,6 +143,7 @@
                 'value' => $item['collection_key'] ?? '',
                 'placeholder' => 'Collections.field_collection_key_placeholder',
                 'help' => 'Collections.field_collection_key_help',
+                'maxlength' => 50,
                 'errors' => $errors ?? []
             ]) ?>
 

@@ -21,6 +21,7 @@ class WizardController extends BaseWebController
     protected MenuApiService $menuService;
     protected EntryApiService $entryService;
     protected FileApiService $fileService;
+    protected \App\Modules\Cms\Services\CmsBootstrapBffAdapter $cmsBootstrap;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
@@ -29,6 +30,7 @@ class WizardController extends BaseWebController
         $this->menuService = service('menuApiService');
         $this->entryService = service('entryApiService');
         $this->fileService = service('fileApiService');
+        $this->cmsBootstrap = service('cmsBootstrapBffAdapter');
     }
 
     public function index(): string
@@ -42,44 +44,32 @@ class WizardController extends BaseWebController
 
     public function config(): ResponseInterface
     {
-        $domainClient = service('domainApiClient');
-
-        $wizardResult = $this->safeApiCall(static fn () => $domainClient->get('/cms/wizard/config'));
-        if (isset($wizardResult['ok']) && $wizardResult['ok'] === false) {
+        $bootstrap = $this->cmsBootstrap->wizardBootstrap();
+        if ($bootstrap === null) {
             return $this->response
                 ->setStatusCode(502)
-                ->setJSON(['ok' => false, 'message' => 'Could not load wizard config from domain API']);
+                ->setJSON(['ok' => false, 'message' => lang('App.connection_error')]);
         }
+        $config = is_array($bootstrap['config'] ?? null) ? $bootstrap['config'] : [];
+        $btList = is_array($bootstrap['blockTypes'] ?? null) ? $bootstrap['blockTypes'] : [];
 
-        $config = $this->extractData($wizardResult);
-
-        // Enrich block_types with id, is_container, allowed_children, icon, category
-        $blockTypesResult = $this->safeApiCall(
-            static fn () => $domainClient->get('/cms/block-types', ['limit' => 200, 'is_active' => 1])
-        );
-
-        if (! isset($blockTypesResult['ok']) || $blockTypesResult['ok'] !== false) {
-            $btRaw  = $this->extractData($blockTypesResult);
-            $btList = $btRaw['items'] ?? $btRaw['data'] ?? [];
-
-            foreach ($btList as $bt) {
-                $key = $bt['block_key'] ?? null;
-                if (! $key) {
-                    continue;
-                }
-
-                $schemaDef                   = $bt['schema_definition'] ?? [];
-                $existing                    = $config['block_types'][$key] ?? [];
-                $config['block_types'][$key] = array_merge($existing, [
-                    'id'               => $bt['id'] ?? null,
-                    'icon'             => $bt['icon'] ?? null,
-                    'category'         => $bt['category'] ?? null,
-                    'is_container'     => (bool) ($bt['is_container'] ?? false),
-                    'supports_pages'   => (bool) ($bt['supports_pages'] ?? true),
-                    'supports_entries' => (bool) ($bt['supports_entries'] ?? false),
-                    'allowed_children' => $schemaDef['allowed_children'] ?? [],
-                ]);
+        foreach ($btList as $bt) {
+            $key = $bt['block_key'] ?? null;
+            if (! $key) {
+                continue;
             }
+
+            $schemaDef                   = $bt['schema_definition'] ?? [];
+            $existing                    = $config['block_types'][$key] ?? [];
+            $config['block_types'][$key] = array_merge($existing, [
+                'id'               => $bt['id'] ?? null,
+                'icon'             => $bt['icon'] ?? null,
+                'category'         => $bt['category'] ?? null,
+                'is_container'     => (bool) ($bt['is_container'] ?? false),
+                'supports_pages'   => (bool) ($bt['supports_pages'] ?? true),
+                'supports_entries' => (bool) ($bt['supports_entries'] ?? false),
+                'allowed_children' => $schemaDef['allowed_children'] ?? [],
+            ]);
         }
 
         $config['collection_types'] = CmsPresetCatalog::collectionTypeOptions();
@@ -104,7 +94,31 @@ class WizardController extends BaseWebController
             'has_active_block_types' => ! empty($config['block_types']),
         ], is_array($config['setup_state'] ?? null) ? $config['setup_state'] : []);
 
+        if ($this->wantsHumanReadableConfig()) {
+            $configJson = json_encode(
+                $config,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE,
+            ) ?: '{}';
+
+            return $this->response
+                ->setContentType('text/html')
+                ->setBody($this->render('cms/wizard/config_preview', [
+                    'title'     => lang('Wizard.config_preview_title'),
+                    'configJson' => $configJson,
+                ]));
+        }
+
         return $this->response->setJSON($config);
+    }
+
+    private function wantsHumanReadableConfig(): bool
+    {
+        $accept = strtolower($this->request->getHeaderLine('Accept'));
+        $requestedWith = strtolower($this->request->getHeaderLine('X-Requested-With'));
+
+        return $requestedWith !== 'xmlhttprequest'
+            && str_contains($accept, 'text/html')
+            && ! str_contains($accept, 'application/json');
     }
 
     public function publish(): ResponseInterface

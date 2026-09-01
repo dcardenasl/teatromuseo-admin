@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'venues_title' => 'Venues',
+    'venues_new' => 'New venue',
+    'venues_create' => 'Create venue',
+    'venues_edit' => 'Edit venue',
+    'venues_details' => 'Venue details',
+    'venues_not_found' => 'Venue not found.',
+    'venues_loading' => 'Loading venues…',
+    'venues_search_placeholder' => 'Search venues…',
+    'venues_create_success' => 'Venue created successfully.',
+    'venues_create_failed' => 'The venue could not be created.',
+    'venues_update_success' => 'Venue updated successfully.',
+    'venues_update_failed' => 'The venue could not be updated.',
+    'venues_delete_success' => 'Venue deleted successfully.',
+    'venues_delete_failed' => 'The venue could not be deleted.',
+    'field_name' => 'Name',
+    'field_name_placeholder' => 'Venue name',
+    'field_name_help' => 'Operational name of the venue.',
+    'field_slug' => 'Slug',
+    'field_slug_placeholder' => 'URL identifier',
+    'field_slug_help' => 'Stable URL-safe identifier.',
+    'field_description' => 'Description',
+    'field_description_placeholder' => 'Venue notes…',
+    'field_description_help' => 'Operational information about the venue.',
+    'field_capacity' => 'Capacity',
+    'field_capacity_placeholder' => 'Maximum capacity',
+    'field_capacity_help' => 'Default capacity of the venue.',
+    'field_is_active' => 'Active',
+    'field_is_active_placeholder' => 'Enable or disable',
+    'field_is_active_help' => 'Whether the venue can be selected for new occurrences.',
+    'sidebar_label' => 'Venues',
+];
