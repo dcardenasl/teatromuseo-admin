@@ -447,7 +447,18 @@ abstract class BaseWebController extends BaseController
             ? ($this->request->getJSON(true) ?? [])
             : [];
 
-        return is_array($raw) ? $raw : [];
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $payload = [];
+        foreach ($raw as $key => $value) {
+            if (is_string($key)) {
+                $payload[$key] = $value;
+            }
+        }
+
+        return $payload;
     }
 
     /**

@@ -322,7 +322,14 @@ class FormController extends BaseWebController
         if ($this->request instanceof \CodeIgniter\HTTP\IncomingRequest) {
             $json = $this->request->getJSON(true);
             if (is_array($json)) {
-                return $json;
+                $payload = [];
+                foreach ($json as $key => $value) {
+                    if (is_string($key)) {
+                        $payload[$key] = $value;
+                    }
+                }
+
+                return $payload;
             }
         }
 
